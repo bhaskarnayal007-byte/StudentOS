@@ -10,7 +10,11 @@ import { supabase } from '../lib/supabase.js'
  * then swaps — a visible flash on every reload.
  */
 export function useSession() {
-  const [session, setSession] = useState(null)
+  // Annotated because this file is JS but .ts consumers import it: without a
+  // type, `useState(null)` infers `never` and every `session.user` is an error.
+  const [session, setSession] = useState(
+    /** @type {import('@supabase/supabase-js').Session | null} */ (null),
+  )
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

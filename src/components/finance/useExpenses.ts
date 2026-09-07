@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readScoped, writeScoped } from "../../lib/scopedStorage.js";
+import { useSession } from "../../auth/useSession.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE ONLY PLACE EXPENSES ARE READ OR WRITTEN.
@@ -20,10 +22,10 @@ export type Expense = {
 
 const STORAGE_KEY = "student-os-expenses";
 
-function load(): Expense[] {
+function load(userId: string | null = null): Expense[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readScoped(STORAGE_KEY, userId);
     const parsed = raw ? JSON.parse(raw) : [];
     // Storage is user-editable and survives schema changes, so treat anything
     // out there as untrusted and drop entries that can't be rendered.
@@ -76,16 +78,28 @@ export function formatMoney(value: number) {
 }
 
 export function useExpenses() {
-  const [expenses, setExpenses] = useState<Expense[]>(load);
+  const { session } = useSession();
+  const userId = session?.user?.id ?? null;
+
+  const [expenses, setExpenses] = useState<Expense[]>(() => load(null));
+  // Which account the list in state belongs to. Same problem as the store: on
+  // a user change both effects run in one commit, and without this the save
+  // would write the previous account's expenses under the new account's key.
+  const owner = useRef<string | null>(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-    } catch {
-      // Quota exceeded or storage blocked — keep the session usable rather
-      // than crashing the dashboard.
-    }
-  }, [expenses]);
+    if (owner.current === userId) return;
+    owner.current = userId;
+    setExpenses(load(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    // Signed out there is nothing worth saving, and writing would recreate the
+    // unscoped key that readScoped just retired — handing the next account to
+    // sign in on this browser a copy of someone else's spending.
+    if (!userId || owner.current !== userId) return;
+    writeScoped(STORAGE_KEY, userId, JSON.stringify(expenses));
+  }, [expenses, userId]);
 
   const addExpense = useCallback((input: Omit<Expense, "id">) => {
     setExpenses((list) => [...list, { ...input, id: crypto.randomUUID() }]);

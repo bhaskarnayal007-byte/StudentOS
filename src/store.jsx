@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useReducer } from 'react'
+import { readScoped, writeScoped } from './lib/scopedStorage.js'
+import { useSession } from './auth/useSession.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE STATE FILE. Everything the app knows lives in one object, defined here.
@@ -11,6 +13,10 @@ const STORAGE_KEY = 'student-os-state'
 // silently starting them from an empty app. Safe to delete this line — and
 // the migration in loadState — once nobody is on the old build.
 const LEGACY_KEY = 'day-deck-state'
+// Theme is a property of the device, not the account: it has to apply on the
+// login screen, where nobody is signed in yet. So it's stored outside the
+// per-user slice as well as in it.
+const THEME_KEY = 'student-os-theme'
 
 // Shown on first run so the sidebar is never empty. The user can delete any of
 // them, and deleting all of them sticks — see the note in loadState().
@@ -47,6 +53,11 @@ const emptyState = {
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
   profileName: '',
+  // Which account this state belongs to (null = nobody signed in). Kept in the
+  // state itself rather than a ref because the save effect needs to know
+  // whether what it's holding matches the user it would write it under — see
+  // the note on that effect.
+  ownerId: null,
 
   // Quick Launch. { id, name, url, iconUrl, order } — see DEFAULT_SHORTCUTS.
   // Stored in list order; `order` is kept in sync so a future server sync has
@@ -141,6 +152,11 @@ function reducer(state, action) {
     case 'set-theme':
       return { ...state, theme: action.value }
 
+    // Swap in a different account's data wholesale. The only action that
+    // replaces state rather than editing it.
+    case 'load-user':
+      return action.value
+
     default:
       // A typo in an action type should be loud, not silent.
       throw new Error(`Unknown action: ${action.type}`)
@@ -152,19 +168,17 @@ export function newId() {
 }
 
 // ─── Loading and saving ──────────────────────────────────────────────────────
-function loadState() {
+function loadState(userId = null) {
   try {
-    // Fall back to the pre-rename key, but only when nothing is stored under
-    // the new one — otherwise a stale Day Deck save would clobber real data.
-    const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY)
-    // Spreading emptyState first means: if you add a new key later, old saved
-    // data still loads instead of crashing with `undefined`.
-    //
-    // This is also what makes the default shortcuts behave correctly: a save
-    // with no `shortcuts` key at all (first run, or an older save) inherits the
-    // defaults, while a save containing `shortcuts: []` — the user deleted them
-    // all — overrides the defaults and stays empty.
-    if (!saved) return emptyState
+    const deviceTheme = localStorage.getItem(THEME_KEY)
+
+    // This account's own slice, falling back to the pre-account keys — the
+    // unscoped one, then the pre-rename Day Deck one — which readScoped adopts
+    // and clears on the first signed-in load.
+    const saved = readScoped(STORAGE_KEY, userId, [LEGACY_KEY])
+    if (!saved) {
+      return { ...emptyState, ownerId: userId, theme: deviceTheme ?? emptyState.theme }
+    }
 
     // Spreading emptyState first means: if you add a new key later, old saved
     // data still loads instead of crashing with `undefined`.
@@ -184,9 +198,13 @@ function loadState() {
       delete loaded[stale]
     }
 
+    loaded.ownerId = userId
+    // A slice saved before themes were device-level has no theme of its own.
+    if (deviceTheme && !JSON.parse(saved).theme) loaded.theme = deviceTheme
+
     return loaded
   } catch {
-    return emptyState
+    return { ...emptyState, ownerId: userId }
   }
 }
 
@@ -197,11 +215,29 @@ const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  const { session } = useSession()
+  const userId = session?.user?.id ?? null
+
+  // Swap the whole store when the signed-in account changes — including on
+  // first load, where it starts as null and becomes a real id once the stored
+  // session has been read back.
+  useEffect(() => {
+    if (state.ownerId === userId) return
+    dispatch({ type: 'load-user', value: loadState(userId) })
+  }, [userId, state.ownerId])
 
   // Runs after every render where `state` changed → save to disk.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  }, [state])
+    // Only write state that belongs to the account we'd be writing it under.
+    // Both effects run in the same commit when the user changes, and this one
+    // would otherwise persist the *previous* account's data under the *new*
+    // account's key before the swap above has landed.
+    // Signed out there is nothing worth saving, and writing would recreate the
+    // unscoped key that readScoped just retired — handing the next account to
+    // sign in on this browser a copy of someone else's data.
+    if (!userId || state.ownerId !== userId) return
+    writeScoped(STORAGE_KEY, userId, JSON.stringify(state))
+  }, [state, userId])
 
   // Put the choice on <html> as data-theme, which is what the CSS reads.
   // 'system' removes the attribute entirely so the prefers-color-scheme rule
@@ -210,6 +246,12 @@ export function StoreProvider({ children }) {
     const root = document.documentElement
     if (state.theme === 'system') root.removeAttribute('data-theme')
     else root.dataset.theme = state.theme
+
+    // Also kept outside the per-user slice, so the login screen — where there
+    // is no user — still renders in the theme this device chose.
+    try {
+      localStorage.setItem(THEME_KEY, state.theme)
+    } catch { /* private mode */ }
   }, [state.theme])
 
   return <StoreContext.Provider value={{ state, dispatch }}>{children}</StoreContext.Provider>
