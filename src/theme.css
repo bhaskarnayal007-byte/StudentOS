@@ -1,0 +1,1382 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ─────────────────────────────────────────────────────────────────────────
+   60 / 30 / 10 — base / surface / accent.
+
+   THE ACCENT RULE: --color-accent is for INTERACTIVE things only. Buttons,
+   links, active and selected states, focus rings. Cards, panels, page
+   backgrounds and body text never use it. That restraint is what keeps the
+   accent reading as ~10% of the page instead of decoration smeared everywhere.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  --color-base:         #F3F0EA;  /* 60% — the page */
+  --color-surface:      #FFFFFF;  /* 30% — cards, panels, modals, sidebar */
+  --color-text:         #1C1B19;
+  --color-accent:       #2E5334;  /* 10% — interactive only */
+  --color-accent-hover: #25422A;
+  --color-border:       #E4DFD5;
+
+  /* Derived, so components never hardcode an rgba(). Both are the token
+     itself at reduced strength — no new hues enter the system. */
+  --color-text-2:    color-mix(in srgb, var(--color-text) 68%, transparent);
+  --color-text-3:    color-mix(in srgb, var(--color-text) 46%, transparent);
+  --color-accent-ink:#FFFFFF;                                        /* on accent */
+  --color-accent-wash: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --color-focus-ring:  color-mix(in srgb, var(--color-accent) 28%, transparent);
+  --color-sunken:      color-mix(in srgb, var(--color-base) 60%, var(--color-surface));
+
+  /* Type scale */
+  --t-xs: 12px; --t-sm: 14px; --t-md: 16px; --t-lg: 19px; --t-xl: 23px; --t-2xl: 33px;
+
+  /* Space, 4px rhythm */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 22px; --s6: 32px;
+
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  --shadow:    0 1px 2px rgba(28, 27, 25, 0.05);
+  --shadow-lg: 0 2px 4px rgba(28, 27, 25, 0.06), 0 12px 32px rgba(28, 27, 25, 0.10);
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --fast: 160ms;
+  --slow: 300ms;
+
+  /* Dark-mode legibility over the topographic backdrop. Transparent here, so
+     the shared rules below cost nothing in light mode — no duplicated
+     selectors, no [data-theme] overrides scattered through the file. */
+  --halo: transparent;   /* soft dark glow behind text */
+  --edge: transparent;   /* thin dark outline around bordered surfaces */
+
+  /* How far interactive elements rise on hover. */
+  --lift: -2px;
+
+  color-scheme: light;
+}
+
+/* Explicit dark choice. */
+[data-theme="dark"] {
+  --color-base:         #2B2E27;
+  --color-surface:      #3A3D38;
+  --color-text:         #EDEAE2;
+  --color-accent:       #9BB08C;
+  --color-accent-hover: #B3C4A6;
+  --color-border:       #4A4D46;
+
+  /* Sage is light, so ink ON the accent must be dark to stay readable. */
+  --color-accent-ink:   #22261F;
+  --color-accent-wash:  color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --color-focus-ring:   color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --color-sunken:       color-mix(in srgb, var(--color-base) 55%, var(--color-surface));
+
+  --shadow:    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  --halo: rgba(0, 0, 0, 0.72);
+  --edge: rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+/* No explicit choice → follow the OS. `:not([data-theme])` means an explicit
+   light choice still wins on a dark system. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-base:         #2B2E27;
+    --color-surface:      #3A3D38;
+    --color-text:         #EDEAE2;
+    --color-accent:       #9BB08C;
+    --color-accent-hover: #B3C4A6;
+    --color-border:       #4A4D46;
+
+    --color-accent-ink:   #22261F;
+    --color-accent-wash:  color-mix(in srgb, var(--color-accent) 16%, transparent);
+    --color-focus-ring:   color-mix(in srgb, var(--color-accent) 35%, transparent);
+    --color-sunken:       color-mix(in srgb, var(--color-base) 55%, var(--color-surface));
+
+    --shadow:    0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.45);
+
+    --halo: rgba(0, 0, 0, 0.72);
+    --edge: rgba(0, 0, 0, 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  /* One serif for everything — headings, body, buttons, labels, nav. */
+  font-family: var(--font-family);
+  font-size: var(--t-md);
+  font-weight: 400;
+  line-height: 1.55;
+  background: var(--color-base);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.2; }
+
+/* ── Dark-mode legibility ──
+   text-shadow rather than -webkit-text-stroke: a stroke thickens the glyphs
+   themselves, which on a serif at 13-16px fills in the counters and muddies
+   the letterforms. A shadow sits behind the type and leaves it untouched.
+   Both layers are transparent in light mode, so this rule is inert there. */
+body {
+  text-shadow:
+    0 1px 1px var(--halo),   /* tight contact edge */
+    0 0 3px var(--halo);     /* soft spread, kills background lines behind text */
+}
+
+/* A thin dark outline just outside the existing border, separating panels from
+   the topographic backdrop. `outline` (not box-shadow) so it composes with the
+   shadows these elements already carry, follows border-radius, and costs no
+   layout. Focus styles override it, which is what we want.
+   Scoped to things that actually have a surface. Deliberately NOT applied to
+   `button` as a whole: .tab and .ghost are transparent, and outlining them
+   draws boxes around controls that were designed to have none. */
+main,
+nav,
+.item,
+.chip,
+.countdown,
+.cal-day,
+.launcher,
+.launch-icon,
+.fin-toggle,
+.fin-toggle-icon,
+.modal,
+.bubble,
+.suggestion,
+.icon-preview,
+.theme-toggle,
+.file-btn,
+button.primary,
+input, select, textarea {
+  outline: 1px solid var(--edge);
+}
+
+/* Serif numerals vary in width by default; lock them so counters and dates
+   don't jitter as they change. */
+.big, .chip, .sched-hour, .cal-day, .countdown { font-variant-numeric: tabular-nums lining-nums; }
+
+/* ── The topographic backdrop ──
+   Fixed and behind everything. z-index -1 keeps it under the app without
+   needing a stacking context on every panel; pointer-events: none means the
+   iframe can never swallow a click meant for the UI. */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* The shader paints its own background, so nothing shows through the seams. */
+  overflow: hidden;
+}
+
+.app-bg iframe { width: 100%; height: 100%; }
+
+.app {
+  position: relative;
+  z-index: 0;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) var(--s6);
+  padding-top: calc(var(--s5) + env(safe-area-inset-top));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER + NAV
+   ═══════════════════════════════════════════════════════════════════════════ */
+header { margin-bottom: var(--s4); }
+
+.titlebar { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+
+header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 var(--s4);
+}
+
+/* The logo is a designed badge (dark rounded square), used as-is — the corner
+   radius here matches the artwork's own so the PNG's square edges don't show. */
+.brand-mark {
+  display: block;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 11px;
+}
+
+/* ── AI mascot ── */
+.mascot { display: block; flex: none; object-fit: contain; }
+.mascot-sm { width: 22px; height: 22px; }
+.mascot-lg {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto var(--s2);
+  /* A soft grounding shadow, since the keyed PNG lost the render's own. */
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+}
+
+/* The widget heading is uppercase and letterspaced; the mascot needs to sit
+   on the text baseline rather than inherit that spacing. */
+.widget-head h3 { display: flex; align-items: center; gap: 7px; }
+
+nav {
+  display: flex;
+  gap: var(--s1);
+  padding: var(--s1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+  background: var(--color-surface);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: 1;
+  min-width: fit-content;
+  white-space: nowrap;
+  padding: var(--s2) var(--s4);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--color-text-2);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.tab:hover { color: var(--color-text); background: var(--color-sunken); }
+/* Active state = interactive state, so the accent belongs here. */
+.tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/* Theme switch sits in the title row. */
+.theme-toggle {
+  flex: none;
+  padding: var(--s1) var(--s3);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.theme-toggle:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANELS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.body { display: flex; align-items: flex-start; gap: var(--s3); }
+.body > main { flex: 1; min-width: 0; }
+
+main {
+  margin-top: var(--s3);
+  padding: var(--s5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  animation: panel-in var(--slow) var(--ease);
+}
+
+@keyframes panel-in { from { opacity: 0; transform: translateY(5px); } }
+
+.placeholder {
+  color: var(--color-text-3);
+  font-size: var(--t-sm);
+  font-style: italic;
+  text-align: center;
+  padding: var(--s5) 0;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROLS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.row { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s4); }
+.row.between { align-items: center; justify-content: space-between; }
+.grow { flex: 1; min-width: 150px; }
+.muted { color: var(--color-text-3); align-self: center; font-size: var(--t-sm); }
+
+input, select, textarea, button {
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--color-text);
+  padding: 9px var(--s3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+input::placeholder, textarea::placeholder { color: var(--color-text-3); font-style: italic; }
+input:hover, select:hover, textarea:hover { border-color: var(--color-text-3); }
+
+/* Focus rings are interactive → accent. */
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+button:focus-visible, .cal-day:focus-visible, .launch-item:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+select {
+  appearance: none;
+  padding-right: 28px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-2) 50%),
+                    linear-gradient(135deg, var(--color-text-2) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 53%, calc(100% - 10px) 53%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 19px; height: 19px;
+  flex: none;
+  padding: 0;
+  border: 1.5px solid var(--color-text-3);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  position: relative;
+}
+input[type="checkbox"]:hover { border-color: var(--color-accent); }
+input[type="checkbox"]:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5.5px; top: 2px;
+  width: 5px; height: 10px;
+  border: solid var(--color-accent-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(43deg);
+}
+
+button { cursor: pointer; font-weight: 600; }
+
+/* ── Hover lift ──
+   Everything you can click rises slightly under the cursor. Deliberately not
+   applied to `.item` (a task row isn't clickable — only its checkbox and ✕
+   are) or `.ghost` (those sit inside .launch-item, which already lifts, and a
+   nested lift reads as a glitch).
+   Each element's own rule adds `transform` to its transition list; a shared
+   transition here would replace theirs, since `transition` is a shorthand. */
+.tab:hover,
+button:hover:not(:disabled):not(.ghost),
+.cal-day:hover,
+.launch-item:hover,
+.launch-add:hover,
+.sched-block:hover,
+.file-btn:hover,
+.fin-toggle:hover,
+.home-btn:hover,
+.theme-toggle:hover {
+  transform: translateY(var(--lift));
+}
+
+/* Press returns it to the surface — the click feels like it lands. */
+.tab:active,
+button:active:not(:disabled),
+.cal-day:active,
+.launch-item:active,
+.launch-add:active,
+.sched-block:active,
+.file-btn:active,
+.theme-toggle:active {
+  transform: translateY(0);
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+button.primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+button.ghost {
+  background: none;
+  border-color: transparent;
+  color: var(--color-text-3);
+  padding: var(--s1) var(--s2);
+  opacity: 0;
+  transition: opacity var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+button.ghost:hover { color: var(--color-accent); }
+.item:hover .ghost, .item:focus-within .ghost, .ghost:focus-visible { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LISTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  transition: border-color var(--fast) var(--ease), opacity var(--slow) var(--ease);
+  animation: item-in var(--slow) var(--ease);
+}
+.item:hover { border-color: var(--color-text-3); }
+
+@keyframes item-in { from { opacity: 0; transform: translateY(-4px); } }
+
+/* break-word, NOT anywhere: `anywhere` also shrinks the element's min-content
+   width, which lets flexbox squeeze the text column to a few characters and
+   break every word mid-way. `break-word` only breaks a word that genuinely
+   cannot fit on its own line. */
+.item .grow { min-width: 0; overflow-wrap: break-word; }
+.item.done { opacity: 0.5; }
+.item.done .grow { text-decoration: line-through; }
+
+.chip {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  padding: 2px 9px;
+  white-space: nowrap;
+  flex: none;
+}
+/* Priority chips are meaning, not interaction — kept on text tokens, with
+   weight and a border doing the work the accent would otherwise do. */
+.chip.high { color: var(--color-text); border-color: var(--color-text-3); font-weight: 700; }
+.chip.low { color: var(--color-text-3); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CALENDAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s1); margin-bottom: var(--s5); }
+
+.cal-head {
+  text-align: center;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding-bottom: var(--s2);
+}
+
+.cal-day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  font-size: var(--t-sm);
+  background: var(--color-sunken);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.cal-day:hover { background: var(--color-accent-wash); border-color: var(--color-accent); }
+.cal-day.today { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+/* Selected = interactive state → accent. */
+.cal-day.selected {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.dot {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  min-width: 15px;
+  padding: 2px 4px;
+  border-radius: var(--r-pill);
+  background: var(--color-text-2);
+  color: var(--color-surface);
+}
+.cal-day.selected .dot {
+  background: var(--color-accent-ink);
+  color: var(--color-accent);
+}
+
+.day-detail { border-top: 1px solid var(--color-border); padding-top: var(--s4); }
+.day-detail h3 { font-size: var(--t-lg); margin-bottom: var(--s3); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WEEKLY SCHEDULE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sched-scroll { overflow-x: auto; margin: 0 calc(var(--s5) * -1); padding: 0 var(--s5); }
+.sched { display: grid; grid-template-columns: 50px repeat(7, minmax(74px, 1fr)); min-width: 560px; }
+.sched-corner { grid-column: 1; grid-row: 1; }
+
+.sched-dayhead {
+  text-align: center;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding-bottom: var(--s2);
+}
+
+.sched-hour {
+  font-size: 11px;
+  color: var(--color-text-3);
+  text-align: right;
+  padding-right: var(--s2);
+  transform: translateY(-7px);
+}
+
+.sched-cell { border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
+.sched-cell:nth-child(7n) { border-right: 1px solid var(--color-border); }
+
+/* Block colours come from user data (each block stores its own), so they are
+   category colours rather than palette tokens — same reasoning as the
+   out-of-scope status colours. */
+.sched-block {
+  margin: 1px;
+  border: none;
+  border-radius: var(--r-sm);
+  color: #fff;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-align: left;
+  padding: 5px 7px;
+  overflow: hidden;
+  line-height: 1.3;
+  transition: filter var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.sched-block:hover { filter: brightness(1.1); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.stack h3 {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--s3);
+}
+
+.sep { border: none; border-top: 1px solid var(--color-border); margin: var(--s6) 0; }
+
+.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s6) var(--s5);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+}
+/* The countdown is read, not clicked — text token, not accent. */
+.countdown .big { font-size: 62px; font-weight: 400; line-height: 1; letter-spacing: -0.03em; }
+.countdown.finished { border-color: var(--color-accent); background: var(--color-accent-wash); }
+.countdown.finished .big { color: var(--color-accent); animation: pulse 1.5s var(--ease) infinite; }
+
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ASSISTANT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.chat { display: flex; flex-direction: column; gap: var(--s3); }
+.chat-empty { padding: var(--s4) 0; }
+
+.suggestions { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; }
+
+.suggestion {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-2);
+  border-radius: var(--r-pill);
+  font-size: var(--t-sm);
+  font-weight: 400;
+  padding: var(--s2) var(--s4);
+}
+/* A suggestion is a button, so accent on hover is correct. */
+.suggestion:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+.messages { display: flex; flex-direction: column; gap: var(--s2); max-height: 48vh; overflow-y: auto; }
+
+.bubble {
+  max-width: 82%;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  animation: item-in var(--slow) var(--ease);
+}
+/* Neither bubble is interactive, so neither gets the accent. Speaker is
+   signalled by alignment, fill and border weight instead. */
+.bubble.user {
+  align-self: flex-end;
+  background: var(--color-sunken);
+  border-color: var(--color-text-3);
+  border-bottom-right-radius: var(--s1);
+}
+.bubble.assistant {
+  align-self: flex-start;
+  background: var(--color-surface);
+  border-bottom-left-radius: var(--s1);
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: var(--s1); margin-top: var(--s2); }
+
+.thinking { display: flex; gap: 5px; padding: var(--s4); align-items: center; }
+.thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-text-3); animation: blink 1.3s var(--ease) infinite; }
+.thinking span:nth-child(2) { animation-delay: 0.18s; }
+.thinking span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes blink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+
+/* Left as-is: status colours are out of scope for this pass. */
+.error {
+  font-size: var(--t-sm);
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: var(--r-sm);
+  padding: var(--s2) var(--s3);
+  margin: 0;
+}
+
+button.ghost.always { opacity: 1; align-self: flex-start; font-size: var(--t-xs); }
+button.ghost.always:hover { color: var(--color-accent); }
+
+.keyform { display: flex; flex-direction: column; gap: var(--s3); }
+.keyform h3 { font-size: var(--t-xl); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUICK LAUNCH
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* The sidebar column owns position and width; the cards inside it are just
+   stacked blocks. Previously .launcher did both jobs, which left no way to put
+   a second card beside it. */
+.side {
+  position: sticky;
+  top: var(--s4);
+  flex: none;
+  width: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s3);
+}
+
+.launcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.launcher-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.launch-item, .launch-add {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  padding: 6px var(--s2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--t-sm);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.launch-item:hover, .launch-add:hover { background: var(--color-accent-wash); color: var(--color-accent); }
+
+.launch-item.dragging {
+  background: var(--color-sunken);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 2;
+}
+
+.launch-icon {
+  flex: none;
+  width: 26px; height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  font-size: var(--t-sm);
+  color: var(--color-text-2);
+}
+.launch-icon img { width: 18px; height: 18px; object-fit: contain; }
+
+.launch-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.launch-tools {
+  position: absolute;
+  right: 5px;
+  display: flex;
+  background: var(--color-surface);
+  border-radius: var(--r-pill);
+  opacity: 0;
+  transition: opacity var(--fast) var(--ease);
+}
+.launch-item:hover .launch-tools, .launch-item:focus-within .launch-tools { opacity: 1; }
+.launch-tools .ghost { padding: 3px 5px; font-size: var(--t-xs); opacity: 1; }
+
+.launch-add {
+  margin-top: var(--s1);
+  color: var(--color-text-2);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  padding-top: var(--s3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--s4);
+  background: rgba(28, 27, 25, 0.4);
+  animation: fade-in var(--fast) var(--ease);
+}
+
+@keyframes fade-in { from { opacity: 0; } }
+
+.modal {
+  width: min(420px, 100%);
+  padding: var(--s5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  animation: modal-in var(--slow) var(--ease);
+}
+
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px); } }
+
+.modal h3 { font-size: var(--t-xl); margin-bottom: var(--s4); }
+
+.field { display: block; margin-bottom: var(--s3); }
+.field > span {
+  display: block;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 5px;
+}
+.field .grow { width: 100%; }
+
+.icon-row { display: flex; align-items: center; gap: var(--s2); }
+.icon-preview {
+  width: 38px; height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  color: var(--color-text-2);
+}
+.icon-preview img { width: 24px; height: 24px; object-fit: contain; }
+
+/* A <label>, not a <button>, so it doesn't pick up the shared control
+   transition and needs its own. */
+.file-btn {
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  padding: 9px var(--s3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.file-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: var(--s2); margin-top: var(--s5); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOPO FIELD DEMO
+   Stands in for the Tailwind classes the upstream demo used, since this
+   project has no Tailwind.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.topo-demo {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  max-height: 60vh;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+}
+
+.topo-demo-field { position: absolute; inset: 0; }
+
+.topo-demo-caption {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  /* The iframe swallows pointer events anyway, but this keeps the caption
+     from blocking anything layered over it later. */
+  pointer-events: none;
+}
+
+.topo-demo-caption p {
+  margin: 0;
+  padding: 0 var(--s5);
+  text-align: center;
+  font-size: var(--t-xl);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  /* The field follows data-theme, so the theme's own text token is already
+     the correct contrast against it — dark ink on paper, off-white on black.
+     (mix-blend-mode: difference washes out against the light paper.) */
+  color: var(--color-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════════════════════════════════════════ */
+.login-page {
+  min-height: 78vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5) 0;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s3);
+  padding: var(--s6) var(--s5);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  outline: 1px solid var(--edge);
+  animation: panel-in var(--slow) var(--ease);
+}
+
+.login-mark { width: 64px; height: 64px; align-self: center; border-radius: 15px; }
+.login-card h1 { font-size: 34px; letter-spacing: -0.025em; }
+.login-sub { margin: 0 0 var(--s3); color: var(--color-text-2); font-size: var(--t-sm); }
+.login-card .field { text-align: left; margin: 0; }
+.login-card .field .grow { width: 100%; }
+.login-go { padding: 11px var(--s4); font-size: var(--t-md); }
+.login-note { margin: 0; font-size: var(--t-xs); color: var(--color-text-3); }
+
+/* Wrong password. Small horizontal nudge, not a violent shake — and the
+   reduced-motion rule at the top of this file already flattens it to nothing
+   for anyone who asked for that. */
+.login-shake { animation: login-shake 320ms var(--ease); }
+
+@keyframes login-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  45% { transform: translateX(6px); }
+  70% { transform: translateX(-3px); }
+}
+
+/* The transition canvas sits above everything, including the modals. */
+.portal-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOME
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Home has no surrounding panel, so it owns its own width and rhythm. */
+.home {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.home-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.home-top h2 {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+/* The name is the one accented word — it names the person, and the accent
+   rule allows identity as well as interaction. */
+.home-name { color: var(--color-accent); }
+
+/* ── Orbit: the mascot in the middle, everything else flanking it ── */
+.home-orbit {
+  display: grid;
+  grid-template-columns: 1fr minmax(210px, 280px) 1fr;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.orbit-col { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
+.orbit-centre { display: grid; place-items: center; }
+
+.mascot-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--fast) var(--ease);
+}
+
+/* The WebGL canvas. It has no intrinsic size, so the container must give it
+   one — a Canvas in an auto-height parent collapses to zero and renders
+   nothing. The idle motion now lives in the 3D scene, not in CSS. */
+.mascot-stage {
+  width: min(260px, 52vw);
+  aspect-ratio: 1;
+  /* Lets the cursor reach the button underneath; the model isn't interactive. */
+  pointer-events: none;
+}
+.mascot-stage canvas { display: block; }
+
+.mascot-caption {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--color-text-2);
+  transition: color var(--fast) var(--ease);
+}
+
+.mascot-button:hover { transform: scale(1.04); }
+.mascot-button:hover .mascot-caption { color: var(--color-accent); }
+.mascot-button:active { transform: scale(0.99); }
+.mascot-button:focus-visible {
+  outline: none;
+  border-radius: var(--r-lg);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+/* ── Buttons for the sections and apps that no longer have a bar of their own ── */
+.home-buttons { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.home-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s4);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.home-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
+.home-btn-icon { width: 17px; height: 17px; object-fit: contain; flex: none; }
+
+/* Surface, not sunken: with the enclosing panel gone these sit directly on the
+   animated background and have to be opaque enough to read against it. */
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  outline: 1px solid var(--edge);
+  min-width: 0;
+}
+
+.widget-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.widget-head h3 {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.widget-link {
+  padding: 2px var(--s2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.widget-link:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+.widget .row { margin-bottom: 0; }
+/* Rows recede against the widget's own surface now that it isn't sunken. */
+.widget-tasks .item { background: var(--color-sunken); }
+.widget-quick { justify-content: flex-start; }
+.widget-quick .suggestion { font-size: var(--t-xs); padding: 4px var(--s3); }
+
+/* Timer */
+.widget-timer { justify-content: space-between; }
+.widget-countdown { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.widget-clock {
+  font-size: 38px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.widget-clock.finished { color: var(--color-accent); animation: pulse 1.5s var(--ease) infinite; }
+.widget-start { align-self: flex-start; }
+
+/* Finance */
+.widget-finance.active { border-color: var(--color-accent); }
+.widget-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.widget-figure span { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.07em; }
+.widget-figure strong { font-size: 27px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.widget-figure:hover strong { color: var(--color-accent); }
+
+@media (max-width: 620px) {
+  .home-top h2, .login-card h1 { font-size: 28px; }
+  .home { gap: var(--s4); }
+
+  /* One column, and the mascot moves to the top — it's the primary action, so
+     it shouldn't sit buried between two stacks of widgets. */
+  .home-orbit { grid-template-columns: 1fr; }
+  .orbit-centre { order: -1; }
+  .mascot-stage { width: min(210px, 60vw); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPENDING FOOTPRINT
+   No new colours: every value below resolves to an existing token, so the
+   whole feature follows data-theme with no dark-mode rules of its own.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Toggle — its own card in the sidebar column, deliberately larger than a
+   launcher row so it reads as a distinct destination rather than one more
+   shortcut in the list above it. */
+.fin-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3);
+  font-size: var(--t-md);
+  font-weight: 600;
+  text-align: left;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease),
+              border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+
+.fin-toggle-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  /* The glyph, not an icon font: set in the app's serif at a weight that
+     matches the headings. */
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-2);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+  transition: inherit;
+}
+
+.fin-toggle:hover { border-color: var(--color-text-3); }
+.fin-toggle:hover .fin-toggle-icon { color: var(--color-text); }
+
+.fin-toggle.active { color: var(--color-accent); border-color: var(--color-accent); }
+.fin-toggle.active .fin-toggle-icon {
+  color: var(--color-accent-ink);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.fin-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--s5) var(--s4);
+  overflow-y: auto;
+  background: rgba(28, 27, 25, 0.4);
+  animation: fade-in var(--fast) var(--ease);
+}
+
+.fin-panel {
+  width: min(860px, 100%);
+  /* Opaque surface: this sits over the animated topographic background, and a
+     translucent panel would leave contour lines running through the numbers. */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  outline: 1px solid var(--edge);
+  animation: fin-in var(--slow) var(--ease);
+}
+
+@keyframes fin-in { from { opacity: 0; transform: translateY(12px); } }
+
+.fin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--color-border);
+}
+.fin-head h3 { font-size: var(--t-xl); }
+.fin-close { opacity: 1; font-size: var(--t-md); }
+
+.fin-body { padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+
+/* ── Summary ── */
+.fin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--s3);
+}
+
+.fin-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s3) var(--s4);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+}
+
+.fin-stat-label {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.fin-stat-value { font-size: 27px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.fin-stat-value.fin-stat-sm { font-size: var(--t-lg); }
+.fin-muted { color: var(--color-text-3); font-weight: 400; }
+
+/* ── Cards ── */
+.fin-card {
+  padding: var(--s4);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+}
+.fin-card-title { font-size: var(--t-sm); margin-bottom: var(--s3); }
+
+.fin-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+
+/* ── Donut ── */
+.fin-donut-row { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; }
+.fin-donut { position: relative; flex: 1 1 190px; min-width: 170px; }
+
+.fin-donut-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.fin-donut-centre span { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.07em; }
+.fin-donut-centre strong { font-size: var(--t-lg); }
+
+.fin-legend {
+  flex: 1 1 190px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--t-sm);
+}
+.fin-legend li { display: flex; align-items: center; gap: var(--s2); }
+.fin-legend strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+.fin-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.fin-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+/* ── Chart tooltip: recharts renders this outside our normal cascade, so it
+      needs its own surface styling. ── */
+.fin-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--s2) var(--s3);
+  font-size: var(--t-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow);
+}
+.fin-tooltip span { color: var(--color-text-2); font-variant-numeric: tabular-nums; }
+/* recharts puts a focus outline on the SVG wrapper on click — not useful here. */
+.recharts-wrapper:focus, .recharts-surface:focus { outline: none; }
+
+/* ── Form + list ── */
+.fin-form { display: flex; flex-direction: column; gap: 0; }
+.fin-amount { width: 120px; flex: none; font-variant-numeric: tabular-nums; }
+.fin-amount-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .fin-charts { grid-template-columns: 1fr; }
+  .fin-backdrop { padding: var(--s3); }
+  .fin-body, .fin-head { padding: var(--s4); }
+  .fin-amount { width: 100%; }
+  .fin-stat-value { font-size: 23px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SMALL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 620px) {
+  .app { padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom)); }
+  header h1 { font-size: 30px; margin-bottom: var(--s3); }
+  .brand-mark { width: 34px; height: 34px; }
+  main { padding: var(--s4); margin-top: 0; }
+  .sched-scroll { margin: 0 calc(var(--s4) * -1); padding: 0 var(--s4); }
+  .countdown .big { font-size: 48px; }
+
+  .row > input, .row > select { min-width: 0; }
+  .grow { flex-basis: 100%; }
+
+  /* Chips drop to a second line rather than squeezing the title. */
+  .item { flex-wrap: wrap; }
+  .item .grow { flex-basis: auto; }
+
+  .body { flex-direction: column; }
+  .side { position: static; width: 100%; order: 2; margin-top: var(--s3); }
+
+  nav {
+    position: fixed;
+    z-index: 20;
+    left: var(--s3);
+    right: var(--s3);
+    bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+    box-shadow: var(--shadow-lg);
+  }
+  .tab { font-size: var(--t-xs); padding: var(--s2) 6px; min-width: 0; }
+}

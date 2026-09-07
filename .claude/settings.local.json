@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(node scripts/make-logo-mark.mjs)",
+      "Bash(node -e ' *)",
+      "Bash(node scripts/make-icons.mjs)",
+      "Bash(node -e \"const m=require\\('./dist/manifest.webmanifest.js'\\)\")",
+      "Bash(node -e \"console.log\\('recharts', require\\('./node_modules/recharts/package.json'\\).version\\)\")",
+      "Bash(ls -lt \"/c/Users/bhaskar/.claude/uploads/0316426a-1706-4fe9-be5a-41f95c6642db/\" 2>/dev/null | head -12)",
+      "Bash(ls -lt \"/c/Users/bhaskar/OneDrive/Desktop\" 2>/dev/null | head -8; echo \"--- Downloads ---\"; ls -lt \"/c/Users/bhaskar/Downloads\" 2>/dev/null | head -8; echo \"--- Desktop/student os ---\"; ls -lt \"/c/Users/bhaskar/OneDrive/Desktop/student os\" 2>/dev/null | head -8)",
+      "Bash(cp \"/c/Users/bhaskar/Downloads/ChatGPT Image Sep 7, 2026, 12_31_06 PM.png\" src/assets/mascot-src.png)",
+      "Bash(cp \"/c/Users/bhaskar/Downloads/ChatGPT Image Sep 7, 2026, 12_11_05 PM.png\" src/assets/logo.png)",
+      "Bash(node scripts/make-assets.mjs)",
+      "Bash(python -)"
+    ]
+  }
+}

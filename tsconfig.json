@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    /* The app is JavaScript; only the shadcn-style components in
+       src/components/ui are TypeScript. allowJs lets the two coexist, and
+       checkJs stays off so existing .jsx files aren't type-checked. */
+    "allowJs": true,
+    "checkJs": false,
+
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+
+    /* The "@/..." import style shadcn components use. Must be mirrored in
+       vite.config.js — tsconfig only teaches the editor, Vite does the
+       actual resolving at build time. */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
