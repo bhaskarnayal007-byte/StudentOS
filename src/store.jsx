@@ -164,7 +164,27 @@ function loadState() {
     // with no `shortcuts` key at all (first run, or an older save) inherits the
     // defaults, while a save containing `shortcuts: []` — the user deleted them
     // all — overrides the defaults and stays empty.
-    return saved ? { ...emptyState, ...JSON.parse(saved) } : emptyState
+    if (!saved) return emptyState
+
+    // Spreading emptyState first means: if you add a new key later, old saved
+    // data still loads instead of crashing with `undefined`.
+    //
+    // This is also what makes the default shortcuts behave correctly: a save
+    // with no `shortcuts` key at all (first run, or an older save) inherits the
+    // defaults, while a save containing `shortcuts: []` — the user deleted them
+    // all — overrides the defaults and stays empty.
+    const loaded = { ...emptyState, ...JSON.parse(saved) }
+
+    // That same spread also resurrects keys we've since removed, so a field
+    // deleted from emptyState lives on in every existing save. It matters here
+    // because one of them held a real API key: dropping the field from the code
+    // did not drop it from anyone's disk. Deleting them on load does, since the
+    // next save writes the pruned object back.
+    for (const stale of ['apiKey', 'passwordSalt', 'passwordHash']) {
+      delete loaded[stale]
+    }
+
+    return loaded
   } catch {
     return emptyState
   }
