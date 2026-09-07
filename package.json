@@ -14,6 +14,11 @@
   "engines": {
     "node": ">=20"
   },
+  "//nodemonConfig": "nodemon only watches js/mjs/cjs/json by default, so editing .env changed nothing until a manual restart — which looked exactly like a bad API key.",
+  "nodemonConfig": {
+    "watch": ["src", ".env"],
+    "ext": "js,mjs,cjs,json,env"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
     "cors": "^2.8.5",
