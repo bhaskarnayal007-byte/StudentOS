@@ -217,14 +217,34 @@ export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
   const { session } = useSession()
   const userId = session?.user?.id ?? null
+  // The account is the source of truth for the name, so it follows the user to
+  // any device.
+  const displayName = session?.user?.user_metadata?.name ?? ''
 
   // Swap the whole store when the signed-in account changes — including on
   // first load, where it starts as null and becomes a real id once the stored
   // session has been read back.
+  //
+  // The name is applied here rather than by a separate effect. A child effect
+  // that dispatched `set-name` would run BEFORE this one (React runs child
+  // effects first), so this swap would overwrite it in the same batch — and
+  // because profileName read the same before and after that sequence, the
+  // child's dependencies looked unchanged and it never retried. The name was
+  // silently lost.
   useEffect(() => {
     if (state.ownerId === userId) return
-    dispatch({ type: 'load-user', value: loadState(userId) })
-  }, [userId, state.ownerId])
+    const next = loadState(userId)
+    if (displayName) next.profileName = displayName
+    dispatch({ type: 'load-user', value: next })
+  }, [userId, state.ownerId, displayName])
+
+  // A later rename in Supabase still has to reach the store, and by now the
+  // swap above has settled, so there is nothing to race with.
+  useEffect(() => {
+    if (displayName && displayName !== state.profileName && state.ownerId === userId) {
+      dispatch({ type: 'set-name', value: displayName })
+    }
+  }, [displayName, state.profileName, state.ownerId, userId])
 
   // Runs after every render where `state` changed → save to disk.
   useEffect(() => {

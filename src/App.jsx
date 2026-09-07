@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Tasks from './components/Tasks.jsx'
 import Calendar from './components/Calendar.jsx'
 import Schedule from './components/Schedule.jsx'
@@ -29,7 +29,6 @@ const TABS = {
 const NAMES = Object.keys(TABS)
 
 export default function App() {
-  const { state, dispatch } = useStore()
   const { session, loading } = useSession()
   const [tab, setTab] = useState('Home')
   // Lives here, not in the sidebar, because the toggle, the home grid and the
@@ -40,15 +39,6 @@ export default function App() {
 
   const Panel = TABS[tab]
   const toggleFinance = () => setFinanceOpen(o => !o)
-
-  // The name lives on the Supabase user, so it follows the account to any
-  // device. Mirrored into the store because that's what HomePage reads.
-  const displayName = session?.user?.user_metadata?.name ?? ''
-  useEffect(() => {
-    if (displayName && displayName !== state.profileName) {
-      dispatch({ type: 'set-name', value: displayName })
-    }
-  }, [displayName, state.profileName, dispatch])
 
   // Everything shares one root so AppBackground mounts once and keeps running
   // across the login screen, the transition and the app — no restart, no flash.
