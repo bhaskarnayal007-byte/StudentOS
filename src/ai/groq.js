@@ -11,19 +11,27 @@ async function callModel(messages) {
   const token = await accessToken()
   if (!token) throw new Error('Signed out — sign in again to use the assistant.')
 
-  const res = await fetch(`${API_URL}/api/ai/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      messages,
-      tools: TOOL_DEFS,
-      tool_choice: 'auto', // the model decides whether to use a tool
-      temperature: 0.3,    // low: we want obedient, not creative
-    }),
-  })
+  let res
+  try {
+    res = await fetch(`${API_URL}/api/ai/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        messages,
+        tools: TOOL_DEFS,
+        tool_choice: 'auto', // the model decides whether to use a tool
+        temperature: 0.3,    // low: we want obedient, not creative
+      }),
+    })
+  } catch {
+    // fetch only rejects when the request never got a reply — server down,
+    // wrong URL, no network. Every HTTP status, including 500, resolves. The
+    // raw message is "Failed to fetch", which tells a user nothing.
+    throw new Error(`Can't reach the assistant server at ${API_URL}. Is it running?`)
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))

@@ -17,7 +17,8 @@
       "Bash(node scripts/make-assets.mjs)",
       "Bash(python -)",
       "PowerShell(cd \"C:\\\\Users\\\\bhaskar\\\\OneDrive\\\\Desktop\\\\student-os-backend\"; \\(Get-Content .env | Select-String '^SUPABASE_URL='\\).Line)",
-      "PowerShell(cd \"C:\\\\Users\\\\bhaskar\\\\OneDrive\\\\Desktop\\\\project 1\"; if \\(\\(Get-Content .env -Raw\\) -match 'PASTE_YOUR_ANON_KEY_HERE'\\) { \"anon key: NOT SET\" } else { \"anon key: set\" }; try { $h = Invoke-WebRequest http://localhost:3001/health -UseBasicParsing -TimeoutSec 3; \"backend: running\" } catch { \"backend: NOT running\" }; foreach \\($p in 5173,5174\\) { try { Invoke-WebRequest \"http://localhost:$p\" -UseBasicParsing -TimeoutSec 3 | Out-Null; \"frontend: running on $p\" } catch {} })"
+      "PowerShell(cd \"C:\\\\Users\\\\bhaskar\\\\OneDrive\\\\Desktop\\\\project 1\"; if \\(\\(Get-Content .env -Raw\\) -match 'PASTE_YOUR_ANON_KEY_HERE'\\) { \"anon key: NOT SET\" } else { \"anon key: set\" }; try { $h = Invoke-WebRequest http://localhost:3001/health -UseBasicParsing -TimeoutSec 3; \"backend: running\" } catch { \"backend: NOT running\" }; foreach \\($p in 5173,5174\\) { try { Invoke-WebRequest \"http://localhost:$p\" -UseBasicParsing -TimeoutSec 3 | Out-Null; \"frontend: running on $p\" } catch {} })",
+      "PowerShell(cd \"C:\\\\Users\\\\bhaskar\\\\OneDrive\\\\Desktop\\\\student-os-backend\"; node scripts/test-middleware.mjs; \"exit $LASTEXITCODE\")"
     ]
   }
 }
