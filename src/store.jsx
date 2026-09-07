@@ -43,15 +43,10 @@ const emptyState = {
   scheduleBlocks: [], // { id, day, startHour, endHour, title } — weekly routine
   alarms: [],         // { id, at, label, fired }               — `at` is a timestamp
   timer: null,        // { endsAt, label } or null
-  apiKey: '',         // your Groq key, typed into Settings
   theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
-  // Captured on the onboarding screen.
+  // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
+  // greet you without an async read. The account is the source of truth.
   profileName: '',
-  // PBKDF2 salt + derived hash for the local gate. The password itself is
-  // never stored. See the warning at the top of components/auth/password.ts
-  // about what this does and does not protect.
-  passwordSalt: '',
-  passwordHash: '',
 
   // Quick Launch. { id, name, url, iconUrl, order } — see DEFAULT_SHORTCUTS.
   // Stored in list order; `order` is kept in sync so a future server sync has
@@ -143,19 +138,8 @@ function reducer(state, action) {
     case 'set-name':
       return { ...state, profileName: action.value }
 
-    case 'set-credentials':
-      return {
-        ...state,
-        profileName: action.name,
-        passwordSalt: action.salt,
-        passwordHash: action.hash,
-      }
-
     case 'set-theme':
       return { ...state, theme: action.value }
-
-    case 'set-api-key':
-      return { ...state, apiKey: action.value }
 
     default:
       // A typo in an action type should be loud, not silent.

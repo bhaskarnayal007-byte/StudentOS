@@ -15,7 +15,8 @@
       "Bash(cp \"/c/Users/bhaskar/Downloads/ChatGPT Image Sep 7, 2026, 12_31_06 PM.png\" src/assets/mascot-src.png)",
       "Bash(cp \"/c/Users/bhaskar/Downloads/ChatGPT Image Sep 7, 2026, 12_11_05 PM.png\" src/assets/logo.png)",
       "Bash(node scripts/make-assets.mjs)",
-      "Bash(python -)"
+      "Bash(python -)",
+      "PowerShell(cd \"C:\\\\Users\\\\bhaskar\\\\OneDrive\\\\Desktop\\\\student-os-backend\"; \\(Get-Content .env | Select-String '^SUPABASE_URL='\\).Line)"
     ]
   }
 }

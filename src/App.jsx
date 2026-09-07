@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Tasks from './components/Tasks.jsx'
 import Calendar from './components/Calendar.jsx'
 import Schedule from './components/Schedule.jsx'
@@ -12,6 +12,7 @@ import SpendingToggle from './components/finance/SpendingToggle'
 import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
+import { useSession, signOut } from './auth/useSession.js'
 
 // Each tab maps to the component that draws it. Adding a tab later = one line
 // here plus one new file. The rest of App.jsx never changes.
@@ -27,23 +28,10 @@ const TABS = {
 
 const NAMES = Object.keys(TABS)
 
-// sessionStorage, not localStorage: it is cleared when the tab closes, which
-// is exactly the "unlocked until you close the tab" behaviour we want. A
-// reload within the session keeps you in.
-const UNLOCK_KEY = 'student-os-unlocked'
-
-function readUnlocked() {
-  try {
-    return sessionStorage.getItem(UNLOCK_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
 export default function App() {
   const { state, dispatch } = useStore()
+  const { session, loading } = useSession()
   const [tab, setTab] = useState('Home')
-  const [unlocked, setUnlocked] = useState(readUnlocked)
   // Lives here, not in the sidebar, because the toggle, the home grid and the
   // dashboard are rendered in three different places and all need it.
   const [financeOpen, setFinanceOpen] = useState(false)
@@ -53,31 +41,14 @@ export default function App() {
   const Panel = TABS[tab]
   const toggleFinance = () => setFinanceOpen(o => !o)
 
-  // A password is set but this tab hasn't been unlocked yet.
-  const hasAccount = Boolean(state.profileName && state.passwordHash)
-  const locked = hasAccount && !unlocked
-
-  function unlock() {
-    try {
-      sessionStorage.setItem(UNLOCK_KEY, '1')
-    } catch {
-      // Private mode can refuse sessionStorage; stay unlocked in memory.
+  // The name lives on the Supabase user, so it follows the account to any
+  // device. Mirrored into the store because that's what HomePage reads.
+  const displayName = session?.user?.user_metadata?.name ?? ''
+  useEffect(() => {
+    if (displayName && displayName !== state.profileName) {
+      dispatch({ type: 'set-name', value: displayName })
     }
-    setUnlocked(true)
-  }
-
-  function handleSetup({ name, salt, hash }, formSeeds) {
-    // Committed immediately, so the app renders behind the canvas and the
-    // transition genuinely reveals it rather than faking a handoff.
-    dispatch({ type: 'set-credentials', name, salt, hash })
-    unlock()
-    setSeeds(formSeeds)
-  }
-
-  function handleUnlock(formSeeds) {
-    unlock()
-    setSeeds(formSeeds)
-  }
+  }, [displayName, state.profileName, dispatch])
 
   // Everything shares one root so AppBackground mounts once and keeps running
   // across the login screen, the transition and the app — no restart, no flash.
@@ -89,7 +60,10 @@ export default function App() {
       {/* Fixed, full-viewport topographic backdrop behind everything. */}
       <AppBackground />
 
-      {hasAccount && !locked ? (
+      {/* While the stored session is being read back we know neither answer.
+          Rendering the login screen in the meantime would flash it on every
+          refresh, so show nothing for that moment. */}
+      {loading ? null : session ? (
         <AppShell
           tab={tab}
           setTab={setTab}
@@ -98,13 +72,7 @@ export default function App() {
           toggleFinance={toggleFinance}
         />
       ) : (
-        <LoginPage
-          mode={locked ? 'unlock' : 'setup'}
-          name={state.profileName}
-          credential={{ salt: state.passwordSalt, hash: state.passwordHash }}
-          onSetup={handleSetup}
-          onUnlock={handleUnlock}
-        />
+        <LoginPage onAuthed={setSeeds} />
       )}
 
       {seeds && (
@@ -146,7 +114,10 @@ function AppShell({
             <img src="/logo-mark.png" alt="" className="brand-mark" />
             Student OS
           </h1>
-          <ThemeToggle />
+          <div className="titlebar-actions">
+            <ThemeToggle />
+            <button className="theme-toggle" onClick={signOut}>Sign out</button>
+          </div>
         </div>
 
         <nav>

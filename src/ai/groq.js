@@ -1,24 +1,23 @@
 import { TOOL_DEFS, runTool, systemPrompt } from './tools.js'
+import { API_URL, accessToken } from '../lib/supabase.js'
 
-const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'
+// One HTTP request — but to our own backend, not to Groq. The API key used to
+// live in localStorage, where any devtools user could read it; now it never
+// leaves the server. The model name lives there too (AI_MODEL), so switching
+// providers doesn't touch the frontend at all.
+async function callModel(messages) {
+  // Read the token per request: supabase-js rotates it in the background, so
+  // a copy taken at mount would 401 within the hour.
+  const token = await accessToken()
+  if (!token) throw new Error('Signed out — sign in again to use the assistant.')
 
-// Swap this for any model your Groq account lists at /openai/v1/models.
-// (llama-3.3-70b-versatile was retired by Groq; this one is the strongest
-// tool-calling model currently available on the free tier.)
-const MODEL = 'openai/gpt-oss-120b'
-
-// One HTTP request to Groq. That's the entire "SDK" — no package needed.
-// Groq speaks the OpenAI format, so this same function works against OpenAI
-// or anything else that copies it: change ENDPOINT and MODEL.
-async function callGroq(apiKey, messages) {
-  const res = await fetch(ENDPOINT, {
+  const res = await fetch(`${API_URL}/api/ai/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      model: MODEL,
       messages,
       tools: TOOL_DEFS,
       tool_choice: 'auto', // the model decides whether to use a tool
@@ -27,10 +26,10 @@ async function callGroq(apiKey, messages) {
   })
 
   if (!res.ok) {
-    const body = await res.text()
-    // Surface the real reason (bad key, rate limit, bad request) instead of
-    // a generic "something went wrong".
-    throw new Error(`Groq ${res.status}: ${body.slice(0, 300)}`)
+    const body = await res.json().catch(() => ({}))
+    // Surface the real reason (rate limit, bad request, server down) rather
+    // than a generic "something went wrong".
+    throw new Error(body.error ?? `Assistant failed (${res.status})`)
   }
 
   return res.json()
@@ -49,7 +48,7 @@ async function callGroq(apiKey, messages) {
 // `getState` is a FUNCTION, not the state object. Each tool call may have
 // changed the data, and the next one must see the change — "add a task, then
 // complete it" only works if the second call reads fresh state.
-export async function ask({ apiKey, history, userText, getState, dispatch, maxRounds = 4 }) {
+export async function ask({ history, userText, getState, dispatch, maxRounds = 4 }) {
   const messages = [
     { role: 'system', content: systemPrompt(getState()) },
     ...history,
@@ -60,7 +59,7 @@ export async function ask({ apiKey, history, userText, getState, dispatch, maxRo
   const actions = []
 
   for (let round = 0; round < maxRounds; round++) {
-    const data = await callGroq(apiKey, messages)
+    const data = await callModel(messages)
     const reply = data.choices[0].message
 
     // The assistant's turn must go into the transcript before the tool results,

@@ -30,8 +30,6 @@ export default function Assistant() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat, busy])
 
-  if (!state.apiKey) return <ApiKeyForm dispatch={dispatch} />
-
   async function send(text) {
     const message = (text ?? input).trim()
     if (!message || busy) return
@@ -43,7 +41,6 @@ export default function Assistant() {
 
     try {
       const { text: answer, actions } = await ask({
-        apiKey: state.apiKey,
         // Only the plain user/assistant turns go back as history — tool
         // plumbing from previous requests would just confuse the model.
         history: chat.map(m => ({ role: m.role, content: m.content })),
@@ -104,38 +101,6 @@ export default function Assistant() {
         />
         <button className="primary" disabled={busy || !input.trim()}>Send</button>
       </form>
-
-      <button className="ghost always" onClick={() => dispatch({ type: 'set-api-key', value: '' })}>
-        Change API key
-      </button>
     </div>
-  )
-}
-
-function ApiKeyForm({ dispatch }) {
-  const [value, setValue] = useState('')
-
-  return (
-    <form
-      className="keyform"
-      onSubmit={e => { e.preventDefault(); if (value.trim()) dispatch({ type: 'set-api-key', value: value.trim() }) }}
-    >
-      <h3>Connect the assistant</h3>
-      <p className="placeholder" style={{ padding: 0, textAlign: 'left' }}>
-        Paste a free Groq API key from console.groq.com. It's stored only in this
-        browser — anyone with access to this device can read it, so don't use a
-        key that has billing attached to it.
-      </p>
-      <div className="row">
-        <input
-          className="grow"
-          type="password"
-          placeholder="gsk_…"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-        />
-        <button className="primary">Save</button>
-      </div>
-    </form>
   )
 }
