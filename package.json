@@ -2,6 +2,8 @@
   "name": "student-os-backend",
   "version": "1.0.0",
   "private": true,
+  "description": "Express API for the Student OS PWA — verifies Supabase session tokens and proxies AI calls so the provider key never reaches the browser.",
+  "license": "MIT",
   "type": "module",
   "main": "src/server.js",
   "scripts": {

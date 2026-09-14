@@ -3,7 +3,11 @@
 Express API for the Student OS PWA. Holds two things the browser shouldn't:
 the AI provider key, and privileged database access.
 
-The frontend is a separate repo. Nothing is shared between them but HTTP.
+The frontend is a separate repo — **`student-os`** — and nothing is shared
+between them but HTTP.
+
+<!-- After pushing, link the frontend repo here:
+     [student-os](https://github.com/<you>/student-os) -->
 
 ## Setup
 
