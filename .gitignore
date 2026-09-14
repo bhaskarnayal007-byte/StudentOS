@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dist/
 dev-dist/
 .env
@@ -6,5 +6,5 @@ dev-dist/
 *.log
 .DS_Store
 
-# Local editor/agent config — contains machine-specific absolute paths.
+# Local agent config - machine-specific absolute paths.
 .claude/settings.local.json
