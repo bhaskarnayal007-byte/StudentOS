@@ -4,7 +4,7 @@
     {
       "name": "student-os",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "start:frontend"],
       "port": 5173
     }
   ]

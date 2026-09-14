@@ -1,0 +1,30 @@
+{
+  "name": "student-os",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A productivity PWA — tasks, calendar, schedule, timers and spending — with an AI assistant that operates the app through tool calls.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start": "concurrently -n backend,frontend -c blue,green \"npm:start:backend\" \"npm:start:frontend\"",
+    "start:backend": "npm run dev --workspace backend",
+    "start:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "test": "npm test --workspace frontend && npm test --workspace backend",
+    "check": "npm run check --workspace backend",
+    "smoke": "npm run smoke --workspace backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}
