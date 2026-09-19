@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { readScoped, writeScoped } from "../../lib/scopedStorage.js";
-import { useSession } from "../../auth/useSession.js";
+import { useCallback, useMemo } from "react";
+import { useStore } from "../../store.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE ONLY PLACE EXPENSES ARE READ OR WRITTEN.
 //
-// Every component below consumes this hook and nothing else — no component
-// touches localStorage directly. To move to a backend later, replace the body
-// of load/persist (and make the mutators async); the components keep working
-// untouched because their contract is `{ expenses, addExpense, ... }`, not
-// "there is a localStorage key".
+// Every component below consumes this hook and nothing else. The list itself
+// lives in the app store (src/store.jsx) like everything else, which is what
+// puts it in the cloud sync — it used to sit under a localStorage key of its
+// own and so stayed on whichever device created it. Components never noticed:
+// their contract is `{ expenses, addExpense, ... }`, not where it is kept.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Expense = {
@@ -19,33 +18,6 @@ export type Expense = {
   date: string; // ISO date, "YYYY-MM-DD"
   note?: string;
 };
-
-const STORAGE_KEY = "student-os-expenses";
-
-function load(userId: string | null = null): Expense[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = readScoped(STORAGE_KEY, userId);
-    const parsed = raw ? JSON.parse(raw) : [];
-    // Storage is user-editable and survives schema changes, so treat anything
-    // out there as untrusted and drop entries that can't be rendered.
-    return Array.isArray(parsed) ? parsed.filter(isExpense) : [];
-  } catch {
-    return [];
-  }
-}
-
-function isExpense(value: unknown): value is Expense {
-  if (!value || typeof value !== "object") return false;
-  const e = value as Partial<Expense>;
-  return (
-    typeof e.id === "string" &&
-    typeof e.amount === "number" &&
-    Number.isFinite(e.amount) &&
-    typeof e.category === "string" &&
-    typeof e.date === "string"
-  );
-}
 
 /** "2026-09-05" → "2026-09". Plain string slicing, never a Date object —
  *  see the note in src/dates.js about days-as-labels vs. moments-in-time. */
@@ -78,36 +50,27 @@ export function formatMoney(value: number) {
 }
 
 export function useExpenses() {
-  const { session } = useSession();
-  const userId = session?.user?.id ?? null;
+  const { state, dispatch } = useStore() as {
+    state: { expenses: Expense[] };
+    dispatch: (action: unknown) => void;
+  };
 
-  const [expenses, setExpenses] = useState<Expense[]>(() => load(null));
-  // Which account the list in state belongs to. Same problem as the store: on
-  // a user change both effects run in one commit, and without this the save
-  // would write the previous account's expenses under the new account's key.
-  const owner = useRef<string | null>(null);
+  // Storage is user-editable and survives schema changes, so treat anything
+  // coming back out of it as untrusted and drop what can't be rendered.
+  const expenses = useMemo(
+    () => (Array.isArray(state.expenses) ? state.expenses.filter(isExpense) : []),
+    [state.expenses],
+  );
 
-  useEffect(() => {
-    if (owner.current === userId) return;
-    owner.current = userId;
-    setExpenses(load(userId));
-  }, [userId]);
+  const addExpense = useCallback(
+    (input: Omit<Expense, "id">) => dispatch({ type: "add-expense", expense: input }),
+    [dispatch],
+  );
 
-  useEffect(() => {
-    // Signed out there is nothing worth saving, and writing would recreate the
-    // unscoped key that readScoped just retired — handing the next account to
-    // sign in on this browser a copy of someone else's spending.
-    if (!userId || owner.current !== userId) return;
-    writeScoped(STORAGE_KEY, userId, JSON.stringify(expenses));
-  }, [expenses, userId]);
-
-  const addExpense = useCallback((input: Omit<Expense, "id">) => {
-    setExpenses((list) => [...list, { ...input, id: crypto.randomUUID() }]);
-  }, []);
-
-  const deleteExpense = useCallback((id: string) => {
-    setExpenses((list) => list.filter((e) => e.id !== id));
-  }, []);
+  const deleteExpense = useCallback(
+    (id: string) => dispatch({ type: "delete-expense", id }),
+    [dispatch],
+  );
 
   // Every category ever used, most-used first — this is what feeds the
   // autocomplete, so there is no preset list to maintain.
@@ -120,6 +83,18 @@ export function useExpenses() {
   }, [expenses]);
 
   return { expenses, addExpense, deleteExpense, categories };
+}
+
+function isExpense(value: unknown): value is Expense {
+  if (!value || typeof value !== "object") return false;
+  const e = value as Partial<Expense>;
+  return (
+    typeof e.id === "string" &&
+    typeof e.amount === "number" &&
+    Number.isFinite(e.amount) &&
+    typeof e.category === "string" &&
+    typeof e.date === "string"
+  );
 }
 
 // ─── Derived views ───────────────────────────────────────────────────────────

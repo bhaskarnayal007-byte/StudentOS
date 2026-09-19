@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useReducer } from 'react'
+import { createContext, useContext, useEffect, useRef, useReducer } from 'react'
 import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
+import { pull, push, subscribe, reconcile, readRev } from './lib/cloudSync.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE STATE FILE. Everything the app knows lives in one object, defined here.
@@ -17,6 +18,9 @@ const LEGACY_KEY = 'day-deck-state'
 // login screen, where nobody is signed in yet. So it's stored outside the
 // per-user slice as well as in it.
 const THEME_KEY = 'student-os-theme'
+// Spending used to be stored on its own, outside this state object, so it
+// never reached the cloud. loadState() folds it in once; see EXPENSES_KEY below.
+const EXPENSES_KEY = 'student-os-expenses'
 
 // Shown on first run so the sidebar is never empty. The user can delete any of
 // them, and deleting all of them sticks — see the note in loadState().
@@ -48,6 +52,7 @@ const emptyState = {
   events: [],         // { id, date, time, title }              — one-off things
   scheduleBlocks: [], // { id, day, startHour, endHour, title } — weekly routine
   alarms: [],         // { id, at, label, fired }               — `at` is a timestamp
+  expenses: [],       // { id, amount, category, date, note }   — see finance/useExpenses.ts
   timer: null,        // { endsAt, label } or null
   theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
@@ -101,6 +106,12 @@ function reducer(state, action) {
     // `at` is a timestamp (milliseconds). See the note in Timers.jsx.
     case 'add-alarm':
       return { ...state, alarms: [...state.alarms, { id: newId(), fired: false, ...action.alarm }] }
+
+    case 'add-expense':
+      return { ...state, expenses: [...state.expenses, { id: newId(), ...action.expense }] }
+
+    case 'delete-expense':
+      return { ...state, expenses: state.expenses.filter(e => e.id !== action.id) }
 
     case 'delete-alarm':
       return { ...state, alarms: state.alarms.filter(a => a.id !== action.id) }
@@ -198,6 +209,16 @@ function loadState(userId = null) {
       delete loaded[stale]
     }
 
+    // Spending predates living in this object. Adopt the separate key once;
+    // from then on the `expenses` above is the only copy.
+    if (!Array.isArray(loaded.expenses) || loaded.expenses.length === 0) {
+      const legacyExpenses = readScoped(EXPENSES_KEY, userId)
+      if (legacyExpenses) {
+        const parsed = JSON.parse(legacyExpenses)
+        if (Array.isArray(parsed)) loaded.expenses = parsed
+      }
+    }
+
     loaded.ownerId = userId
     // A slice saved before themes were device-level has no theme of its own.
     if (deviceTheme && !JSON.parse(saved).theme) loaded.theme = deviceTheme
@@ -212,6 +233,90 @@ function loadState(userId = null) {
 // Context is React's way to make one value reachable from any component
 // without passing it down through every layer in between.
 const StoreContext = createContext(null)
+
+// ─── Cloud sync ──────────────────────────────────────────────────────────────
+// localStorage stays the working copy; this mirrors it to the account's row so
+// the same data shows up on every device. See lib/cloudSync.js.
+//
+// How long to sit on an edit before sending it. Long enough that typing a task
+// title is one write instead of thirty, short enough to feel immediate.
+const PUSH_DEBOUNCE_MS = 1200
+
+function useCloudSync(state, dispatch, userId) {
+  // The newest state, readable from a timer without making the timer depend on
+  // every keystroke.
+  const latest = useRef(state)
+  latest.current = state
+
+  // Until the first pull has settled we must not push: an empty local state
+  // would otherwise overwrite a perfectly good row on the server.
+  const ready = useRef(false)
+  const pending = useRef(false)
+
+  useEffect(() => {
+    ready.current = false
+    if (!userId) return
+
+    let cancelled = false
+
+    const adopt = remoteData => {
+      // Theme and ownership belong to this device, not to the row.
+      dispatch({
+        type: 'load-user',
+        value: { ...emptyState, ...remoteData, theme: latest.current.theme, ownerId: userId },
+      })
+    }
+
+    const flush = async () => {
+      if (!ready.current || !pending.current) return
+      pending.current = false
+      const rev = await push(userId, latest.current)
+      // The write failed — keep it pending so the next tick or reconnect retries.
+      if (rev === null) pending.current = true
+    }
+
+    ;(async () => {
+      const remote = await pull(userId)
+      if (cancelled) return
+
+      const localRev = readRev(userId)
+      const hasLocalData =
+        latest.current.tasks.length > 0 ||
+        latest.current.events.length > 0 ||
+        latest.current.scheduleBlocks.length > 0 ||
+        latest.current.alarms.length > 0 ||
+        latest.current.expenses.length > 0
+
+      const { action } = reconcile({ remote, localRev, hasLocalData })
+      if (action === 'adopt') adopt(remote.data)
+      ready.current = action !== 'wait'
+      if (action === 'push') pending.current = true
+      await flush()
+    })()
+
+    const stop = subscribe(userId, adopt)
+    const timer = setInterval(flush, PUSH_DEBOUNCE_MS)
+    // Coming back from a tunnel or campus wifi: retry whatever is still queued.
+    const onOnline = () => { flush() }
+    window.addEventListener('online', onOnline)
+    // A tab closing mid-debounce would otherwise drop the last edit.
+    window.addEventListener('pagehide', flush)
+
+    return () => {
+      cancelled = true
+      stop()
+      clearInterval(timer)
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('pagehide', flush)
+      flush()
+    }
+  }, [userId, dispatch])
+
+  // Any local change becomes something to send on the next tick.
+  useEffect(() => {
+    if (state.ownerId === userId) pending.current = true
+  }, [state, userId])
+}
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
@@ -258,6 +363,8 @@ export function StoreProvider({ children }) {
     if (!userId || state.ownerId !== userId) return
     writeScoped(STORAGE_KEY, userId, JSON.stringify(state))
   }, [state, userId])
+
+  useCloudSync(state, dispatch, userId)
 
   // Put the choice on <html> as data-theme, which is what the CSS reads.
   // 'system' removes the attribute entirely so the prefers-color-scheme rule

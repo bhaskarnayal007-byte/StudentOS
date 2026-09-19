@@ -5,7 +5,6 @@ import helmet from "helmet";
 
 import authRoutes from "./routes/auth.js";
 import aiRoutes from "./routes/ai.js";
-import dataRoutes from "./routes/data.js";
 import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
@@ -28,7 +27,6 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/data", dataRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 app.use(errorHandler);

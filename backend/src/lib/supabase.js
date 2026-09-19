@@ -16,7 +16,7 @@ if (!url || !serviceRoleKey) {
  *
  * This key bypasses Row Level Security, so this module must never reach a
  * browser. Because RLS is off for this client, every query MUST filter by
- * `req.user.id` itself — see routes/data.js. That filtering is the only thing
+ * `req.user.id` itself. That filtering is the only thing
  * keeping one user's rows away from another.
  *
  * `persistSession: false` because a server has no single logged-in user to
