@@ -286,6 +286,27 @@ nav::-webkit-scrollbar { display: none; }
   color: var(--color-accent-ink);
 }
 
+/* Sign in with Google. Neutral surface on purpose: the coloured mark is the
+   only thing in the card competing with the accent on the primary button. */
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  width: 100%;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.oauth-btn:hover:not(:disabled) { background: var(--color-sunken); border-color: var(--color-text-2); }
+.oauth-btn:disabled { opacity: 0.6; cursor: default; }
+
 /* Theme switch sits in the title row. */
 .theme-toggle {
   flex: none;

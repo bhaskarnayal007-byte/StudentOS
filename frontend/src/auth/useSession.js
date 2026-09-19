@@ -35,6 +35,23 @@ export function useSession() {
   return { session, loading }
 }
 
+/**
+ * Hand off to Google. This navigates away and comes back to the app with a
+ * session already established, so there is nothing to await here — the return
+ * trip is handled by onAuthStateChange above like any other sign-in.
+ */
+export function signInWithGoogle() {
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+      // Without this Google stops issuing a refresh token on the second and
+      // later sign-ins, which is what the Calendar sync needs server-side.
+      queryParams: { access_type: 'offline', prompt: 'consent' },
+    },
+  })
+}
+
 export function signOut() {
   return supabase.auth.signOut()
 }

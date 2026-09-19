@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SeedRect } from "../PortalTransition";
 import { supabase } from "../../lib/supabase.js";
+import { signInWithGoogle } from "../../auth/useSession.js";
 
 const MIN_LENGTH = 6;
 
@@ -163,6 +164,23 @@ export default function AuthForm({ onAuthed }: Props) {
         {busy ? (signup ? "Setting up…" : "Signing in…") : signup ? "Create account" : "Sign in"}
       </button>
 
+      {/* Google leaves the page and returns with a session, so there is no
+          success branch here — only a failure to report. */}
+      <button
+        type="button"
+        className="oauth-btn"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          const { error: err } = await signInWithGoogle();
+          if (err) fail(err.message);
+        }}
+      >
+        <img src="/google.svg" alt="" width={18} height={18} />
+        Continue with Google
+      </button>
+
       <button
         type="button"
         className="ghost always"
@@ -176,7 +194,8 @@ export default function AuthForm({ onAuthed }: Props) {
       </button>
 
       <p className="login-note">
-        Your account is stored with Supabase. Tasks and expenses stay on this device.
+        Your account is stored with Supabase. Your data syncs to every device
+        you sign in on.
       </p>
     </form>
   );
