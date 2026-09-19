@@ -261,6 +261,11 @@ nav::-webkit-scrollbar { display: none; }
   flex: 1;
   min-width: fit-content;
   white-space: nowrap;
+  /* Tabs are links now, so they need the anchor defaults undone. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   padding: var(--s2) var(--s4);
   border: 1px solid transparent;
   background: none;
