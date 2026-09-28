@@ -133,6 +133,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
             Student OS
           </h1>
           <div className="titlebar-actions">
+            <SyncBadge />
             <ThemeToggle />
             <button className="theme-toggle" onClick={signOut}>Sign out</button>
           </div>
@@ -162,6 +163,24 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
         <main>{children}</main>
       </div>
     </>
+  )
+}
+
+/**
+ * Says whether your data has reached the server.
+ *
+ * Shown only when it hasn't. A permanent green "Synced" badge is noise —
+ * people stop reading it within a day, which is exactly when it would matter.
+ * Silence means saved.
+ */
+function SyncBadge() {
+  const { sync } = useStore()
+  if (sync !== 'local') return null
+
+  return (
+    <span className="sync-badge" role="status">
+      Saved on this device
+    </span>
   )
 }
 

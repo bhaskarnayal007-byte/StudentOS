@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useReducer } from 'react'
+import { createContext, useContext, useEffect, useRef, useReducer, useState } from 'react'
 import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
 import { pull, push, subscribe, reconcile, readRev } from './lib/cloudSync.js'
@@ -243,6 +243,11 @@ const StoreContext = createContext(null)
 const PUSH_DEBOUNCE_MS = 1200
 
 function useCloudSync(state, dispatch, userId) {
+  // What the user is told about their data. A failed save used to be entirely
+  // silent — you would keep working, believing it was safe, and find out on
+  // the next device. 'local' is not an error: the app works offline by design,
+  // it just has to say so.
+  const [status, setStatus] = useState('idle')
   // The newest state, readable from a timer without making the timer depend on
   // every keystroke.
   const latest = useRef(state)
@@ -270,9 +275,15 @@ function useCloudSync(state, dispatch, userId) {
     const flush = async () => {
       if (!ready.current || !pending.current) return
       pending.current = false
+      setStatus('saving')
       const rev = await push(userId, latest.current)
       // The write failed — keep it pending so the next tick or reconnect retries.
-      if (rev === null) pending.current = true
+      if (rev === null) {
+        pending.current = true
+        setStatus('local')
+        return
+      }
+      setStatus('synced')
     }
 
     ;(async () => {
@@ -290,6 +301,9 @@ function useCloudSync(state, dispatch, userId) {
       const { action } = reconcile({ remote, localRev, hasLocalData })
       if (action === 'adopt') adopt(remote.data)
       ready.current = action !== 'wait'
+      // Couldn't reach the server at all: everything still works, on this
+      // device only, and the next successful flush clears this.
+      if (action === 'wait') setStatus('local')
       if (action === 'push') pending.current = true
       await flush()
     })()
@@ -316,6 +330,8 @@ function useCloudSync(state, dispatch, userId) {
   useEffect(() => {
     if (state.ownerId === userId) pending.current = true
   }, [state, userId])
+
+  return status
 }
 
 export function StoreProvider({ children }) {
@@ -364,7 +380,7 @@ export function StoreProvider({ children }) {
     writeScoped(STORAGE_KEY, userId, JSON.stringify(state))
   }, [state, userId])
 
-  useCloudSync(state, dispatch, userId)
+  const sync = useCloudSync(state, dispatch, userId)
 
   // Put the choice on <html> as data-theme, which is what the CSS reads.
   // 'system' removes the attribute entirely so the prefers-color-scheme rule
@@ -381,7 +397,9 @@ export function StoreProvider({ children }) {
     } catch { /* private mode */ }
   }, [state.theme])
 
-  return <StoreContext.Provider value={{ state, dispatch }}>{children}</StoreContext.Provider>
+  return (
+    <StoreContext.Provider value={{ state, dispatch, sync }}>{children}</StoreContext.Provider>
+  )
 }
 
 // Every component calls this to read state or change it.

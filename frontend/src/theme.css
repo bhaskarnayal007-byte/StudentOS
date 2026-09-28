@@ -374,7 +374,7 @@ input:hover, select:hover, textarea:hover { border-color: var(--color-text-3); }
 
 /* Focus rings are interactive → accent. */
 input:focus-visible, select:focus-visible, textarea:focus-visible,
-button:focus-visible, .cal-day:focus-visible, .launch-item:focus-visible {
+button:focus-visible, a:focus-visible, .cal-day:focus-visible, .launch-item:focus-visible {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
@@ -1471,4 +1471,28 @@ button.ghost.always:hover { color: var(--color-accent); }
     height: min(70vh, calc(100vh - 140px));
   }
   .octi-dock { right: var(--s2); bottom: var(--s2); }
+}
+
+/* Told only when the news is bad: the data is on this device and not yet on
+   the server. See SyncBadge in App.jsx. */
+.sync-badge {
+  padding: 4px var(--s2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  background: var(--color-sunken);
+  color: var(--color-text-2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The dock used to sit on top of the fixed bottom nav, covering the last tab.
+   Above the bar on small screens, where the bar exists. */
+@media (max-width: 620px) {
+  .octi-dock { bottom: calc(var(--s3) + 58px + env(safe-area-inset-bottom)); }
+  .octi-panel { bottom: calc(var(--s3) + 58px + 56px + var(--s2) + env(safe-area-inset-bottom)); }
+  /* Octi has his own button down there; a tab for him as well wastes one of
+     the five slots that actually have to fit. */
+  nav .tab[href="/octi"] { display: none; }
+  .sync-badge { font-size: 10px; }
 }
