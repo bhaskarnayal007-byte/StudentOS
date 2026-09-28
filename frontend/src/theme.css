@@ -169,7 +169,7 @@ nav,
 .icon-preview,
 .theme-toggle,
 .file-btn,
-button.primary,
+button.primary, a.primary,
 input, select, textarea {
   outline: 1px solid var(--edge);
 }
@@ -451,12 +451,19 @@ button:active:not(:disabled),
 }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-button.primary {
+/* The landing CTA is a link, not a button — it navigates. Same paint. */
+button.primary, a.primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-accent-ink);
 }
-button.primary:hover:not(:disabled) {
+a.primary {
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+}
+button.primary:hover:not(:disabled), a.primary:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
 }
@@ -1495,4 +1502,116 @@ button.ghost.always:hover { color: var(--color-accent); }
      the five slots that actually have to fit. */
   nav .tab[href="/octi"] { display: none; }
   .sync-badge { font-size: 10px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LANDING — what a signed-out visitor sees
+   No new colours or fonts: every value resolves to an existing token, so this
+   follows light/dark with the rest of the app.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.landing {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--s4) var(--s4) var(--s6);
+  padding-top: calc(var(--s4) + env(safe-area-inset-top));
+}
+
+.landing-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s6);
+}
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-size: var(--t-lg);
+  font-weight: 700;
+}
+.landing-bar .theme-toggle { text-decoration: none; }
+
+/* Text left, Octi right — deliberately not a centred hero with the art on top,
+   which is the layout every other app has. */
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: center;
+  gap: var(--s5);
+  margin-bottom: var(--s6);
+}
+.landing-hero h1 {
+  /* Bigger than anything else in the app, and tracked in — this is the one
+     place a headline has to carry the whole screen. */
+  font-size: clamp(38px, 6vw, 62px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s4);
+  text-wrap: balance;
+}
+.landing-lead {
+  max-width: 52ch;
+  margin: 0 0 var(--s5);
+  color: var(--color-text-2);
+  font-size: var(--t-lg);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.landing-cta { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+.landing-go { text-decoration: none; display: inline-flex; align-items: center; }
+.landing-install { width: auto; }
+.landing-note { margin: var(--s4) 0 0; color: var(--color-text-3); font-size: var(--t-sm); }
+
+.landing-hero-art { display: flex; justify-content: center; }
+/* Larger than the home-page instance: here he is the illustration. */
+.landing-hero-art .mascot-stage { width: min(330px, 70vw); }
+.landing-hero-art .mascot-caption { display: none; }
+.landing-hero-art .mascot-button { cursor: default; }
+
+/* Three points, but deliberately uneven — the first is the reason to use it
+   and gets the room to say so. */
+.landing-points {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--color-border);
+}
+.landing-points h2 {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.landing-points p {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--color-text-2);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.landing-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: var(--s6);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-3);
+  font-size: var(--t-sm);
+}
+.landing-foot a { color: var(--color-text-2); }
+
+@media (max-width: 760px) {
+  /* One column, with the words first. Octi leading pushed the entire pitch
+     below the fold on a phone — a visitor saw a wordless picture and had to
+     scroll to find out what this even is. He follows the CTA instead. */
+  .landing-hero { grid-template-columns: 1fr; gap: var(--s4); }
+  .landing-hero-art .mascot-stage { width: min(190px, 48vw); }
+  .landing-points { grid-template-columns: 1fr; gap: var(--s4); }
+  .landing { padding-left: var(--s3); padding-right: var(--s3); }
+  .landing-cta > * { flex: 1 1 auto; justify-content: center; text-align: center; }
 }

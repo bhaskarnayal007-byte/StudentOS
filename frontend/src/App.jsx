@@ -14,6 +14,7 @@ import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
+import Landing from './components/Landing'
 import { useSession, signOut } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
@@ -60,7 +61,15 @@ export default function App() {
       {loading ? null : session ? (
         <AppShell />
       ) : (
-        <LoginPage onAuthed={setSeeds} />
+        /* Signed out, "/" is the pitch rather than a password field — someone
+           who has never heard of this needs to know what it is first. */
+        <Routes>
+          <Route path="/signin" element={<LoginPage onAuthed={setSeeds} />} />
+          <Route path="/" element={<Landing />} />
+          {/* A deep link into the app while signed out lands on the pitch,
+              not a dead end. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       )}
 
       {seeds && (
