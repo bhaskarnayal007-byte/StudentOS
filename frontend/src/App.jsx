@@ -13,6 +13,7 @@ import SpendingToggle from './components/finance/SpendingToggle'
 import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
+import OctiDock from './components/OctiDock'
 import { useSession, signOut } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
@@ -113,6 +114,9 @@ function AppShell() {
       </Routes>
 
       {financeOpen && <SpendingDashboard onClose={closeFinance} />}
+
+      {/* Octi sits outside <Routes> so he survives every navigation. */}
+      <OctiDock />
     </>
   )
 }

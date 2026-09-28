@@ -1,10 +1,15 @@
 import FinanceWidget from "./FinanceWidget";
 import TasksWidget from "./TasksWidget";
 import TimerWidget from "./TimerWidget";
-import OctopusMascot from "../mascot/OctopusMascot";
+import { Suspense, lazy } from "react";
 import { openShortcut } from "../AppLauncherSidebar.jsx";
 import { ThemeToggle } from "../../App.jsx";
 import { useStore } from "../../store.jsx";
+
+// three.js and react-three-fiber are more than half the app's JavaScript, and
+// this is the only screen that renders them. Splitting them out means every
+// other screen — and the login screen — stops paying for them.
+const OctopusMascot = lazy(() => import("../mascot/OctopusMascot"));
 
 type Shortcut = { id: string; name: string; url: string; iconUrl: string };
 
@@ -46,7 +51,11 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
         </div>
 
         <div className="orbit-centre">
-          <OctopusMascot onClick={() => onGoTo("Assistant")} />
+          {/* The stage keeps its size while the canvas loads, so nothing
+              below it jumps when Octi arrives. */}
+          <Suspense fallback={<div className="mascot-stage" />}>
+            <OctopusMascot onClick={() => onGoTo("Assistant")} />
+          </Suspense>
         </div>
 
         <div className="orbit-col">

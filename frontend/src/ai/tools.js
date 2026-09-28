@@ -106,6 +106,35 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'add_expense',
+      description: 'Record something the user spent money on.',
+      parameters: {
+        type: 'object',
+        properties: {
+          amount: { type: 'number', description: 'Amount spent, in rupees.' },
+          category: { type: 'string', description: 'e.g. Food, Travel, Books. Reuse an existing category when one fits.' },
+          date: { type: 'string', description: 'YYYY-MM-DD. Defaults to today.' },
+          note: { type: 'string' },
+        },
+        required: ['amount', 'category'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_expense',
+      description: 'Remove a recorded expense, found by its note or category.',
+      parameters: {
+        type: 'object',
+        properties: { text: { type: 'string' } },
+        required: ['text'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'start_timer',
       description: 'Start a countdown timer for a number of minutes.',
       parameters: {
@@ -145,6 +174,7 @@ export function runTool(name, args, { state, dispatch }) {
     case 'delete_task': {
       const task = findTask(state.tasks, args.text)
       if (!task) return `No task matching "${args.text}".`
+      if (!confirmDestructive(`Delete the task "${task.text}"?`)) return 'The user declined.'
       dispatch({ type: 'delete-task', id: task.id })
       return `Deleted "${task.text}".`
     }
@@ -185,6 +215,27 @@ export function runTool(name, args, { state, dispatch }) {
       return `Alarm set for ${new Date(at).toLocaleString()}.`
     }
 
+    case 'add_expense': {
+      const amount = Number(args.amount)
+      if (!(amount > 0)) return 'amount must be a positive number.'
+      const date = args.date || todayKey()
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'Date must be YYYY-MM-DD.'
+      dispatch({
+        type: 'add-expense',
+        expense: { amount, category: args.category || 'Other', date, note: args.note || '' },
+      })
+      return `Recorded ${amount} on ${args.category || 'Other'} (${date}).`
+    }
+
+    case 'delete_expense': {
+      const expense = findExpense(state.expenses, args.text)
+      if (!expense) return `No expense matching "${args.text}".`
+      const label = `${expense.amount} on ${expense.category}${expense.note ? ` (${expense.note})` : ''}`
+      if (!confirmDestructive(`Delete the expense: ${label}?`)) return 'The user declined.'
+      dispatch({ type: 'delete-expense', id: expense.id })
+      return `Deleted ${label}.`
+    }
+
     case 'start_timer': {
       const mins = Number(args.minutes)
       if (!(mins > 0)) return 'minutes must be a positive number.'
@@ -199,6 +250,32 @@ export function runTool(name, args, { state, dispatch }) {
     default:
       return `Unknown tool "${name}".`
   }
+}
+
+/**
+ * Ask before anything that destroys data.
+ *
+ * A model that misreads "clear that" can otherwise delete something the user
+ * never mentioned, and there is no undo. The browser's own dialog is used
+ * deliberately: it cannot be missed, it blocks the tool until answered, and it
+ * needs no state threaded through the chat UI to work.
+ */
+function confirmDestructive(question) {
+  if (typeof window === 'undefined') return true
+  return window.confirm(`Octi wants to: ${question}`)
+}
+
+// Expenses have no title, so match on the note first, then the category.
+function findExpense(expenses, text) {
+  const q = (text || '').trim().toLowerCase()
+  if (!q) return null
+  const has = (value) => (value || '').toLowerCase().includes(q)
+  return (
+    expenses.find(e => (e.note || '').toLowerCase() === q) ||
+    expenses.find(e => has(e.note)) ||
+    expenses.find(e => has(e.category)) ||
+    null
+  )
 }
 
 // The model refers to tasks by roughly what you called them, not by id.
@@ -228,10 +305,16 @@ export function systemPrompt(state) {
     })),
     alarms: state.alarms.map(a => ({ label: a.label, at: new Date(a.at).toLocaleString(), fired: a.fired })),
     timerRunning: Boolean(state.timer),
+    // Only this month's: the full history grows without limit and every token
+    // of it is paid for on every message.
+    expensesThisMonth: state.expenses
+      .filter(e => e.date.slice(0, 7) === todayKey().slice(0, 7))
+      .map(e => ({ amount: e.amount, category: e.category, date: e.date, note: e.note })),
   }
 
   return [
-    "You are the assistant inside Student OS, the user's personal planner.",
+    "You are Octi, the octopus who runs Student OS — the user's personal planner.",
+    'Be warm and short, never chirpy. You are a study partner, not a butler.',
     'Use the tools to change their data. Answer questions directly from the',
     'context below without calling a tool. Weekday numbers are 0=Sunday..6=Saturday.',
     'Resolve relative dates like "tomorrow" against today\'s date. Be brief —',

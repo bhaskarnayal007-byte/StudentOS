@@ -23,7 +23,7 @@ const limiter = rateLimit({ windowMs: 60_000, max: 60 });
 /**
  * POST /api/ai/generate
  *
- * Body: { messages: [{role, content}], model?, tools?, temperature? }
+ * Body: { messages: [{role, content}], model?, tools?, tool_choice?, temperature? }
  *
  * The whole point of this route is that AI_API_KEY stays on the server. The
  * frontend used to hold it in localStorage, where any devtools user could
@@ -31,7 +31,7 @@ const limiter = rateLimit({ windowMs: 60_000, max: 60 });
  */
 router.post("/generate", requireAuth, requireAllowedUser, limiter, async (req, res, next) => {
   try {
-    const { messages, model, tools, temperature } = req.body ?? {};
+    const { messages, model, tools, tool_choice, temperature } = req.body ?? {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "`messages` must be a non-empty array" });
@@ -52,6 +52,9 @@ router.post("/generate", requireAuth, requireAllowedUser, limiter, async (req, r
         model: model ?? DEFAULT_MODEL,
         messages,
         ...(tools ? { tools } : {}),
+        // Was dropped here. Providers default to "auto" when tools are present,
+        // so tool use still worked — but "none" and a forced tool had no effect.
+        ...(tool_choice && tools ? { tool_choice } : {}),
         ...(temperature != null ? { temperature } : {}),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),

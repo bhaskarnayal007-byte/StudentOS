@@ -56,7 +56,11 @@ async function callModel(messages) {
 // `getState` is a FUNCTION, not the state object. Each tool call may have
 // changed the data, and the next one must see the change — "add a task, then
 // complete it" only works if the second call reads fresh state.
-export async function ask({ history, userText, getState, dispatch, maxRounds = 4 }) {
+// maxRounds was 4, which a request like "add my chem assignment and block two
+// hours to study for it" can exhaust before it finishes — each tool call plus
+// its confirmation is a round. 8 leaves room for a multi-step request and
+// still stops a confused model looping forever.
+export async function ask({ history, userText, getState, dispatch, maxRounds = 8 }) {
   const messages = [
     { role: 'system', content: systemPrompt(getState()) },
     ...history,
