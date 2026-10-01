@@ -1653,3 +1653,33 @@ button.ghost.always:hover { color: var(--color-accent); }
 .today-late { border-color: var(--color-accent); }
 .today-late strong { color: var(--color-accent); }
 .today-next { color: var(--color-text); }
+
+/* ─── Focus week ────────────────────────────────────────────────────────────
+   Seven bars, no axes. Baseline-aligned so the shape of the week reads at a
+   glance; an empty day is a visible gap, which is the point. */
+.focus-week { margin-bottom: var(--s4); }
+.focus-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--s2);
+  align-items: end;
+  height: 110px;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.focus-bars li {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+.focus-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  background: var(--color-accent);
+}
+.focus-day { color: var(--color-text-3); font-size: var(--t-xs); }

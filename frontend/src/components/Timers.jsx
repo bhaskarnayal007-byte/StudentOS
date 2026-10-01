@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { useNow, beep } from '../useNow.js'
+import FocusWeek from './FocusWeek.jsx'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE RULE FOR TIME: store the moment it ENDS, never "seconds remaining".
@@ -19,6 +20,9 @@ export default function Timers() {
   return (
     <div className="stack">
       <TimerPanel state={state} dispatch={dispatch} now={now} />
+      <hr className="sep" />
+      {/* Directly under the timer: the reason to start another one. */}
+      <FocusWeek />
       <hr className="sep" />
       <AlarmPanel state={state} dispatch={dispatch} now={now} />
     </div>
@@ -168,6 +172,13 @@ export function AlarmWatcher() {
     if (timerRang.current) return
     timerRang.current = true
     alert_(`${state.timer.label} finished`)
+
+    // A timer that ran its course is a focus session. Cancelling one isn't,
+    // which is why this lives here and not in clear-timer.
+    const { startedAt, endsAt } = state.timer
+    const minutes = Math.round(((endsAt - (startedAt ?? endsAt)) / 60_000))
+    // Older timers have no startedAt, and a sub-minute run isn't worth a row.
+    if (minutes >= 1) dispatch({ type: 'log-focus', endedAt: endsAt, minutes })
   }, [timerDone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null

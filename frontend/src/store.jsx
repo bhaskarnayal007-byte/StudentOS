@@ -54,7 +54,8 @@ const emptyState = {
   scheduleBlocks: [], // { id, day, startHour, endHour, title } — weekly routine
   alarms: [],         // { id, at, label, fired }               — `at` is a timestamp
   expenses: [],       // { id, amount, category, date, note }   — see finance/useExpenses.ts
-  timer: null,        // { endsAt, label } or null
+  timer: null,        // { endsAt, label, startedAt } or null
+  focusSessions: [],  // { id, endedAt, minutes } — one per timer run to completion
   theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
@@ -151,7 +152,22 @@ function reducer(state, action) {
       }
 
     case 'start-timer':
-      return { ...state, timer: { endsAt: action.endsAt, label: action.label } }
+      // startedAt is recorded here rather than passed in, so every caller gets
+      // it for free — it's what tells a finished timer how long it ran for.
+      return {
+        ...state,
+        timer: { endsAt: action.endsAt, label: action.label, startedAt: Date.now() },
+      }
+
+    // Logged only when a timer runs all the way out; cancelling is not studying.
+    case 'log-focus':
+      return {
+        ...state,
+        focusSessions: [
+          ...state.focusSessions,
+          { id: newId(), endedAt: action.endedAt, minutes: action.minutes },
+        ],
+      }
 
     case 'clear-timer':
       return { ...state, timer: null }
@@ -325,6 +341,7 @@ function useCloudSync(state, dispatch, userId) {
         latest.current.scheduleBlocks.length > 0 ||
         latest.current.alarms.length > 0 ||
         latest.current.courses.length > 0 ||
+        latest.current.focusSessions.length > 0 ||
         latest.current.expenses.length > 0
 
       const { action } = reconcile({ remote, localRev, hasLocalData })
