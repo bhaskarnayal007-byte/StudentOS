@@ -119,6 +119,21 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'add_note',
+      description: 'Save a note. Use for anything the user wants kept, including a summary you just wrote.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          course: { type: 'string', description: 'Name of an existing subject to file it under. Omit if none fits.' },
+        },
+        required: ['text'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'add_expense',
       description: 'Record something the user spent money on.',
       parameters: {
@@ -251,6 +266,14 @@ export function runTool(name, args, { state, dispatch }) {
       return `Added ${name}.`
     }
 
+    case 'add_note': {
+      const text = (args.text || '').trim()
+      if (!text) return 'A note needs something in it.'
+      const course = findCourse(state.courses, args.course)
+      dispatch({ type: 'add-note', note: { text, courseId: course?.id } })
+      return course ? `Saved a note under ${course.name}.` : 'Saved the note.'
+    }
+
     case 'add_expense': {
       const amount = Number(args.amount)
       if (!(amount > 0)) return 'amount must be a positive number.'
@@ -348,6 +371,12 @@ export function systemPrompt(state) {
     today: todayKey(),
     now: new Date().toLocaleString(),
     courses: state.courses.map(c => c.name),
+    notes: state.notes.map(n => ({
+      // Truncated: a term of notes in full would dominate every prompt and be
+      // paid for on every message. Enough to find and summarise one.
+      text: n.text.length > 400 ? `${n.text.slice(0, 400)}…` : n.text,
+      course: state.courses.find(c => c.id === n.courseId)?.name,
+    })),
     tasks: state.tasks.map(t => ({
       text: t.text,
       done: t.done,

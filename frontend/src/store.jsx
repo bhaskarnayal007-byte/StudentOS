@@ -56,6 +56,7 @@ const emptyState = {
   expenses: [],       // { id, amount, category, date, note }   — see finance/useExpenses.ts
   timer: null,        // { endsAt, label, startedAt } or null
   focusSessions: [],  // { id, endedAt, minutes } — one per timer run to completion
+  notes: [],          // { id, text, courseId?, updatedAt }
   theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
@@ -115,6 +116,9 @@ function reducer(state, action) {
         tasks: state.tasks.map(t =>
           t.courseId === action.id ? { ...t, courseId: undefined } : t,
         ),
+        notes: state.notes.map(n =>
+          n.courseId === action.id ? { ...n, courseId: undefined } : n,
+        ),
       }
 
     case 'add-event':
@@ -171,6 +175,27 @@ function reducer(state, action) {
 
     case 'clear-timer':
       return { ...state, timer: null }
+
+    // ── Notes ──
+    case 'add-note':
+      return {
+        ...state,
+        notes: [
+          { id: newId(), updatedAt: Date.now(), ...action.note },
+          ...state.notes, // newest first: the one just written is the one being read
+        ],
+      }
+
+    case 'update-note':
+      return {
+        ...state,
+        notes: state.notes.map(n =>
+          n.id === action.id ? { ...n, ...action.changes, updatedAt: Date.now() } : n,
+        ),
+      }
+
+    case 'delete-note':
+      return { ...state, notes: state.notes.filter(n => n.id !== action.id) }
 
     // ── Quick Launch ──
     case 'add-shortcut':
@@ -342,6 +367,7 @@ function useCloudSync(state, dispatch, userId) {
         latest.current.alarms.length > 0 ||
         latest.current.courses.length > 0 ||
         latest.current.focusSessions.length > 0 ||
+        latest.current.notes.length > 0 ||
         latest.current.expenses.length > 0
 
       const { action } = reconcile({ remote, localRev, hasLocalData })

@@ -1683,3 +1683,44 @@ button.ghost.always:hover { color: var(--color-accent); }
   background: var(--color-accent);
 }
 .focus-day { color: var(--color-text-3); font-size: var(--t-xs); }
+
+/* ─── Notes ─────────────────────────────────────────────────────────────────
+   A note is a textarea, open and editable. No modal: putting a textarea behind
+   a dialog adds two clicks to every correction. */
+.note-form { margin-bottom: var(--s4); }
+.note-input {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.55;
+}
+.note-actions { margin-top: var(--s2); margin-bottom: 0; justify-content: flex-end; }
+.note-filter { margin-bottom: var(--s4); gap: var(--s1); }
+
+.note-list { display: grid; gap: var(--s3); }
+.note-card {
+  display: block;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  background: var(--color-surface);
+}
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+/* Pushes the timestamp and delete to the right of the subject chip. */
+.note-meta .muted { margin-left: auto; align-self: center; }
+.note-body {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+.note-body:focus-visible { outline-offset: 4px; }
