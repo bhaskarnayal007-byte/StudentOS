@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store.jsx'
+import { CoursePicker, CourseChip } from './Courses.jsx'
 
 export default function Tasks() {
   const { state, dispatch } = useStore()
@@ -9,13 +10,16 @@ export default function Tasks() {
   const [text, setText] = useState('')
   const [due, setDue] = useState('')
   const [priority, setPriority] = useState('normal')
+  const [courseId, setCourseId] = useState(undefined)
 
   function submit(e) {
     e.preventDefault() // stop the browser from reloading the page
     if (!text.trim()) return
-    dispatch({ type: 'add-task', task: { text: text.trim(), due, priority } })
+    dispatch({ type: 'add-task', task: { text: text.trim(), due, priority, courseId } })
     setText('')
     setDue('')
+    // The subject is deliberately kept: adding three chemistry tasks in a row
+    // shouldn't mean choosing chemistry three times.
   }
 
   // Sort for display only — we never reorder the stored array itself.
@@ -36,6 +40,7 @@ export default function Tasks() {
         />
         {/* Native date picker — no library needed. */}
         <input type="date" value={due} onChange={e => setDue(e.target.value)} />
+        <CoursePicker value={courseId} onChange={setCourseId} />
         <select value={priority} onChange={e => setPriority(e.target.value)}>
           <option value="low">Low</option>
           <option value="normal">Normal</option>
@@ -56,6 +61,7 @@ export default function Tasks() {
               onChange={() => dispatch({ type: 'toggle-task', id: task.id })}
             />
             <span className="grow">{task.text}</span>
+            <CourseChip courseId={task.courseId} />
             {task.priority !== 'normal' && <span className={`chip ${task.priority}`}>{task.priority}</span>}
             {task.due && <span className="chip">{formatDue(task.due)}</span>}
             <button className="ghost" onClick={() => dispatch({ type: 'delete-task', id: task.id })}>

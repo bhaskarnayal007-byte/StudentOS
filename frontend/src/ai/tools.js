@@ -26,6 +26,7 @@ export const TOOL_DEFS = [
           text: { type: 'string', description: 'What the task is.' },
           due: { type: 'string', description: 'Due date as YYYY-MM-DD. Omit if none.' },
           priority: { type: 'string', enum: ['low', 'normal', 'high'] },
+          course: { type: 'string', description: 'Name of an existing subject this belongs to. Omit if none fits.' },
         },
         required: ['text'],
       },
@@ -106,6 +107,18 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'add_course',
+      description: 'Add a subject the user is studying, e.g. "Organic Chemistry".',
+      parameters: {
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        required: ['name'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'add_expense',
       description: 'Record something the user spent money on.',
       parameters: {
@@ -156,12 +169,23 @@ const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240'
 // knows whether it worked and can say something sensible to you.
 export function runTool(name, args, { state, dispatch }) {
   switch (name) {
-    case 'add_task':
+    case 'add_task': {
+      // A course name the model invented must not create a dangling link, so
+      // an unknown name simply means no subject rather than a new one.
+      const course = findCourse(state.courses, args.course)
       dispatch({
         type: 'add-task',
-        task: { text: args.text, due: args.due || '', priority: args.priority || 'normal' },
+        task: {
+          text: args.text,
+          due: args.due || '',
+          priority: args.priority || 'normal',
+          courseId: course?.id,
+        },
       })
-      return `Added task "${args.text}".`
+      return course
+        ? `Added "${args.text}" under ${course.name}.`
+        : `Added task "${args.text}".`
+    }
 
     case 'complete_task': {
       const task = findTask(state.tasks, args.text)
@@ -215,6 +239,18 @@ export function runTool(name, args, { state, dispatch }) {
       return `Alarm set for ${new Date(at).toLocaleString()}.`
     }
 
+    case 'add_course': {
+      const name = (args.name || '').trim()
+      if (!name) return 'A subject needs a name.'
+      const existing = findCourse(state.courses, name)
+      if (existing) return `${existing.name} is already there.`
+      dispatch({
+        type: 'add-course',
+        course: { name, color: COLORS[state.courses.length % COLORS.length] },
+      })
+      return `Added ${name}.`
+    }
+
     case 'add_expense': {
       const amount = Number(args.amount)
       if (!(amount > 0)) return 'amount must be a positive number.'
@@ -265,6 +301,19 @@ function confirmDestructive(question) {
   return window.confirm(`Octi wants to: ${question}`)
 }
 
+// Same forgiving match as tasks: the model says "chem", the subject is
+// "Organic Chemistry".
+function findCourse(courses, name) {
+  const q = (name || '').trim().toLowerCase()
+  if (!q) return null
+  return (
+    courses.find(c => c.name.toLowerCase() === q) ||
+    courses.find(c => c.name.toLowerCase().includes(q)) ||
+    courses.find(c => q.includes(c.name.toLowerCase())) ||
+    null
+  )
+}
+
 // Expenses have no title, so match on the note first, then the category.
 function findExpense(expenses, text) {
   const q = (text || '').trim().toLowerCase()
@@ -298,7 +347,14 @@ export function systemPrompt(state) {
   const summary = {
     today: todayKey(),
     now: new Date().toLocaleString(),
-    tasks: state.tasks.map(t => ({ text: t.text, done: t.done, due: t.due, priority: t.priority })),
+    courses: state.courses.map(c => c.name),
+    tasks: state.tasks.map(t => ({
+      text: t.text,
+      done: t.done,
+      due: t.due,
+      priority: t.priority,
+      course: state.courses.find(c => c.id === t.courseId)?.name,
+    })),
     events: state.events.map(e => ({ title: e.title, date: e.date, time: e.time })),
     schedule: state.scheduleBlocks.map(b => ({
       title: b.title, day: b.day, from: b.startHour, to: b.endHour,

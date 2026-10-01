@@ -56,3 +56,29 @@ assert.equal(store.state.expenses.length, 0);
 assert.match(runTool("delete_expense", { text: "rent" }, store), /No expense matching/);
 
 console.log("tools: ok");
+
+// ── courses ─────────────────────────────────────────────────────────────────
+store = makeStore({ tasks: [], expenses: [], courses: [] });
+store.dispatch = (a) => {
+  if (a.type === "add-course") store.state.courses.push({ id: "c1", ...a.course });
+  if (a.type === "add-task") store.state.tasks.push({ id: "t1", ...a.task });
+};
+
+runTool("add_course", { name: "Organic Chemistry" }, store);
+assert.equal(store.state.courses.length, 1);
+assert.equal(store.state.courses[0].color?.startsWith("#"), true, "gets a colour");
+
+// The same subject twice is a no-op, not a duplicate.
+assert.match(runTool("add_course", { name: "organic chemistry" }, store), /already/);
+assert.equal(store.state.courses.length, 1);
+
+// A partial name still finds the subject — the model says "chem".
+runTool("add_task", { text: "Lab report", course: "chem" }, store);
+assert.equal(store.state.tasks[0].courseId, "c1", "linked by partial name");
+
+// The one that matters: a subject the model invented must not create a
+// dangling link to something that doesn't exist.
+runTool("add_task", { text: "Essay", course: "Astrophysics" }, store);
+assert.equal(store.state.tasks[1].courseId, undefined, "unknown subject means none");
+
+console.log("courses: ok");

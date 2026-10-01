@@ -5,6 +5,7 @@ import Calendar from './components/Calendar.jsx'
 import Schedule from './components/Schedule.jsx'
 import Timers, { AlarmWatcher } from './components/Timers.jsx'
 import Assistant from './components/Assistant.jsx'
+import Courses from './components/Courses.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
 import AppBackground from './components/AppBackground.jsx'
@@ -23,6 +24,7 @@ import { useSession, signOut } from './auth/useSession.js'
 export const SECTIONS = [
   { path: '/', name: 'Home', Panel: HomePage },
   { path: '/tasks', name: 'Tasks', Panel: Tasks },
+  { path: '/courses', name: 'Courses', Panel: Courses },
   { path: '/calendar', name: 'Calendar', Panel: Calendar },
   { path: '/schedule', name: 'Schedule', Panel: Schedule },
   { path: '/timers', name: 'Timers', Panel: Timers },

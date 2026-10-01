@@ -1,6 +1,7 @@
 import FinanceWidget from "./FinanceWidget";
 import TasksWidget from "./TasksWidget";
 import TimerWidget from "./TimerWidget";
+import TodayStrip from "./TodayStrip";
 import { Suspense, lazy } from "react";
 import { openShortcut } from "../AppLauncherSidebar.jsx";
 import { ThemeToggle } from "../../App.jsx";
@@ -43,6 +44,10 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
             needs a place here or it becomes unreachable from this screen. */}
         <ThemeToggle />
       </header>
+
+      {/* Above everything, because it is the question people open the app
+          with. Draws nothing on a quiet day rather than showing empty zeros. */}
+      <TodayStrip />
 
       <div className="home-orbit">
         <div className="orbit-col">

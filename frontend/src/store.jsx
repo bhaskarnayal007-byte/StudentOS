@@ -48,7 +48,8 @@ const renumber = list => list.map((s, i) => (s.order === i ? s : { ...s, order: 
 
 // The shape of all your data. Adding a feature usually starts by adding a key here.
 const emptyState = {
-  tasks: [],          // { id, text, done, due, priority }
+  tasks: [],          // { id, text, done, due, priority, courseId? }
+  courses: [],        // { id, name, color } — subjects tasks and events belong to
   events: [],         // { id, date, time, title }              — one-off things
   scheduleBlocks: [], // { id, day, startHour, endHour, title } — weekly routine
   alarms: [],         // { id, at, label, fired }               — `at` is a timestamp
@@ -87,6 +88,33 @@ function reducer(state, action) {
 
     case 'delete-task':
       return { ...state, tasks: state.tasks.filter(t => t.id !== action.id) }
+
+    // ── Courses ──
+    case 'add-course':
+      return {
+        ...state,
+        courses: [...state.courses, { id: newId(), ...action.course }],
+      }
+
+    case 'update-course':
+      return {
+        ...state,
+        courses: state.courses.map(c =>
+          c.id === action.id ? { ...c, ...action.changes } : c,
+        ),
+      }
+
+    // Dropping a course must not leave its tasks pointing at something that no
+    // longer exists — they'd render with a blank chip and break any lookup.
+    // The tasks themselves survive; they just stop belonging to a subject.
+    case 'delete-course':
+      return {
+        ...state,
+        courses: state.courses.filter(c => c.id !== action.id),
+        tasks: state.tasks.map(t =>
+          t.courseId === action.id ? { ...t, courseId: undefined } : t,
+        ),
+      }
 
     case 'add-event':
       return { ...state, events: [...state.events, { id: newId(), ...action.event }] }
@@ -296,6 +324,7 @@ function useCloudSync(state, dispatch, userId) {
         latest.current.events.length > 0 ||
         latest.current.scheduleBlocks.length > 0 ||
         latest.current.alarms.length > 0 ||
+        latest.current.courses.length > 0 ||
         latest.current.expenses.length > 0
 
       const { action } = reconcile({ remote, localRev, hasLocalData })

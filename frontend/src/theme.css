@@ -1615,3 +1615,41 @@ button.ghost.always:hover { color: var(--color-accent); }
   .landing { padding-left: var(--s3); padding-right: var(--s3); }
   .landing-cta > * { flex: 1 1 auto; justify-content: center; text-align: center; }
 }
+
+/* ─── Courses ───────────────────────────────────────────────────────────────
+   A subject is identified by its colour everywhere it appears, so the dot is
+   the component — not a coloured border or background that would fight the
+   accent. */
+.course-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.course-item { gap: var(--s3); }
+.course-chip { display: inline-flex; align-items: center; gap: 6px; }
+.course-note { display: block; margin-top: var(--s4); text-align: left; }
+
+/* ─── Today ─────────────────────────────────────────────────────────────────
+   One row, above the widgets. Wraps rather than scrolls — a count you can't
+   see is worse than one on a second line. */
+.today-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.today-cell {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-sm);
+  background: var(--color-surface);
+  color: var(--color-text-2);
+  font-size: var(--t-sm);
+}
+.today-cell strong { color: var(--color-text); font-weight: 700; }
+/* Overdue is the only thing here that is actually bad news, so it is the only
+   one that changes colour. */
+.today-late { border-color: var(--color-accent); }
+.today-late strong { color: var(--color-accent); }
+.today-next { color: var(--color-text); }
