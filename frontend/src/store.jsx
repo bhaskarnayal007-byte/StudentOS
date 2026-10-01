@@ -164,14 +164,20 @@ function reducer(state, action) {
       }
 
     // Logged only when a timer runs all the way out; cancelling is not studying.
+    //
+    // Deduped on endedAt, which identifies the run: the component guarding this
+    // uses a ref, and a remount resets that ref and logs the same finished
+    // timer twice. Guarding here covers every caller rather than one of them.
     case 'log-focus':
-      return {
-        ...state,
-        focusSessions: [
-          ...state.focusSessions,
-          { id: newId(), endedAt: action.endedAt, minutes: action.minutes },
-        ],
-      }
+      return state.focusSessions.some(f => f.endedAt === action.endedAt)
+        ? state
+        : {
+            ...state,
+            focusSessions: [
+              ...state.focusSessions,
+              { id: newId(), endedAt: action.endedAt, minutes: action.minutes },
+            ],
+          }
 
     case 'clear-timer':
       return { ...state, timer: null }
@@ -286,6 +292,18 @@ function loadState(userId = null) {
         const parsed = JSON.parse(legacyExpenses)
         if (Array.isArray(parsed)) loaded.expenses = parsed
       }
+    }
+
+    // Anyone who used the app before focus sessions were deduped has pairs of
+    // rows for a single finished timer, which doubles their week. Drop the
+    // repeats once on load; the reducer stops new ones being written.
+    if (Array.isArray(loaded.focusSessions)) {
+      const seen = new Set()
+      loaded.focusSessions = loaded.focusSessions.filter(f => {
+        if (seen.has(f.endedAt)) return false
+        seen.add(f.endedAt)
+        return true
+      })
     }
 
     loaded.ownerId = userId

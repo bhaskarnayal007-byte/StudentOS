@@ -1724,3 +1724,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   resize: vertical;
 }
 .note-body:focus-visible { outline-offset: 4px; }
+
+/* Subject filters are chips, not nav tabs — .tab stretches to fill a row,
+   which made two filters span the whole width. */
+.note-filter .tab { flex: 0 0 auto; }
