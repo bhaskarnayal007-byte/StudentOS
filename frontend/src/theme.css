@@ -1728,3 +1728,20 @@ button.ghost.always:hover { color: var(--color-accent); }
 /* Subject filters are chips, not nav tabs — .tab stretches to fill a row,
    which made two filters span the whole width. */
 .note-filter .tab { flex: 0 0 auto; }
+
+/* The bottom bar outgrew the screen once Courses and Notes arrived: seven tabs
+   sharing 375px shrank until "Calendar" and "Schedule" ran into each other.
+   They keep their own width and the bar scrolls instead, with a fade on the
+   right edge so there is some sign there is more. */
+@media (max-width: 620px) {
+  nav {
+    /* Room for the fade, and for Octi's dock above it. */
+    padding-right: var(--s5);
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+  .tab {
+    flex: 0 0 auto;
+    padding: var(--s2) var(--s3);
+  }
+}

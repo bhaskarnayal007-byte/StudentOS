@@ -1,4 +1,4 @@
-import { todayKey } from '../dates.js'
+import { todayKey, toKey } from '../dates.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE TOOLS.
@@ -363,6 +363,18 @@ function findTask(tasks, text) {
   )
 }
 
+/** { Saturday: '2026-10-03', … } for the seven days after today, so "Friday"
+ *  is a lookup rather than a calculation. */
+function nextSevenDays() {
+  const out = {}
+  for (let i = 1; i <= 7; i++) {
+    const day = new Date()
+    day.setDate(day.getDate() + i)
+    out[day.toLocaleDateString(undefined, { weekday: 'long' })] = toKey(day)
+  }
+  return out
+}
+
 // What the model is told before your message. Two jobs: tell it today's date
 // (otherwise "tomorrow" is meaningless), and show it your current data so it
 // can answer questions without calling a tool at all.
@@ -370,6 +382,11 @@ export function systemPrompt(state) {
   const summary = {
     today: todayKey(),
     now: new Date().toLocaleString(),
+    // The model is given the weekday arithmetic rather than asked to do it.
+    // Left to work out which date "Friday" is, it picked a Thursday — dates
+    // are exactly the kind of reasoning it is worst at and we can do exactly.
+    thisIs: new Date().toLocaleDateString(undefined, { weekday: 'long' }),
+    nextSevenDays: nextSevenDays(),
     courses: state.courses.map(c => c.name),
     notes: state.notes.map(n => ({
       // Truncated: a term of notes in full would dominate every prompt and be
@@ -402,7 +419,8 @@ export function systemPrompt(state) {
     'Be warm and short, never chirpy. You are a study partner, not a butler.',
     'Use the tools to change their data. Answer questions directly from the',
     'context below without calling a tool. Weekday numbers are 0=Sunday..6=Saturday.',
-    'Resolve relative dates like "tomorrow" against today\'s date. Be brief —',
+    'Resolve "tomorrow", "Friday" and the like by looking the date up in',
+    'nextSevenDays below. Never work a weekday out yourself. Be brief —',
     'one or two sentences. Never invent data that is not below.',
     // The chat bubbles render plain text, so asking for plain text is cheaper
     // than shipping a Markdown renderer to un-render it.
