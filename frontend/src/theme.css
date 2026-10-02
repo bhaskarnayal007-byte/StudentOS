@@ -1506,22 +1506,51 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    LANDING — what a signed-out visitor sees
-   No new colours or fonts: every value resolves to an existing token, so this
-   follows light/dark with the rest of the app.
+   Locked to dark whatever the viewer's theme is (data-theme="dark" on the
+   wrapper), so the page the world sees is one deliberate thing. Keeps the
+   brand serif and the forest accent; everything else is its own scale, because
+   a marketing page breathes at a size the app never does.
    ═══════════════════════════════════════════════════════════════════════════ */
 .landing {
-  max-width: 1040px;
+  --ink:      #F4F2EC;                  /* type on the dark ground */
+  --ink-2:    rgba(244, 242, 236, 0.68);
+  --ink-3:    rgba(244, 242, 236, 0.44);
+  --ground:   #161815;                  /* off-black, never #000 */
+  --raised:   #1E211D;
+  --hairline: rgba(244, 242, 236, 0.12);
+  --leaf:     #8FAE84;                  /* the forest accent, lifted to read on dark */
+
+  /* Its own spacing scale: the app's largest step is 32px, which is a cramped
+     section gap on a page whose job is to feel unhurried. */
+  --gap:     clamp(28px, 5vw, 56px);
+  --section: clamp(72px, 11vw, 148px);
+
+  max-width: 1180px;
   margin: 0 auto;
-  padding: var(--s4) var(--s4) var(--s6);
+  padding: var(--s4) var(--s5) var(--section);
   padding-top: calc(var(--s4) + env(safe-area-inset-top));
+  color: var(--ink);
+}
+/* The topographic backdrop is light-themed behind a dark page, so the landing
+   lays its own ground over the whole viewport. */
+.landing::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--ground);
 }
 
+.landing h1, .landing h2, .landing h3 { color: var(--ink); }
+
+/* ─── Bar ─── */
 .landing-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s3);
-  margin-bottom: var(--s6);
+  height: 64px;
+  margin-bottom: clamp(32px, 7vw, 84px);
 }
 .landing-brand {
   display: flex;
@@ -1530,66 +1559,203 @@ button.ghost.always:hover { color: var(--color-accent); }
   font-size: var(--t-lg);
   font-weight: 700;
 }
-.landing-bar .theme-toggle { text-decoration: none; }
+.landing-signin {
+  padding: var(--s2) var(--s4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.landing-signin:hover { border-color: var(--ink-3); background: rgba(244, 242, 236, 0.06); }
 
-/* Text left, Octi right — deliberately not a centred hero with the art on top,
-   which is the layout every other app has. */
+/* ─── Hero ─── */
 .landing-hero {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.1fr 0.9fr;
   align-items: center;
-  gap: var(--s5);
-  margin-bottom: var(--s6);
+  gap: var(--gap);
+  margin-bottom: var(--section);
 }
 .landing-hero h1 {
-  /* Bigger than anything else in the app, and tracked in — this is the one
-     place a headline has to carry the whole screen. */
-  font-size: clamp(38px, 6vw, 62px);
+  /* The one place type carries the whole screen, so it is tracked in and set
+     tight. Two lines, hard-broken in the markup. */
+  /* Scaled so it holds two lines in the hero's narrower column, not four:
+     the mid value is what a 900px laptop actually gets. */
+  font-size: clamp(36px, 4.6vw, 68px);
   line-height: 1.04;
-  letter-spacing: -0.02em;
-  margin: 0 0 var(--s4);
-  text-wrap: balance;
+  letter-spacing: -0.025em;
+  margin: 0 0 var(--s5);
 }
 .landing-lead {
-  max-width: 52ch;
-  margin: 0 0 var(--s5);
-  color: var(--color-text-2);
-  font-size: var(--t-lg);
+  max-width: 44ch;
+  margin: 0 0 var(--s6);
+  color: var(--ink-2);
+  font-size: clamp(17px, 1.6vw, 21px);
   line-height: 1.55;
   text-wrap: pretty;
 }
 .landing-cta { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
-.landing-go { text-decoration: none; display: inline-flex; align-items: center; }
-.landing-install { width: auto; }
-.landing-note { margin: var(--s4) 0 0; color: var(--color-text-3); font-size: var(--t-sm); }
+.landing .landing-go {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--s3) var(--s6);
+  border-radius: var(--r-pill);
+  background: var(--leaf);
+  border: 1px solid var(--leaf);
+  /* Dark ink on the light-green pill: the accent is too light for white type. */
+  color: #16201A;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.landing .landing-go:hover { background: #A2BE97; }
+.landing .landing-go:active { transform: translateY(1px); }
+.landing-ghost {
+  padding: var(--s3) var(--s5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease);
+}
+.landing-ghost:hover { border-color: var(--ink-3); }
 
 .landing-hero-art { display: flex; justify-content: center; }
-/* Larger than the home-page instance: here he is the illustration. */
-.landing-hero-art .mascot-stage { width: min(330px, 70vw); }
+.landing-hero-art .mascot-stage { width: min(360px, 74vw); }
 .landing-hero-art .mascot-caption { display: none; }
 .landing-hero-art .mascot-button { cursor: default; }
 
-/* Three points, but deliberately uneven — the first is the reason to use it
-   and gets the room to say so. */
-.landing-points {
+/* ─── Collage ───
+   Two columns of uneven tiles. Photographs set their own heights, so the
+   column edges never line up and the page reads as a pinboard rather than a
+   grid of cards. */
+.landing-collage {
   display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--s5);
-  padding-top: var(--s5);
-  border-top: 1px solid var(--color-border);
+  margin-bottom: var(--section);
 }
-.landing-points h2 {
-  margin: 0 0 var(--s2);
-  font-size: var(--t-md);
-  font-weight: 700;
+.landing .tile {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+}
+.landing figure.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  /* Screenshots of a dark app on a dark ground: pulled back just enough that
+     the tiles read as images rather than as more page. */
+  filter: brightness(0.92);
+  transition: transform 600ms var(--ease), filter 600ms var(--ease);
+}
+.landing figure.tile:hover img { transform: scale(1.02); filter: brightness(1); }
+
+/* The tall one spans both rows of its column, which is what breaks the grid. */
+.tile-tall { grid-row: span 2; min-height: 420px; }
+.tile-wide { min-height: 240px; }
+.tile-short { min-height: 220px; }
+
+/* The phone shot fills its tile; the two interface details must not be cropped
+   to fit, or the sentence being demonstrated loses its last few words. They sit
+   whole, on the raised ground, with room around them. */
+.tile-wide, .tile-short { background: var(--raised); padding: var(--s4); }
+.landing figure.tile-wide img, .landing figure.tile-short img {
+  object-fit: contain;
+  object-position: center;
+  border-radius: var(--r);
+}
+
+.tile-quote, .tile-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s3);
+  padding: var(--gap) var(--s6);
+  background: var(--raised);
+}
+.tile-quote p {
+  margin: 0;
+  font-size: clamp(19px, 2vw, 25px);
+  line-height: 1.4;
   letter-spacing: -0.01em;
 }
-.landing-points p {
-  margin: 0;
-  max-width: 44ch;
-  color: var(--color-text-2);
+.tile-quote cite {
+  color: var(--ink-3);
+  font-size: var(--t-sm);
+  font-style: normal;
+}
+.tile-stat strong { color: var(--leaf); font-size: var(--t-lg); }
+.tile-stat p { margin: 0; color: var(--ink-2); line-height: 1.55; }
+
+/* ─── Download ───
+   One large tile and two small ones, not three equal columns: installing on a
+   laptop is the action with a button behind it, the phones are one line each. */
+.landing-download { margin-bottom: var(--section); }
+.landing-download h2, .landing-close h2 {
+  margin: 0 0 var(--s4);
+  font-size: clamp(30px, 3.8vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.landing-sub {
+  max-width: 54ch;
+  margin: 0 0 var(--gap);
+  color: var(--ink-2);
+  font-size: var(--t-lg);
   line-height: 1.55;
-  text-wrap: pretty;
+}
+.install-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: var(--s5);
+  align-items: stretch;
+}
+.install-main, .install-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+}
+.install-main { background: var(--raised); border-color: transparent; }
+.install-main h3, .install-side h3 { margin: 0; font-size: var(--t-lg); }
+.install-main p, .install-side p { margin: 0; color: var(--ink-2); line-height: 1.55; }
+/* Pins the button to the bottom so it does not float mid-tile. */
+.install-go { margin-top: auto; align-self: flex-start; }
+.landing .install-go {
+  display: inline-flex;
+  padding: var(--s3) var(--s5);
+  border-radius: var(--r-pill);
+  background: var(--leaf);
+  border: 1px solid var(--leaf);
+  color: #16201A;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ─── Close ─── */
+.landing-close {
+  padding-top: var(--gap);
+  border-top: 1px solid var(--hairline);
+  margin-bottom: var(--gap);
+}
+.landing-close p {
+  max-width: 52ch;
+  margin: 0 0 var(--s6);
+  color: var(--ink-2);
+  font-size: var(--t-lg);
+  line-height: 1.55;
 }
 
 .landing-foot {
@@ -1597,22 +1763,28 @@ button.ghost.always:hover { color: var(--color-accent); }
   align-items: center;
   justify-content: space-between;
   gap: var(--s3);
-  margin-top: var(--s6);
-  padding-top: var(--s4);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-3);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-3);
   font-size: var(--t-sm);
 }
-.landing-foot a { color: var(--color-text-2); }
+.landing-foot a { color: var(--ink-2); }
 
-@media (max-width: 760px) {
-  /* One column, with the words first. Octi leading pushed the entire pitch
-     below the fold on a phone — a visitor saw a wordless picture and had to
-     scroll to find out what this even is. He follows the CTA instead. */
-  .landing-hero { grid-template-columns: 1fr; gap: var(--s4); }
-  .landing-hero-art .mascot-stage { width: min(190px, 48vw); }
-  .landing-points { grid-template-columns: 1fr; gap: var(--s4); }
-  .landing { padding-left: var(--s3); padding-right: var(--s3); }
+/* ─── Narrow ─── */
+@media (max-width: 860px) {
+  /* Words first. Leading with the portrait puts a wordless picture above the
+     fold and makes a visitor scroll to find out what this even is. */
+  .landing-hero { grid-template-columns: 1fr; gap: var(--s5); }
+  .landing-hero-art { justify-content: flex-start; }
+  .landing-hero-art .mascot-stage { width: min(210px, 52vw); }
+  .install-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .landing { padding-left: var(--s4); padding-right: var(--s4); }
+  /* One column: two columns of tiles at 375px makes every photograph a stamp. */
+  .landing-collage { grid-template-columns: 1fr; gap: var(--s4); }
+  .tile-tall { grid-row: auto; min-height: 320px; }
   .landing-cta > * { flex: 1 1 auto; justify-content: center; text-align: center; }
 }
 
