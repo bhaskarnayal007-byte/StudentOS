@@ -1550,6 +1550,15 @@ button.ghost.always:hover { color: var(--color-accent); }
   padding-inline: clamp(20px, 4vw, 56px);
 }
 
+/* The scrolling element is html, not the page wrapper, so the anchor glide
+   has to be set there. Off under reduced motion, where a jump is the point. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing) { scroll-behavior: smooth; }
+}
+/* Clears the sticky bar, which would otherwise sit over the heading the
+   anchor just scrolled to. */
+.landing #get-it { scroll-margin-top: 92px; }
+
 /* Film grain. Fixed and inert so it never repaints with the scroll, and woven
    from an SVG filter rather than an image so there is nothing to download. */
 .grain {
@@ -1597,6 +1606,24 @@ button.ghost.always:hover { color: var(--color-accent); }
   height: 68px;
 }
 .landing-brand { display: flex; align-items: center; gap: var(--s3); font-size: var(--t-lg); font-weight: 700; }
+.landing-nav { display: flex; align-items: center; gap: var(--s2); }
+/* The download door, always present. Filled, because it is the thing the page
+   exists to offer; sign-in next to it stays quiet. */
+.landing-get {
+  padding: 9px var(--s4);
+  border-radius: var(--r-pill);
+  background: rgba(168, 200, 154, 0.14);
+  color: var(--leaf);
+  text-decoration: none;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.3), inset 0 1px 0 rgba(246, 244, 238, 0.14);
+  transition: background 400ms var(--swing);
+}
+.landing-get:hover { background: rgba(168, 200, 154, 0.22); }
+
+.landing-foot-links { display: flex; gap: var(--s5); }
+
 .landing-signin {
   padding: 9px var(--s4);
   border-radius: var(--r-pill);

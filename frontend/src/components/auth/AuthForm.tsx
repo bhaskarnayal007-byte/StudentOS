@@ -9,6 +9,10 @@ type Props = {
   /** Called once a session exists. The seeds are measured from this card so
    *  the portal particles can fly out of the real form. */
   onAuthed: (seeds: SeedRect[]) => void;
+  /** Which side of the form to open on. Someone arriving from "Start for free"
+   *  is not coming back to anything, and used to land on a sign-in form and
+   *  have to find the create-account link. */
+  initialMode?: "signin" | "signup";
 };
 
 /**
@@ -18,8 +22,8 @@ type Props = {
  * single API call — two files would duplicate the whole layout to save an
  * `if`.
  */
-export default function AuthForm({ onAuthed }: Props) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

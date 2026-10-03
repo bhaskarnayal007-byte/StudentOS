@@ -69,6 +69,9 @@ export default function App() {
            who has never heard of this needs to know what it is first. */
         <Routes>
           <Route path="/signin" element={<LoginPage onAuthed={setSeeds} />} />
+          {/* Its own URL so "Start for free" opens the create-account side
+              rather than dropping a first-timer on "Welcome back". */}
+          <Route path="/signup" element={<LoginPage onAuthed={setSeeds} initialMode="signup" />} />
           <Route path="/" element={<Landing />} />
           {/* A deep link into the app while signed out lands on the pitch,
               not a dead end. */}

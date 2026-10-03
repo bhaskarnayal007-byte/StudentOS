@@ -3,6 +3,7 @@ import type { SeedRect } from "../PortalTransition";
 
 type Props = {
   onAuthed: (seeds: SeedRect[]) => void;
+  initialMode?: "signin" | "signup";
 };
 
 /**
@@ -10,10 +11,10 @@ type Props = {
  * at the root and stays put across the gate, the transition and the app, so
  * nothing restarts or flickers when the user crosses over.
  */
-export default function LoginPage({ onAuthed }: Props) {
+export default function LoginPage({ onAuthed, initialMode }: Props) {
   return (
     <div className="login-page">
-      <AuthForm onAuthed={onAuthed} />
+      <AuthForm onAuthed={onAuthed} initialMode={initialMode} />
     </div>
   );
 }

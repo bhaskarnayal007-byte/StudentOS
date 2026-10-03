@@ -55,7 +55,7 @@ function Cta({ to, onClick, children }: { to?: string; onClick?: () => void; chi
   return onClick ? (
     <button className="cta" onClick={onClick}>{inner}</button>
   ) : (
-    <Link className="cta" to={to ?? "/signin"}>{inner}</Link>
+    <Link className="cta" to={to ?? "/signup"}>{inner}</Link>
   );
 }
 
@@ -87,7 +87,13 @@ export default function Landing() {
             <img src="/logo-mark.png" alt="" className="brand-mark" />
             Student OS
           </span>
-          <Link to="/signin" className="landing-signin">Sign in</Link>
+          <nav className="landing-nav">
+            {/* Always present, whether or not the browser offers its own
+                install prompt: the page is how people get the app, so there
+                has to be something to press that says so. */}
+            <a href="#get-it" className="landing-get">Get the app</a>
+            <Link to="/signin" className="landing-signin">Sign in</Link>
+          </nav>
         </div>
       </header>
 
@@ -167,6 +173,13 @@ export default function Landing() {
         <h2 data-reveal>Put it on your phone</h2>
         <p className="install-lead" data-reveal>
           It installs from the browser. No app store, nothing to update by hand.
+          {!install && (
+            <>
+              {" "}
+              Chrome and Edge offer a one-click install once you have opened the
+              app; on everything else it is the two steps below.
+            </>
+          )}
         </p>
 
         <div className="install-grid">
@@ -180,7 +193,7 @@ export default function Landing() {
               {install ? (
                 <Cta onClick={install}>Install now</Cta>
               ) : (
-                <Cta to="/signin">Open the app</Cta>
+                <Cta to="/signup">Create an account</Cta>
               )}
             </div>
           </div>
@@ -209,7 +222,10 @@ export default function Landing() {
       <footer className="landing-foot">
         <div className="wrap landing-foot-inner">
           <span>Student OS</span>
-          <Link to="/signin">Sign in</Link>
+          <span className="landing-foot-links">
+            <Link to="/signup">Create an account</Link>
+            <Link to="/signin">Sign in</Link>
+          </span>
         </div>
       </footer>
     </div>
