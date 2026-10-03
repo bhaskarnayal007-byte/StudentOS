@@ -6,12 +6,27 @@ import { useReveal } from "../lib/useReveal.js";
 // stranger deciding whether to sign up shouldn't wait for it to paint.
 const OctopusMascot = lazy(() => import("./mascot/OctopusMascot"));
 
-/** The showcase. Real screens, no mockup frames, no invented UI. */
-const SCREENS = [
-  { src: "/shots/screen-home.jpg", label: "Home", alt: "The home screen, with tasks, spending and a timer around Octi" },
-  { src: "/shots/screen-courses.jpg", label: "Courses", alt: "Subjects listed with how much is still open in each" },
-  { src: "/shots/screen-notes.jpg", label: "Notes", alt: "A chemistry note kept in the app" },
-  { src: "/shots/screen-timers.jpg", label: "Focus", alt: "The timer, with the week of focus sessions below it" },
+/**
+ * What one sentence turns into.
+ *
+ * The tool names are the real ones from src/ai/tools.js, which is the point:
+ * this is a diagram of what actually happens, not a mock of a screen. It also
+ * ages correctly, because if the tools are renamed this reads wrong and gets
+ * fixed, where a screenshot would just quietly go stale.
+ */
+const SENTENCES: { said: string; did: string[] }[] = [
+  {
+    said: "I spent 180 on lunch and start a 25 minute study timer",
+    did: ["add_expense", "start_timer"],
+  },
+  {
+    said: "Chem lab report due Friday, and the exam is on the 15th",
+    did: ["add_task", "add_note"],
+  },
+  {
+    said: "Gym every Monday 7 to 9, and wake me at 6:30 tomorrow",
+    did: ["add_schedule_block", "set_alarm"],
+  },
 ];
 
 /** What the app actually does. Dense on purpose: a student deciding in ten
@@ -27,9 +42,8 @@ const DOES: [string, string][] = [
   ["Offline", "Keeps working with no signal, catches up when you are back."],
 ];
 
-/** The pill CTA. The arrow lives in its own circle flush to the right inner
- *  padding, and leans out on hover, which is what makes the press feel like a
- *  mechanism rather than a link. */
+/** The pill CTA. The arrow lives in its own well flush to the right inner
+ *  padding, and leans out on hover, which makes the press feel mechanical. */
 function Cta({ to, onClick, children }: { to?: string; onClick?: () => void; children: React.ReactNode }) {
   const inner = (
     <>
@@ -52,9 +66,10 @@ function Cta({ to, onClick, children }: { to?: string; onClick?: () => void; chi
  * one deliberate thing rather than two half-tuned ones. The app behind the
  * sign-in still follows their system preference.
  *
- * Surfaces are built as nested shells rather than flat rectangles: an outer
- * tray holding an inner plate with its own top highlight. Flat panels on a
- * flat ground is the thing that made this page read as a template.
+ * Deliberately has no screenshots. A dark app shot on a dark page is muddy at
+ * any size, and shrinking a whole interface into a card shows a visitor
+ * nothing they can read. The product is carried by type instead: the sentences
+ * people actually say, and what the app does with them.
  */
 export default function Landing() {
   const install = useInstallPrompt();
@@ -77,8 +92,8 @@ export default function Landing() {
       </header>
 
       <section className="hero">
-        {/* Warm light sitting behind the character, so the ground has a source
-            rather than being an even field of near-black. */}
+        {/* Warm light behind the character, so the ground has a source rather
+            than being an even field of near-black. */}
         <div className="hero-glow" aria-hidden="true" />
 
         <div className="hero-art" aria-hidden="true">
@@ -101,109 +116,83 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Cards overlapping in depth rather than a flat row: the stack is what
-          says these are objects, not thumbnails. */}
-      <section className="showcase" aria-label="The app">
+      {/* The product, as type. Each row is a sentence someone says and the
+          things it turns into. */}
+      <section className="says">
         <div className="wrap">
-          <h2 data-reveal>Four screens, no setup.</h2>
-        </div>
-        <ul className="screens">
-          {SCREENS.map((s, i) => (
-            <li key={s.src} data-reveal style={{ transitionDelay: `${i * 70}ms` }}>
-              <div className="tray">
-                <div className="plate">
-                  <img src={s.src} alt={s.alt} loading="lazy" />
+          <h2 data-reveal>Say it once.</h2>
+          <p className="says-lead" data-reveal>
+            Octi reads the date, the subject and the amount out of the sentence,
+            then does every part of it.
+          </p>
+
+          <ol className="say-list">
+            {SENTENCES.map(({ said, did }, i) => (
+              <li key={said} data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
+                <blockquote>“{said}”</blockquote>
+                <div className="say-did">
+                  <span className="say-arrow" aria-hidden="true">↳</span>
+                  <ul>
+                    {did.map((tool) => (
+                      <li key={tool}><code>{tool}</code></li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-              <span className="screen-label">{s.label}</span>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ol>
+
+          <p className="says-foot" data-reveal>
+            He shows you every one of those, every time. And asks first before
+            deleting anything.
+          </p>
+        </div>
       </section>
 
       <section className="band">
-        <div className="wrap">
-          <h2 data-reveal>One sentence does the filing.</h2>
-          <div className="say-grid">
-            <figure className="say-shot" data-reveal>
-              <div className="tray">
-                <div className="plate">
-                  <img
-                    src="/shots/octi-chat-crop.jpg"
-                    alt="Octi confirming he added a task and saved a note, with both tools listed"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </figure>
-            <div className="say-text" data-reveal>
-              <p>
-                Octi runs the app the way you would. He picks the date, the
-                subject and the category himself, then shows you exactly which
-                parts of the app he touched.
-              </p>
-              <p className="say-note">He asks first before deleting anything.</p>
-            </div>
-          </div>
+        <div className="wrap does">
+          <h2 data-reveal>What you get</h2>
+          <ul className="does-grid">
+            {DOES.map(([name, line], i) => (
+              <li key={name} data-reveal style={{ transitionDelay: `${(i % 4) * 60}ms` }}>
+                <h3>{name}</h3>
+                <p>{line}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <section className="wrap does">
-        <h2 data-reveal>What you get</h2>
-        <ul className="does-grid">
-          {DOES.map(([name, line], i) => (
-            <li key={name} data-reveal style={{ transitionDelay: `${(i % 4) * 60}ms` }}>
-              <h3>{name}</h3>
-              <p>{line}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <section className="wrap install" id="get-it">
+        <h2 data-reveal>Put it on your phone</h2>
+        <p className="install-lead" data-reveal>
+          It installs from the browser. No app store, nothing to update by hand.
+        </p>
 
-      <section className="band" id="get-it">
-        <div className="wrap">
-          <h2 data-reveal>Put it on your phone</h2>
-          <p className="band-lead" data-reveal>
-            It installs from the browser. No app store, nothing to update by hand.
-          </p>
-
-          <div className="install-grid">
-            <div className="install-main tray" data-reveal>
-              <div className="plate install-plate">
-                <h3>On a laptop</h3>
-                <p>
-                  Use the install control in the address bar. It then opens in
-                  its own window like anything else on your machine.
-                </p>
-                {install ? (
-                  <Cta onClick={install}>Install now</Cta>
-                ) : (
-                  <Cta to="/signin">Open the app</Cta>
-                )}
-              </div>
+        <div className="install-grid">
+          <div className="tray" data-reveal>
+            <div className="plate install-plate">
+              <h3>On a laptop</h3>
+              <p>
+                Use the install control in the address bar. It then opens in its
+                own window like anything else on your machine.
+              </p>
+              {install ? (
+                <Cta onClick={install}>Install now</Cta>
+              ) : (
+                <Cta to="/signin">Open the app</Cta>
+              )}
             </div>
+          </div>
 
-            <figure className="install-phone" data-reveal>
-              <div className="tray">
-                <div className="plate">
-                  <img
-                    src="/shots/phone-tasks.jpg"
-                    alt="The task list on a phone, with chemistry deadlines filed under their subject"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </figure>
-
-            <div className="install-steps" data-reveal>
-              <div>
-                <h3>iPhone</h3>
-                <p>Share, then Add to Home Screen.</p>
-              </div>
-              <div>
-                <h3>Android</h3>
-                <p>Menu, then Install app.</p>
-              </div>
+          <div className="install-steps" data-reveal>
+            <div>
+              <h3>iPhone</h3>
+              <p>Share, then Add to Home Screen.</p>
+            </div>
+            <div>
+              <h3>Android</h3>
+              <p>Menu, then Install app.</p>
             </div>
           </div>
         </div>

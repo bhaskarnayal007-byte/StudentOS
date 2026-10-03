@@ -1510,9 +1510,9 @@ button.ghost.always:hover { color: var(--color-accent); }
    wrapper), so the page the world sees is one deliberate thing.
 
    Surfaces are nested: an outer tray holding an inner plate that carries its
-   own top highlight, so a screenshot reads as something set into the page
-   rather than pasted onto it. Flat panels on a flat ground is what made the
-   earlier version read as a template.
+   own top highlight, so a panel reads as something set into the page rather
+   than pasted onto it. Flat panels on a flat ground is what made the earlier
+   version read as a template.
    ═══════════════════════════════════════════════════════════════════════════ */
 .landing {
   --ink:      #F6F4EE;
@@ -1760,59 +1760,77 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .plate img { display: block; width: 100%; }
 
-/* ─── Showcase ───
-   Runs off the right edge on purpose: the cut card is what says there is more
-   here than fits. */
-.showcase { padding-block: var(--section); }
-.screens {
-  display: flex;
-  gap: clamp(18px, 2.2vw, 32px);
-  margin: 0;
-  padding: var(--s3) 0 var(--s5) max(calc((100vw - 1240px) / 2 + 56px), clamp(20px, 4vw, 56px));
-  list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-.screens::-webkit-scrollbar { display: none; }
-.screens li {
-  flex: 0 0 min(560px, 78vw);
-  scroll-snap-align: start;
-}
-.screens .tray { transition: transform 600ms var(--swing), box-shadow 600ms var(--swing); }
-.screens li:hover .tray {
-  transform: translateY(-6px);
-  box-shadow: inset 0 1px 0 var(--edge-top), 0 36px 80px -20px var(--edge-low);
-}
-.screen-label {
-  display: block;
-  margin-top: var(--s4);
-  color: var(--ink-3);
-  font-size: var(--t-sm);
-  letter-spacing: 0.02em;
-}
-
-/* ─── One sentence ─── */
-.say-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: clamp(32px, 5vw, 80px);
-  align-items: center;
-}
-.say-shot { margin: 0; }
-.say-text p {
-  margin: 0 0 var(--s5);
+/* ─── Say it once ───
+   The product carried by type. Each row is a sentence someone says, and the
+   things it turns into, set as a specimen rather than a screenshot: a dark app
+   shot on a dark page is muddy at any size, and a whole interface shrunk into
+   a card shows a visitor nothing they can read. */
+.says { padding-block: var(--section); }
+.says-lead {
+  max-width: 48ch;
+  margin: calc(var(--s6) * -1) 0 var(--section);
   color: var(--ink-2);
   font-size: var(--t-lg);
-  line-height: 1.6;
+  line-height: 1.55;
+}
+.say-list {
+  display: grid;
+  gap: clamp(28px, 4vw, 56px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: say;
+}
+.say-list > li {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+  padding-top: clamp(24px, 3vw, 44px);
+  /* A rule that fades before the edge, so the list is not ruled like a table. */
+  background: linear-gradient(90deg, rgba(246, 244, 238, 0.2), transparent 85%) top left / 100% 1px no-repeat;
+}
+.say-list blockquote {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(22px, 2.9vw, 40px);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
   text-wrap: pretty;
 }
-.say-note { color: var(--leaf) !important; font-size: var(--t-md) !important; margin-bottom: 0 !important; }
+.say-did { display: flex; align-items: center; gap: var(--s4); }
+.say-arrow { color: var(--leaf); font-size: var(--t-xl); line-height: 1; }
+.say-did ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.say-did code {
+  display: inline-block;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  color: var(--leaf);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  /* Inset edges rather than a border: lit on top, dark underneath. */
+  box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.26), inset 0 1px 0 rgba(246, 244, 238, 0.14);
+}
+.says-foot {
+  max-width: 46ch;
+  margin: var(--section) 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
 
 /* ─── What you get ───
    Hairline-topped columns rather than eight boxes, which would read as a
    pricing table. */
-.does { padding-block: var(--section); }
+.band > .does { padding-inline: 0; }
 .does-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1831,10 +1849,18 @@ button.ghost.always:hover { color: var(--color-accent); }
 .does-grid p { margin: 0; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.6; }
 
 /* ─── Install ─── */
+.install { padding-block: var(--section); }
+.install-lead {
+  max-width: 50ch;
+  margin: calc(var(--s6) * -1) 0 var(--section);
+  color: var(--ink-2);
+  font-size: var(--t-lg);
+  line-height: 1.55;
+}
 .install-grid {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr 1fr;
-  gap: clamp(20px, 3vw, 44px);
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(24px, 4vw, 64px);
   align-items: stretch;
 }
 .install-plate {
@@ -1842,22 +1868,26 @@ button.ghost.always:hover { color: var(--color-accent); }
   flex-direction: column;
   gap: var(--s4);
   height: 100%;
-  padding: var(--s6);
+  padding: clamp(24px, 3vw, 44px);
   background: linear-gradient(180deg, rgba(246, 244, 238, 0.05), transparent);
 }
 .install-plate h3, .install-steps h3 { margin: 0; font-size: var(--t-lg); }
 .install-plate p, .install-steps p { margin: 0; color: var(--ink-2); line-height: 1.6; }
 .install-plate .cta { margin-top: auto; align-self: flex-start; }
 
-.install-phone { margin: 0; display: flex; justify-content: center; align-items: flex-start; }
-.install-phone .tray { width: 100%; max-width: 250px; }
 .install-steps {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--s6);
 }
-.install-steps > div { display: flex; flex-direction: column; gap: var(--s2); }
+.install-steps > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-top: var(--s4);
+  background: linear-gradient(90deg, rgba(246, 244, 238, 0.2), transparent 85%) top left / 100% 1px no-repeat;
+}
 
 /* ─── Closer ─── */
 .closer { padding-block: var(--section); }
@@ -1883,12 +1913,11 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 /* ─── Narrow ─── */
 @media (max-width: 900px) {
-  .say-grid { grid-template-columns: 1fr; }
+  .say-list > li { grid-template-columns: 1fr; gap: var(--s4); }
   .does-grid { grid-template-columns: repeat(2, 1fr); }
   .install-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: row; gap: var(--s5); }
   .install-steps > div { flex: 1; }
-  .install-phone .tray { max-width: 230px; }
 }
 
 @media (max-width: 620px) {
@@ -1912,7 +1941,6 @@ button.ghost.always:hover { color: var(--color-accent); }
   .hero-copy { order: -1; }
   .hero h1 { max-width: none; }
   .hero-glow { top: 30%; right: -30%; width: 120vw; }
-  .screens li { flex-basis: 86vw; }
   .does-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: column; }
   :root { --r-tray: 24px; --r-plate: 17px; }
