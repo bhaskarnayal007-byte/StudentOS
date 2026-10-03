@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase.js'
+import { supabase, API_URL } from '../lib/supabase.js'
 
 /**
  * The signed-in session, or null. `loading` is true until we've checked.
@@ -50,6 +50,31 @@ export function signInWithGoogle() {
       queryParams: { access_type: 'offline', prompt: 'consent' },
     },
   })
+}
+
+/**
+ * Permanently delete the signed-in account, then wipe what this browser holds
+ * for it: its localStorage keys (scoped by user id) and the PDF store.
+ */
+export async function deleteAccount() {
+  const { data } = await supabase.auth.getSession()
+  const session = data.session
+  if (!session) throw new Error('Signed out — sign in again first.')
+
+  const res = await fetch(`${API_URL}/api/auth/me`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  }).catch(() => null)
+  if (!res?.ok) throw new Error("Couldn't delete your account. Check your connection and try again.")
+
+  // The user no longer exists server-side, so only clear the local session.
+  await supabase.auth.signOut({ scope: 'local' })
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.endsWith(`:${session.user.id}`))
+      .forEach(k => localStorage.removeItem(k))
+    indexedDB.deleteDatabase('student-os-pdfs')
+  } catch { /* private mode */ }
 }
 
 export function signOut() {

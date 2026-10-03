@@ -1,103 +1,196 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './Courses.jsx'
+import { addPdfNotes, deletePdf, getPdf } from '../lib/pdfStore.js'
 
 /**
- * Quick notes, optionally filed under a subject.
+ * Notes, with their own sidebar: every saved note listed on the left, the one
+ * you're reading open on the right. On a phone the two stack — the list, then
+ * the note once you tap one, with a back button.
  *
- * Edited in place rather than through a modal: a note is a textarea, and
- * putting a textarea behind a dialog adds two clicks to every correction.
+ * Still edited in place: typing writes straight to the store, no save button.
+ * Drop PDFs anywhere on the panel and each becomes a note of its own.
  */
 export default function Notes() {
   const { state, dispatch } = useStore()
-  const [text, setText] = useState('')
-  const [courseId, setCourseId] = useState(undefined)
+  const [params] = useSearchParams()
+  const [openId, setOpenId] = useState(params.get('id'))
+  const [dragging, setDragging] = useState(false)
+  const fileInput = useRef(null)
+  const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('')
 
-  function submit(e) {
-    e.preventDefault()
-    const clean = text.trim()
-    if (!clean) return
-    dispatch({ type: 'add-note', note: { text: clean, courseId } })
-    setText('')
+  const open = state.notes.find(n => n.id === openId)
+
+  // A note left blank isn't worth keeping — drop it when you move away.
+  function leave() {
+    if (open && !open.pdf && !open.text.trim()) dispatch({ type: 'delete-note', id: open.id })
   }
 
-  const shown = filter ? state.notes.filter(n => n.courseId === filter) : state.notes
+  function select(id) {
+    if (id !== openId) leave()
+    setOpenId(id)
+  }
+
+  function create() {
+    leave()
+    const id = crypto.randomUUID()
+    dispatch({ type: 'add-note', note: { id, text: '', courseId: filter || undefined } })
+    setOpenId(id)
+    setQuery('')
+  }
+
+  async function attach(files) {
+    leave()
+    const id = await addPdfNotes(files, dispatch, filter || undefined)
+    if (id) setOpenId(id)
+  }
+
+  function drop(e) {
+    e.preventDefault()
+    setDragging(false)
+    attach(e.dataTransfer.files)
+  }
+
+  function remove(id) {
+    dispatch({ type: 'delete-note', id })
+    deletePdf(id)
+    setOpenId(null)
+  }
+
+  const q = query.trim().toLowerCase()
+  const shown = state.notes.filter(
+    n => (!filter || n.courseId === filter) && (!q || n.text.toLowerCase().includes(q)),
+  )
 
   return (
-    <div>
-      <form className="note-form" onSubmit={submit}>
-        <textarea
-          className="grow note-input"
-          placeholder="Anything worth keeping — a formula, what the lecturer said, a reminder to yourself."
-          value={text}
-          onChange={e => setText(e.target.value)}
-          rows={3}
-        />
-        <div className="row note-actions">
-          <CoursePicker value={courseId} onChange={setCourseId} />
-          <button className="primary" disabled={!text.trim()}>Save note</button>
-        </div>
-      </form>
-
-      {state.courses.length > 0 && state.notes.length > 0 && (
-        <div className="row note-filter">
-          <button
-            className={filter ? 'tab' : 'tab active'}
-            onClick={() => setFilter('')}
-          >
-            All
+    <div
+      className={'notes' + (open ? ' notes-reading' : '') + (dragging ? ' notes-dragging' : '')}
+      onDragOver={e => { e.preventDefault(); setDragging(true) }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false) }}
+      onDrop={drop}
+    >
+      <aside className="notes-side">
+        <div className="row notes-add">
+          <button className="primary grow" onClick={create}>+ New note</button>
+          <button onClick={() => fileInput.current.click()} title="Add PDF notes — or drag them here">
+            + PDF
           </button>
-          {state.courses.map(c => (
-            <button
-              key={c.id}
-              className={filter === c.id ? 'tab active' : 'tab'}
-              onClick={() => setFilter(c.id)}
-            >
-              {c.name}
-            </button>
-          ))}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="application/pdf,.pdf"
+            multiple
+            hidden
+            onChange={e => { attach(e.target.files); e.target.value = '' }}
+          />
         </div>
-      )}
+        <input
+          type="search"
+          placeholder="Search notes"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          aria-label="Search notes"
+        />
+        {state.courses.length > 0 && (
+          <select value={filter} onChange={e => setFilter(e.target.value)} aria-label="Filter by subject">
+            <option value="">All subjects</option>
+            {state.courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        )}
 
-      {shown.length === 0 && (
-        <p className="placeholder">
-          {state.notes.length === 0
-            ? 'No notes yet. Octi can write them for you too — just tell him.'
-            : 'Nothing filed under that subject.'}
-        </p>
-      )}
-
-      <ul className="list note-list">
-        {shown.map(note => (
-          <li key={note.id} className="note-card">
-            <div className="note-meta">
-              <CourseChip courseId={note.courseId} />
-              <span className="muted">{when(note.updatedAt)}</span>
+        <ul className="notes-index">
+          {shown.map(note => (
+            <li key={note.id}>
               <button
-                className="ghost"
-                aria-label="Delete note"
-                onClick={() => dispatch({ type: 'delete-note', id: note.id })}
+                className={note.id === openId ? 'notes-item active' : 'notes-item'}
+                onClick={() => select(note.id)}
               >
-                ✕
+                <span className="notes-item-title">{note.pdf && '📄 '}{title(note.text)}</span>
+                <span className="notes-item-meta">
+                  <CourseChip courseId={note.courseId} />
+                  <span className="muted">{when(note.updatedAt)}</span>
+                </span>
               </button>
-            </div>
+            </li>
+          ))}
+        </ul>
 
-            {/* Editing writes straight to the store — there is no save button
-                because there is nothing to save it from. */}
+        {shown.length === 0 && (
+          <p className="placeholder">
+            {state.notes.length === 0
+              ? 'No notes yet. Write one, drop in PDFs, or ask Octi.'
+              : 'No notes match.'}
+          </p>
+        )}
+      </aside>
+
+      <section className="notes-editor">
+        {open ? (
+          <>
+            <div className="note-meta">
+              <button className="ghost notes-back" onClick={() => select(null)}>← All notes</button>
+              <CoursePicker
+                value={open.courseId}
+                onChange={courseId => dispatch({ type: 'update-note', id: open.id, changes: { courseId } })}
+              />
+              <span className="muted">{when(open.updatedAt)}</span>
+              <button className="ghost" aria-label="Delete note" onClick={() => remove(open.id)}>✕</button>
+            </div>
+            {open.pdf && <PdfView id={open.id} name={open.pdf.name} />}
             <textarea
-              className="note-body"
-              value={note.text}
-              rows={Math.min(10, note.text.split('\n').length + 1)}
+              key={open.id}
+              className={open.pdf ? 'note-body note-body-pdf' : 'note-body'}
+              autoFocus={!open.pdf}
+              placeholder="Anything worth keeping — a formula, what the lecturer said, a reminder to yourself. The first line is the title."
+              value={open.text}
               onChange={e =>
-                dispatch({ type: 'update-note', id: note.id, changes: { text: e.target.value } })
+                dispatch({ type: 'update-note', id: open.id, changes: { text: e.target.value } })
               }
             />
-          </li>
-        ))}
-      </ul>
+          </>
+        ) : (
+          <p className="placeholder">Pick a note on the left, start a new one, or drop PDFs here.</p>
+        )}
+      </section>
     </div>
   )
+}
+
+/** The browser's own PDF viewer, fed from IndexedDB. */
+function PdfView({ id, name }) {
+  const [url, setUrl] = useState()
+  const [missing, setMissing] = useState(false)
+
+  useEffect(() => {
+    let objectUrl
+    setUrl(undefined)
+    setMissing(false)
+    getPdf(id).then(blob => {
+      if (!blob) return setMissing(true)
+      objectUrl = URL.createObjectURL(blob)
+      setUrl(objectUrl)
+    }, () => setMissing(true))
+    return () => objectUrl && URL.revokeObjectURL(objectUrl)
+  }, [id])
+
+  if (missing) {
+    return <p className="placeholder">“{name}” was added on another device — PDFs stay where they were dropped.</p>
+  }
+  if (!url) return null
+  return (
+    <>
+      <iframe className="notes-pdf" src={url} title={name} />
+      <a className="widget-link notes-pdf-open" href={url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+    </>
+  )
+}
+
+/** The first non-empty line, so a note names itself. */
+function title(text) {
+  const line = text.split('\n').find(l => l.trim())
+  return line ? line.trim().slice(0, 60) : 'Untitled'
 }
 
 /** "3 minutes ago" is noise on a note; the day it was written is not. */

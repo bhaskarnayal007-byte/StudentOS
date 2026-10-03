@@ -1,4 +1,5 @@
 import { useStore } from "../../store.jsx";
+import { openable } from "./SectionWidgets";
 
 type Task = {
   id: string;
@@ -24,12 +25,9 @@ export default function TasksWidget({ onOpen }: { onOpen: () => void }) {
     .slice(0, SHOWN);
 
   return (
-    <section className="widget">
+    <section className="widget widget-open" {...openable(onOpen, "Open Tasks")}>
       <header className="widget-head">
         <h3>Tasks</h3>
-        <button className="widget-link" onClick={onOpen}>
-          {open.length > SHOWN ? `All ${open.length}` : "Open"}
-        </button>
       </header>
 
       {shown.length === 0 ? (

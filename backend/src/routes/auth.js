@@ -1,5 +1,6 @@
 import { Router } from "express";
 import requireAuth from "../middleware/requireAuth.js";
+import { supabase } from "../lib/supabase.js";
 
 const router = Router();
 
@@ -17,6 +18,18 @@ router.get("/me", requireAuth, (req, res) => {
     email: req.user.email,
     createdAt: req.user.created_at,
   });
+});
+
+/**
+ * Delete the caller's own account. Needs the service-role key, which is why it
+ * lives here and not in the browser. Their user_state row goes with it
+ * (`on delete cascade`, see supabase/migrations/0001_user_state.sql).
+ * The id comes from the verified token, never the request body.
+ */
+router.delete("/me", requireAuth, async (req, res, next) => {
+  const { error } = await supabase.auth.admin.deleteUser(req.user.id);
+  if (error) return next(error);
+  res.status(204).end();
 });
 
 export default router;

@@ -225,6 +225,8 @@ export default function Landing() {
           <span className="landing-foot-links">
             <Link to="/signup">Create an account</Link>
             <Link to="/signin">Sign in</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
           </span>
         </div>
       </footer>

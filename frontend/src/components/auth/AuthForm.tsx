@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import type { SeedRect } from "../PortalTransition";
 import { supabase } from "../../lib/supabase.js";
 import { signInWithGoogle } from "../../auth/useSession.js";
@@ -196,6 +197,13 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
       >
         {signup ? "I already have an account" : "Create an account"}
       </button>
+
+      {signup && (
+        <p className="login-note">
+          By creating an account you agree to the <Link to="/terms">Terms</Link> and{" "}
+          <Link to="/privacy">Privacy policy</Link>.
+        </p>
+      )}
 
       <p className="login-note">
         Your account is stored with Supabase. Your data syncs to every device

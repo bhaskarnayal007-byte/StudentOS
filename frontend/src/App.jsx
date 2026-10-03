@@ -17,7 +17,8 @@ import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
 import Landing from './components/Landing'
-import { useSession, signOut } from './auth/useSession.js'
+import { Privacy, Terms } from './components/Legal'
+import { useSession, signOut, deleteAccount } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
 // component that draws it. Adding a section later = one line here plus one
@@ -73,6 +74,8 @@ export default function App() {
               rather than dropping a first-timer on "Welcome back". */}
           <Route path="/signup" element={<LoginPage onAuthed={setSeeds} initialMode="signup" />} />
           <Route path="/" element={<Landing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           {/* A deep link into the app while signed out lands on the pitch,
               not a dead end. */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -110,6 +113,8 @@ function AppShell() {
             back here. Finance renders over whichever one was already there. */}
         <Route path="/" element={<HomePage {...panelProps} />} />
         <Route path={FINANCE_PATH} element={<HomePage {...panelProps} />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
 
         {SECTIONS.filter(s => s.path !== '/').map(({ path, name, Panel }) => (
           <Route
@@ -152,6 +157,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
             <SyncBadge />
             <ThemeToggle />
             <button className="theme-toggle" onClick={signOut}>Sign out</button>
+            <button className="theme-toggle danger" onClick={confirmDeleteAccount}>Delete account</button>
           </div>
         </div>
 
@@ -218,4 +224,17 @@ export function ThemeToggle() {
       {LABEL[state.theme]}
     </button>
   )
+}
+
+/** Irreversible, so it asks for the word, not just an OK click. */
+async function confirmDeleteAccount() {
+  const typed = window.prompt(
+    'This permanently deletes your account and everything in it: tasks, notes, PDFs, schedule, spending. It cannot be undone.\n\nType DELETE to confirm.',
+  )
+  if (typed?.trim() !== 'DELETE') return
+  try {
+    await deleteAccount()
+  } catch (err) {
+    window.alert(err.message)
+  }
 }

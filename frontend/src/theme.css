@@ -1134,9 +1134,14 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .widget-link:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
+/* The whole widget opens its section, so it gets the hover a link would. */
+.widget-open { cursor: pointer; transition: border-color 0.15s var(--ease); }
+.widget-open:hover { border-color: var(--color-accent); }
 .widget .row { margin-bottom: 0; }
 /* Rows recede against the widget's own surface now that it isn't sunken. */
 .widget-tasks .item { background: var(--color-sunken); }
+.widget-rows .item { background: var(--color-sunken); }
+.widget-rows .item.live { box-shadow: inset 3px 0 0 var(--color-accent); }
 .widget-quick { justify-content: flex-start; }
 .widget-quick .suggestion { font-size: var(--t-xs); padding: 4px var(--s3); }
 
@@ -2042,49 +2047,110 @@ button.ghost.always:hover { color: var(--color-accent); }
 .focus-day { color: var(--color-text-3); font-size: var(--t-xs); }
 
 /* ─── Notes ─────────────────────────────────────────────────────────────────
-   A note is a textarea, open and editable. No modal: putting a textarea behind
-   a dialog adds two clicks to every correction. */
-.note-form { margin-bottom: var(--s4); }
-.note-input {
+   Two panes: the note list as its own sidebar, the open note beside it.
+   Under 700px they stack, and only one shows at a time. */
+.notes {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: var(--s4);
+  min-height: 60vh;
+}
+.notes-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-right: var(--s4);
+  border-right: 1px solid var(--color-border);
+  min-width: 0;
+}
+.notes-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 65vh;
+}
+.notes-item {
+  display: grid;
+  gap: 4px;
   width: 100%;
-  resize: vertical;
-  font: inherit;
-  line-height: 1.55;
-}
-.note-actions { margin-top: var(--s2); margin-bottom: 0; justify-content: flex-end; }
-.note-filter { margin-bottom: var(--s4); gap: var(--s1); }
-
-.note-list { display: grid; gap: var(--s3); }
-.note-card {
-  display: block;
-  padding: var(--s3) var(--s4);
-  border: 1px solid var(--color-border);
+  padding: var(--s2) var(--s3);
+  border: none;
   border-radius: var(--r-md);
-  background: var(--color-surface);
+  background: none;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
 }
+.notes-item:hover { background: var(--color-sunken); }
+.notes-item.active { background: var(--color-sunken); box-shadow: inset 3px 0 0 var(--color-accent); }
+.notes-item-title {
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.notes-item-meta { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-xs); }
+
+.notes-editor { display: flex; flex-direction: column; min-width: 0; }
+.notes-back { display: none; }
 .note-meta {
   display: flex;
   align-items: center;
   gap: var(--s2);
-  margin-bottom: var(--s2);
+  margin-bottom: var(--s3);
 }
-/* Pushes the timestamp and delete to the right of the subject chip. */
-.note-meta .muted { margin-left: auto; align-self: center; }
+/* Pushes the timestamp and delete to the right. */
+.note-meta .muted { margin-left: auto; }
 .note-body {
+  flex: 1;
   width: 100%;
+  min-height: 50vh;
   padding: 0;
   border: none;
   background: none;
   color: var(--color-text);
   font: inherit;
   line-height: 1.6;
-  resize: vertical;
+  resize: none;
 }
-.note-body:focus-visible { outline-offset: 4px; }
+.note-body:focus-visible { outline: none; }
 
-/* Subject filters are chips, not nav tabs — .tab stretches to fill a row,
-   which made two filters span the whole width. */
-.note-filter .tab { flex: 0 0 auto; }
+.notes-add { gap: var(--s2); margin-bottom: 0; }
+/* Drop target: the whole panel, outlined while a file hovers over it. */
+.notes { border-radius: var(--r-lg); outline: 2px dashed transparent; outline-offset: 6px; }
+.notes-dragging, .widget-notes.dragging { outline: 2px dashed var(--color-accent); outline-offset: 6px; }
+.notes-pdf {
+  width: 100%;
+  height: 65vh;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  background: var(--color-sunken);
+}
+.notes-pdf-open { align-self: flex-end; margin: var(--s1) 0 var(--s3); text-decoration: none; }
+.note-body-pdf { flex: none; min-height: 6em; }
+
+.widget-notes-list { display: grid; gap: 2px; margin: 0; }
+.widget-drop {
+  margin: 0;
+  padding: var(--s2);
+  font-size: var(--t-xs);
+  color: var(--color-text-3);
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--r-md);
+}
+
+@media (max-width: 700px) {
+  .notes { grid-template-columns: 1fr; }
+  .notes-side { padding-right: 0; border-right: none; }
+  .notes-index { max-height: none; }
+  .notes-reading .notes-side,
+  .notes:not(.notes-reading) .notes-editor { display: none; }
+  .notes-back { display: inline-flex; }
+}
 
 /* The bottom bar outgrew the screen once Courses and Notes arrived: seven tabs
    sharing 375px shrank until "Calendar" and "Schedule" ran into each other.
@@ -2102,3 +2168,30 @@ button.ghost.always:hover { color: var(--color-accent); }
     padding: var(--s2) var(--s3);
   }
 }
+
+/* ─── Privacy policy and terms ───────────────────────────────────────────── */
+.legal {
+  position: relative;
+  max-width: 70ch;
+  margin: var(--s6) auto;
+  padding: var(--s5) var(--s5) var(--s6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  color: var(--color-text);
+  line-height: 1.65;
+}
+.legal h1 { margin: var(--s4) 0 var(--s1); }
+.legal h2 { margin: var(--s5) 0 var(--s2); font-size: var(--t-lg); }
+.legal ul { padding-left: 1.2em; }
+.legal li { margin-bottom: var(--s2); }
+.legal a { color: var(--color-accent); }
+.legal-back { text-decoration: none; font-size: var(--t-sm); }
+.legal-updated, .legal-foot { color: var(--color-text-3); font-size: var(--t-sm); }
+.legal-foot { margin-top: var(--s6); }
+@media (max-width: 620px) {
+  .legal { margin: var(--s4) var(--s4); padding: var(--s4); }
+}
+
+/* Delete account sits next to Sign out but shouldn't look like it. */
+.theme-toggle.danger:hover { color: #c0564b; border-color: #c0564b; }

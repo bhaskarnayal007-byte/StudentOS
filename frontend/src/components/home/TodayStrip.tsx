@@ -85,7 +85,7 @@ function nextBlock(blocks: Block[], now: Date) {
   return later ? { ...later, live: false } : null;
 }
 
-function hour(h: number) {
+export function hour(h: number) {
   const d = new Date();
   d.setHours(h, 0, 0, 0);
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });

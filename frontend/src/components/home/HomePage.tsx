@@ -1,4 +1,6 @@
 import FinanceWidget from "./FinanceWidget";
+import NotesWidget from "./NotesWidget";
+import { CalendarWidget, CoursesWidget, ScheduleWidget } from "./SectionWidgets";
 import TasksWidget from "./TasksWidget";
 import TimerWidget from "./TimerWidget";
 import TodayStrip from "./TodayStrip";
@@ -13,10 +15,6 @@ import { useStore } from "../../store.jsx";
 const OctopusMascot = lazy(() => import("../mascot/OctopusMascot"));
 
 type Shortcut = { id: string; name: string; url: string; iconUrl: string };
-
-/** Sections without a widget of their own. Tasks, Timers and the Assistant are
- *  reachable from the mascot or a widget's "Open" link. */
-const SECTIONS = ["Calendar", "Schedule"];
 
 type Props = {
   financeOpen: boolean;
@@ -52,6 +50,8 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
       <div className="home-orbit">
         <div className="orbit-col">
           <TasksWidget onOpen={() => onGoTo("Tasks")} />
+          <CalendarWidget onOpen={() => onGoTo("Calendar")} />
+          <CoursesWidget onOpen={() => onGoTo("Courses")} />
           <FinanceWidget open={financeOpen} onToggle={onToggleFinance} />
         </div>
 
@@ -65,14 +65,10 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
 
         <div className="orbit-col">
           <TimerWidget onOpen={() => onGoTo("Timers")} />
+          <ScheduleWidget onOpen={() => onGoTo("Schedule")} />
+          <NotesWidget />
 
           <div className="home-buttons">
-            {SECTIONS.map((name) => (
-              <button key={name} className="home-btn" onClick={() => onGoTo(name)}>
-                <span className="home-btn-name">{name}</span>
-              </button>
-            ))}
-
             {state.shortcuts.map((shortcut) => (
               <button
                 key={shortcut.id}

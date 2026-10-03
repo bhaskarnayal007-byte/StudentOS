@@ -1,4 +1,5 @@
 import { useStore } from "../../store.jsx";
+import { openable } from "./SectionWidgets";
 import { useNow } from "../../useNow.js";
 import { formatRemaining } from "../Timers.jsx";
 
@@ -26,12 +27,9 @@ export default function TimerWidget({ onOpen }: { onOpen: () => void }) {
   const done = Boolean(timer) && remaining <= 0;
 
   return (
-    <section className="widget widget-timer">
+    <section className="widget widget-timer widget-open" {...openable(onOpen, "Open Timers")}>
       <header className="widget-head">
         <h3>Timer</h3>
-        <button className="widget-link" onClick={onOpen}>
-          Open
-        </button>
       </header>
 
       {timer ? (
