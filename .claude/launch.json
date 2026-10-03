@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start:frontend"],
       "port": 5173
+    },
+    {
+      "name": "student-os-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:backend"],
+      "port": 3001,
+      "autoPort": false
     }
   ]
 }

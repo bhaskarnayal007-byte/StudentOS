@@ -32,7 +32,7 @@ export default defineConfig({
         theme_color: '#2E5334',
         // Matches the icon's own badge, so the splash behind it isn't a
         // pale rectangle around a dark tile.
-        background_color: '#0d0d0f',
+        background_color: '#090408',
         display: 'standalone', // ← this is the line that removes browser chrome
         start_url: '/',
         icons: [

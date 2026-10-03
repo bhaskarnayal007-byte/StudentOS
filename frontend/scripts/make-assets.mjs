@@ -2,7 +2,7 @@
 //   node scripts/make-assets.mjs
 //
 // Sources (checked in, never modified):
-//   src/assets/logo.png        — the app icon: metallic pinwheel on a dark badge
+//   src/assets/logo.png        — the app icon: a white ship's wheel on near-black
 //   src/assets/mascot-src.png  — the AI mascot, rendered on black
 //
 // Outputs (all in public/):
@@ -18,7 +18,7 @@ const MASCOT = dir("../src/assets/mascot-src.png");
 const OUT = dir("../public/");
 
 // The badge's own background, used to letterbox rather than white bars.
-const BADGE_BG = "#0d0d0f";
+const BADGE_BG = "#090408";
 
 async function icons() {
   // No .trim(): trimming crops the margin the badge was drawn with and shoves
@@ -37,10 +37,11 @@ async function icons() {
   }
 
   // Maskable: Android crops to its own shape and only the middle ~80% is
-  // guaranteed to survive. This artwork already carries enough margin, and its
-  // corners are flat background, so clipping them is invisible.
+  // guaranteed to survive. The wheel's handles reach right to that line, so it
+  // gets shrunk to 400px and padded back out to 512.
   await base()
-    .resize(512, 512, { fit: "contain", background: BADGE_BG })
+    .resize(400, 400, { fit: "contain", background: BADGE_BG })
+    .extend({ top: 56, bottom: 56, left: 56, right: 56, background: BADGE_BG })
     .png()
     .toFile(`${OUT}pwa-maskable-512.png`);
 
