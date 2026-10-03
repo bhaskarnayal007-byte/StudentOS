@@ -1509,127 +1509,210 @@ button.ghost.always:hover { color: var(--color-accent); }
    Locked to dark whatever the viewer's theme is (data-theme="dark" on the
    wrapper), so the page the world sees is one deliberate thing.
 
-   Full-width bands with an inner .wrap, rather than one narrow column. The
-   first version boxed everything inside 1180px and the page was mostly margin;
-   bands let the imagery reach the edges and give the scroll a rhythm.
+   Surfaces are nested: an outer tray holding an inner plate that carries its
+   own top highlight, so a screenshot reads as something set into the page
+   rather than pasted onto it. Flat panels on a flat ground is what made the
+   earlier version read as a template.
    ═══════════════════════════════════════════════════════════════════════════ */
 .landing {
-  --ink:      #F4F2EC;
-  --ink-2:    rgba(244, 242, 236, 0.66);
-  --ink-3:    rgba(244, 242, 236, 0.40);
-  --ground:   #141612;                  /* off-black, never #000 */
-  --raised:   #1C1F1A;
-  --hairline: rgba(244, 242, 236, 0.11);
-  --leaf:     #9CBE90;                  /* the forest accent, lifted to read on dark */
+  --ink:      #F6F4EE;
+  --ink-2:    rgba(246, 244, 238, 0.64);
+  --ink-3:    rgba(246, 244, 238, 0.38);
+  /* Warm near-black. A neutral charcoal under a warm serif reads as grey
+     printer toner; this keeps the page the same temperature as the type. */
+  --ground:   #14150F;
+  --raised:   #1A1C14;
+  --leaf:     #A8C89A;
 
-  --section: clamp(72px, 9vw, 132px);
+  --edge-top:  rgba(246, 244, 238, 0.16);   /* lit edge, catches the light */
+  --edge-low:  rgba(0, 0, 0, 0.55);          /* the side in shadow */
 
-  color: var(--ink);
-  background: var(--ground);
-  /* The app's topographic backdrop is built for the light theme. */
+  --r-tray:  30px;
+  --r-plate: 22px;                           /* concentric inside the tray */
+
+  --section: clamp(84px, 11vw, 168px);
+  --swing: cubic-bezier(0.22, 1, 0.36, 1);   /* heavy, settles rather than stops */
+
   position: relative;
   z-index: 1;
+  color: var(--ink);
+  background: var(--ground);
 }
 /* The landing lives inside .app, which is an 880px centred column with page
-   padding. That is right for the app and wrong here: it boxed every band into
-   a narrow strip and let the light-theme backdrop show down both edges. */
+   padding. Right for the app, wrong here: it boxed every band into a narrow
+   strip and let the light-theme backdrop show down both edges. */
 .app:has(> .landing) { max-width: none; padding: 0; }
 
 .landing h1, .landing h2, .landing h3 { color: var(--ink); }
-
-/* The one measure every band shares. */
 .landing .wrap {
   max-width: 1240px;
   margin: 0 auto;
-  padding-inline: clamp(20px, 4vw, 48px);
+  padding-inline: clamp(20px, 4vw, 56px);
+}
+
+/* Film grain. Fixed and inert so it never repaints with the scroll, and woven
+   from an SVG filter rather than an image so there is nothing to download. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.042;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── Entry ───
+   Everything marked data-reveal arrives rather than appears. Transform and
+   opacity only, plus a small blur that resolves, which is what gives the
+   motion weight. */
+.landing [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 900ms var(--swing),
+    transform 900ms var(--swing),
+    filter 900ms var(--swing);
+}
+.landing [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing [data-reveal] { opacity: 1; transform: none; filter: none; }
 }
 
 /* ─── Bar ─── */
 .landing-bar {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(20, 22, 18, 0.82);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--hairline);
+  z-index: 4;
+  background: rgba(20, 21, 15, 0.72);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(246, 244, 238, 0.07);
 }
 .landing-bar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s3);
-  height: 64px;
+  height: 68px;
 }
 .landing-brand { display: flex; align-items: center; gap: var(--s3); font-size: var(--t-lg); font-weight: 700; }
 .landing-signin {
-  padding: var(--s2) var(--s4);
-  border: 1px solid var(--hairline);
+  padding: 9px var(--s4);
   border-radius: var(--r-pill);
-  color: var(--ink);
+  color: var(--ink-2);
   text-decoration: none;
   font-size: var(--t-sm);
   font-weight: 600;
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  /* Two inset edges instead of a flat border: a lit top and a dark underside. */
+  box-shadow: inset 0 1px 0 var(--edge-top), inset 0 0 0 1px rgba(246, 244, 238, 0.09);
+  transition: color 400ms var(--swing), background 400ms var(--swing);
 }
-.landing-signin:hover { border-color: var(--ink-3); background: rgba(244, 242, 236, 0.07); }
+.landing-signin:hover { color: var(--ink); background: rgba(246, 244, 238, 0.06); }
 
-/* ─── The one button ───
-   Square-ish and solid, borrowed from the way Squarespace sets a single heavy
-   block against a lot of air. One shape, used everywhere. */
-.landing .btn-solid {
+/* ─── The CTA ───
+   A pill with the arrow in its own well, flush to the inner padding. The
+   arrow leans out and the whole thing presses down. */
+.landing .cta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: var(--s4) var(--s6);
-  border: 1px solid var(--leaf);
-  border-radius: var(--r-sm);
-  background: var(--leaf);
-  /* Dark ink on a light-green block: the accent is far too light for white. */
-  color: #15200F;
+  gap: var(--s4);
+  padding: 13px 13px 13px var(--s6);
+  border: none;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, #BAD7AD 0%, var(--leaf) 100%);
+  /* Dark ink on a light green block: the accent is far too light for white. */
+  color: #161E10;
   font: inherit;
   font-size: var(--t-md);
   font-weight: 700;
-  letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 16px 36px rgba(0, 0, 0, 0.32);
+  transition: transform 500ms var(--swing), box-shadow 500ms var(--swing);
 }
-.landing .btn-solid:hover { background: #B2CFA6; }
-.landing .btn-solid:active { transform: translateY(1px); }
+.landing .cta:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 22px 48px rgba(0, 0, 0, 0.42);
+}
+.landing .cta:active { transform: translateY(0) scale(0.985); }
+.cta-arrow {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.14);
+  font-size: 13px;
+  transition: transform 500ms var(--swing), background 500ms var(--swing);
+}
+.landing .cta:hover .cta-arrow {
+  transform: translate(2px, -2px) scale(1.06);
+  background: rgba(0, 0, 0, 0.2);
+}
 
-/* ─── Hero ───
-   Octi sits behind the words at the right, bled off the edge and cropped by
-   the viewport, so the page opens on something rather than on a centred card
-   floating in black. */
+/* ─── Hero ─── */
 .hero {
   position: relative;
   overflow: hidden;
-  min-height: min(86vh, 760px);
+  min-height: min(88vh, 820px);
   display: flex;
   align-items: center;
   padding-block: var(--section);
 }
+/* A source for the light, off to the right where the character sits. */
+.hero-glow {
+  position: absolute;
+  top: 44%;
+  right: -6%;
+  width: min(900px, 86vw);
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(168, 200, 154, 0.16) 0%,
+    rgba(168, 200, 154, 0.05) 38%,
+    transparent 68%
+  );
+}
 .hero-art {
   position: absolute;
   top: 50%;
-  right: clamp(-120px, -6vw, 0px);
+  right: clamp(-130px, -5vw, 0px);
   translate: 0 -50%;
-  width: min(620px, 52vw);
+  width: min(640px, 53vw);
   pointer-events: none;
-  /* Behind the headline, and dimmed so the type stays the loudest thing. */
-  opacity: 0.92;
 }
 .hero-art .mascot-stage { width: 100%; }
 .hero-art .mascot-caption { display: none; }
 .hero-art .mascot-button { cursor: default; padding: 0; background: none; border: none; }
 
 .hero-copy { position: relative; width: 100%; }
+.eyebrow {
+  display: inline-block;
+  margin-bottom: var(--s5);
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  box-shadow: inset 0 0 0 1px rgba(246, 244, 238, 0.11), inset 0 1px 0 var(--edge-top);
+}
 .hero h1 {
   max-width: 11ch;
   margin: 0 0 var(--s5);
-  font-size: clamp(46px, 8.2vw, 116px);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  font-size: clamp(48px, 8.4vw, 124px);
+  line-height: 0.94;
+  letter-spacing: -0.04em;
 }
 .hero-lead {
   max-width: 34ch;
@@ -1639,38 +1722,53 @@ button.ghost.always:hover { color: var(--color-accent); }
   line-height: 1.5;
   text-wrap: pretty;
 }
-.hero-fine { margin: var(--s4) 0 0; color: var(--ink-3); font-size: var(--t-sm); }
+.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s5); }
+.hero-fine { color: var(--ink-3); font-size: var(--t-sm); }
 
 /* ─── Section furniture ─── */
 .landing h2 {
-  margin: 0 0 var(--s5);
-  font-size: clamp(28px, 3.4vw, 46px);
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  margin: 0 0 var(--s6);
+  font-size: clamp(30px, 3.6vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
 }
-.band {
-  padding-block: var(--section);
-  background: var(--raised);
-  /* The bands are what give the scroll its rhythm, so they are separated by a
-     tone change rather than a rule. */
-}
+.band { padding-block: var(--section); background: var(--raised); }
 .band-lead {
   max-width: 50ch;
-  margin: calc(var(--s5) * -1) 0 var(--s6);
+  margin: calc(var(--s6) * -1) 0 var(--section);
   color: var(--ink-2);
   font-size: var(--t-lg);
   line-height: 1.55;
 }
 
+/* ─── Tray and plate ───
+   The outer tray is the machined surround; the plate is the thing set into it,
+   with a lit top edge. Radii are concentric, so the curves stay parallel. */
+.tray {
+  padding: 7px;
+  border-radius: var(--r-tray);
+  background: linear-gradient(180deg, rgba(246, 244, 238, 0.09), rgba(246, 244, 238, 0.02));
+  box-shadow:
+    inset 0 1px 0 var(--edge-top),
+    0 28px 64px -18px var(--edge-low);
+}
+.plate {
+  overflow: hidden;
+  border-radius: var(--r-plate);
+  background: var(--ground);
+  box-shadow: inset 0 1px 0 rgba(246, 244, 238, 0.09);
+}
+.plate img { display: block; width: 100%; }
+
 /* ─── Showcase ───
-   A row that runs off the right edge. The cut screen is the point: it says
-   there is more here than fits, which a neat grid of four never does. */
+   Runs off the right edge on purpose: the cut card is what says there is more
+   here than fits. */
 .showcase { padding-block: var(--section); }
 .screens {
   display: flex;
-  gap: clamp(16px, 2vw, 28px);
+  gap: clamp(18px, 2.2vw, 32px);
   margin: 0;
-  padding: 0 0 var(--s4) max(calc((100vw - 1240px) / 2 + 48px), clamp(20px, 4vw, 48px));
+  padding: var(--s3) 0 var(--s5) max(calc((100vw - 1240px) / 2 + 56px), clamp(20px, 4vw, 56px));
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -1678,102 +1776,88 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .screens::-webkit-scrollbar { display: none; }
 .screens li {
-  flex: 0 0 min(560px, 76vw);
+  flex: 0 0 min(560px, 78vw);
   scroll-snap-align: start;
 }
-.screens img {
-  display: block;
-  width: 100%;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--hairline);
-  /* Screenshots of a dark app on a dark ground need an edge to sit on. */
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+.screens .tray { transition: transform 600ms var(--swing), box-shadow 600ms var(--swing); }
+.screens li:hover .tray {
+  transform: translateY(-6px);
+  box-shadow: inset 0 1px 0 var(--edge-top), 0 36px 80px -20px var(--edge-low);
 }
-.screens span {
+.screen-label {
   display: block;
-  margin-top: var(--s3);
+  margin-top: var(--s4);
   color: var(--ink-3);
   font-size: var(--t-sm);
+  letter-spacing: 0.02em;
 }
 
 /* ─── One sentence ─── */
 .say-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  gap: clamp(28px, 4vw, 64px);
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(32px, 5vw, 80px);
   align-items: center;
 }
 .say-shot { margin: 0; }
-.say-shot img {
-  display: block;
-  width: 100%;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--hairline);
-}
 .say-text p {
-  margin: 0 0 var(--s4);
+  margin: 0 0 var(--s5);
   color: var(--ink-2);
   font-size: var(--t-lg);
   line-height: 1.6;
   text-wrap: pretty;
 }
-.say-note { color: var(--leaf) !important; font-size: var(--t-md) !important; }
+.say-note { color: var(--leaf) !important; font-size: var(--t-md) !important; margin-bottom: 0 !important; }
 
 /* ─── What you get ───
-   Four across, hairline-separated rather than carded: eight boxes would read
-   as a pricing table. */
+   Hairline-topped columns rather than eight boxes, which would read as a
+   pricing table. */
 .does { padding-block: var(--section); }
 .does-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--s5) clamp(20px, 3vw, 44px);
+  gap: var(--s6) clamp(20px, 3vw, 48px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.does-grid li { padding-top: var(--s4); border-top: 1px solid var(--hairline); }
-.does-grid h3 { margin: 0 0 var(--s2); font-size: var(--t-md); }
-.does-grid p { margin: 0; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.55; }
+.does-grid li {
+  padding-top: var(--s4);
+  /* A gradient rule rather than a flat line: it fades out before the column
+     edge, so the grid does not look ruled. */
+  background: linear-gradient(90deg, rgba(246, 244, 238, 0.22), transparent) top left / 100% 1px no-repeat;
+}
+.does-grid h3 { margin: 0 0 var(--s2); font-size: var(--t-md); letter-spacing: -0.01em; }
+.does-grid p { margin: 0; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.6; }
 
-/* ─── Install ───
-   The laptop tile has the button, the phone shot sits between, the two phone
-   steps stack at the end. Three different weights, not three equal cards. */
+/* ─── Install ─── */
 .install-grid {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 1fr;
-  gap: clamp(20px, 3vw, 40px);
+  grid-template-columns: 1.25fr 0.75fr 1fr;
+  gap: clamp(20px, 3vw, 44px);
   align-items: stretch;
 }
-.install-main, .install-steps > div {
+.install-plate {
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
-}
-.install-main {
+  gap: var(--s4);
+  height: 100%;
   padding: var(--s6);
-  border-radius: var(--r-lg);
-  background: rgba(244, 242, 236, 0.05);
+  background: linear-gradient(180deg, rgba(246, 244, 238, 0.05), transparent);
 }
-.install-main h3, .install-steps h3 { margin: 0; font-size: var(--t-lg); }
-.install-main p, .install-steps p { margin: 0; color: var(--ink-2); line-height: 1.55; }
-/* Pins the button to the bottom so it does not float mid-tile. */
-.install-go { margin-top: auto; align-self: flex-start; }
+.install-plate h3, .install-steps h3 { margin: 0; font-size: var(--t-lg); }
+.install-plate p, .install-steps p { margin: 0; color: var(--ink-2); line-height: 1.6; }
+.install-plate .cta { margin-top: auto; align-self: flex-start; }
 
-.install-phone { margin: 0; display: flex; justify-content: center; }
-.install-phone img {
-  display: block;
-  width: 100%;
-  max-width: 260px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--hairline);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-}
+.install-phone { margin: 0; display: flex; justify-content: center; align-items: flex-start; }
+.install-phone .tray { width: 100%; max-width: 250px; }
 .install-steps {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--s6);
 }
+.install-steps > div { display: flex; flex-direction: column; gap: var(--s2); }
 
 /* ─── Closer ─── */
 .closer { padding-block: var(--section); }
@@ -1785,13 +1869,13 @@ button.ghost.always:hover { color: var(--color-accent); }
   line-height: 1.55;
 }
 
-.landing-foot { border-top: 1px solid var(--hairline); }
+.landing-foot { border-top: 1px solid rgba(246, 244, 238, 0.07); }
 .landing-foot-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s3);
-  padding-block: var(--s5);
+  padding-block: var(--s6);
   color: var(--ink-3);
   font-size: var(--t-sm);
 }
@@ -1804,35 +1888,34 @@ button.ghost.always:hover { color: var(--color-accent); }
   .install-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: row; gap: var(--s5); }
   .install-steps > div { flex: 1; }
-  .install-phone img { max-width: 220px; }
+  .install-phone .tray { max-width: 230px; }
 }
 
 @media (max-width: 620px) {
-  /* Taking Octi out of absolute positioning makes him a flex sibling of the
-     copy, which squeezed the headline off the right edge. Stack them. */
+  /* Octi stops being a backdrop and takes his own place in the stack: behind
+     the headline at this width he would make it unreadable. Taking him out of
+     absolute positioning makes him a flex sibling, so the hero stacks too. */
   .hero {
     min-height: auto;
     flex-direction: column;
     align-items: stretch;
     padding-block: clamp(40px, 12vw, 72px) var(--section);
   }
-  /* Octi moves under the words and stops being a background: at this width he
-     would sit behind the headline and make it unreadable. */
   .hero-art {
     position: static;
     translate: none;
-    width: min(230px, 56vw);
-    margin: var(--s5) auto 0;
-    opacity: 1;
+    width: min(240px, 58vw);
+    margin: var(--s6) auto 0;
   }
-  /* Octi is first in the DOM because he is the backdrop on a wide screen.
-     Stacked, that puts a wordless portrait above the fold, so the copy is
-     pulled back in front of him. */
+  /* He is first in the DOM because he is the backdrop on a wide screen;
+     stacked, that puts a wordless portrait above the fold. */
   .hero-copy { order: -1; }
   .hero h1 { max-width: none; }
+  .hero-glow { top: 30%; right: -30%; width: 120vw; }
   .screens li { flex-basis: 86vw; }
   .does-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: column; }
+  :root { --r-tray: 24px; --r-plate: 17px; }
 }
 
 /* ─── Courses ───────────────────────────────────────────────────────────────
