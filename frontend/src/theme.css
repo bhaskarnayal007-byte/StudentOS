@@ -1058,7 +1058,53 @@ button.ghost.always:hover { color: var(--color-accent); }
   /* Lets the cursor reach the button underneath; the model isn't interactive. */
   pointer-events: none;
 }
-.mascot-stage canvas { display: block; }
+.mascot-stage { position: relative; }
+.mascot-stage canvas { display: block; position: relative; }
+/* The brand sheet's soft blue glow behind Octi. */
+.mascot-stage::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(92, 112, 255, 0.28), transparent 68%);
+  filter: blur(18px);
+}
+.mascot-sparkle {
+  position: absolute;
+  top: 6%;
+  right: 10%;
+  font-size: clamp(18px, 3vw, 28px);
+  color: #00d1ff;
+  text-shadow: 0 0 12px rgba(0, 209, 255, 0.7);
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+.mascot-sleeping .mascot-sparkle { display: none; }
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  50% { opacity: 0.45; transform: scale(0.75) rotate(20deg); }
+}
+.mascot-zzz {
+  position: absolute;
+  top: 4%;
+  right: 12%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  color: #00d1ff;
+  font-weight: 700;
+}
+.mascot-zzz span { animation: drift 2.4s ease-in-out infinite; opacity: 0; }
+.mascot-zzz span:nth-child(1) { font-size: 13px; }
+.mascot-zzz span:nth-child(2) { font-size: 17px; animation-delay: 0.4s; }
+.mascot-zzz span:nth-child(3) { font-size: 22px; animation-delay: 0.8s; }
+@keyframes drift {
+  0% { opacity: 0; transform: translateY(6px); }
+  30%, 70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-sparkle, .mascot-zzz span { animation: none; opacity: 1; }
+}
 
 .mascot-caption {
   font-size: var(--t-sm);
@@ -2187,11 +2233,21 @@ button.ghost.always:hover { color: var(--color-accent); }
 .legal li { margin-bottom: var(--s2); }
 .legal a { color: var(--color-accent); }
 .legal-back { text-decoration: none; font-size: var(--t-sm); }
-.legal-updated, .legal-foot { color: var(--color-text-3); font-size: var(--t-sm); }
-.legal-foot { margin-top: var(--s6); }
+.legal-updated { color: var(--color-text-3); font-size: var(--t-sm); }
+.legal .copyright { margin-top: var(--s6); }
 @media (max-width: 620px) {
   .legal { margin: var(--s4) var(--s4); padding: var(--s4); }
 }
 
 /* Delete account sits next to Sign out but shouldn't look like it. */
 .theme-toggle.danger:hover { color: #c0564b; border-color: #c0564b; }
+
+/* Creator credit at the foot of every screen. */
+.copyright {
+  margin: var(--s5) 0 var(--s4);
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--color-text-3);
+}
+.copyright a { color: inherit; }
+.copyright a:hover { color: var(--color-accent); }

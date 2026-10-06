@@ -3,7 +3,7 @@
 //
 // Sources (checked in, never modified):
 //   src/assets/logo.png        — the app icon: a white ship's wheel on near-black
-//   src/assets/mascot-src.png  — the AI mascot, rendered on black
+//   src/assets/mascot-src.png  — the AI mascot, white on a navy backdrop with a blue glow
 //
 // Outputs (all in public/):
 //   pwa-192.png, pwa-512.png, pwa-maskable-512.png, logo-mark.png, mascot.png
@@ -58,18 +58,18 @@ async function icons() {
 // eyes, which are black too. A flood fill from the image border only removes
 // dark pixels CONNECTED to the outside, and the eyes are enclosed by the white
 // body, so they survive.
-// Brightest pixel still treated as background. Measured, not guessed: the
-// backdrop sits at 4-9 and the subject's darkest shaded edges are well above
-// this. Raising it lets the fill walk in through those shaded edges and eat
-// the mascot's tentacles — which is exactly what 76 did.
-const DARK_MAX = 52;
+// Background test is the RED channel, not overall brightness: the backdrop
+// is navy and the glow around Octi is saturated blue, so both are bright in
+// blue but low in red, while the body is white or lavender — high in all
+// three. Keying on brightness left the glow behind as a blue halo.
+const RED_MAX = 125;
 
 /** Pixels this bright are unambiguously the figure, never backdrop or its
  *  cast shadow — used to find where the figure actually is. */
-const BODY_MIN = 100;
+const BODY_MIN = 150;
 
 /** The render includes a soft shadow/reflection on the floor beneath the
- *  figure. It is brighter than DARK_MAX, so the flood fill stops at it and
+ *  figure. It is brighter than RED_MAX, so the flood fill stops at it and
  *  leaves a dark smear hanging below the mascot. Cropping to the figure's own
  *  bounds first removes it outright — much simpler than trying to key a soft
  *  gradient out by colour. */
@@ -81,7 +81,7 @@ async function figureBounds() {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (x + y * width) * channels;
-      if (Math.max(data[i], data[i + 1], data[i + 2]) < BODY_MIN) continue;
+      if (data[i] < BODY_MIN) continue;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
@@ -107,7 +107,7 @@ async function mascot() {
     .toBuffer({ resolveWithObject: true });
 
   const { width, height } = info;
-  const isDark = (i) => Math.max(data[i], data[i + 1], data[i + 2]) <= DARK_MAX;
+  const isDark = (i) => data[i] <= RED_MAX;
 
   // Iterative, not recursive — a recursive fill blows the stack at this size.
   const seen = new Uint8Array(width * height);

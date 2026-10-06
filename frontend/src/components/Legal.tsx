@@ -5,6 +5,18 @@ import { Link } from "react-router-dom";
 const CONTACT = "[your contact email]";
 const UPDATED = "3 October 2026";
 
+export const CREATOR = "Bhaskar Nayal";
+
+/** The copyright line shown at the foot of every screen. */
+export function Copyright() {
+  return (
+    <p className="copyright">
+      © 2026 Student OS · Created by {CREATOR} ·{" "}
+      <Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link>
+    </p>
+  );
+}
+
 /**
  * Privacy policy and terms. Written to match what the code actually does —
  * if a new feature sends data somewhere new, this page has to change with it.
@@ -16,9 +28,7 @@ function LegalPage({ title, children }: { title: string; children: React.ReactNo
       <h1>{title}</h1>
       <p className="legal-updated">Last updated {UPDATED}</p>
       {children}
-      <p className="legal-foot">
-        <Link to="/privacy">Privacy policy</Link> · <Link to="/terms">Terms and conditions</Link>
-      </p>
+      <Copyright />
     </main>
   );
 }

@@ -54,12 +54,23 @@ export default function Lighting() {
           scale={[6, 8, 1]}
           target={[0, 0, 0]}
         />
-        {/* Rim strip behind: the bright edge that separates it from the page. */}
+        {/* Rim strip behind, tinted blue-violet: the brand sheet's glow
+            around Octi's edge, and what separates white from a pale page. */}
         <Lightformer
           form="rect"
-          intensity={1.5}
+          intensity={1.8}
+          color="#7f8cff"
           position={[0, 2, -5]}
           scale={[8, 3, 1]}
+          target={[0, 0, 0]}
+        />
+        {/* Low cool kicker from behind-left: the blue under the arms. */}
+        <Lightformer
+          form="rect"
+          intensity={1.2}
+          color="#4d6bff"
+          position={[-4, -1, -3]}
+          scale={[4, 4, 1]}
           target={[0, 0, 0]}
         />
         {/* Bounce from below, standing in for light off the floor. Carries
@@ -68,7 +79,7 @@ export default function Lighting() {
         <Lightformer
           form="rect"
           intensity={1.15}
-          color="#ffffff"
+          color="#e4e9ff"
           position={[0, -3, 1]}
           rotation={[Math.PI / 2, 0, 0]}
           scale={[6, 6, 1]}
@@ -78,7 +89,7 @@ export default function Lighting() {
       {/* Grounding. Higher resolution and more blur than a plain shadow map,
           which is what keeps the contact soft instead of a hard ellipse. */}
       <ContactShadows
-        position={[0, -1.34, 0]}
+        position={[0, -1.3, 0]}
         opacity={0.5}
         scale={6}
         blur={3.2}

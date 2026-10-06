@@ -28,7 +28,7 @@ export default defineConfig({
       manifest: {
         name: 'Student OS',
         short_name: 'Student OS',
-        description: 'Calendar, tasks, schedule, timers and an AI assistant.',
+        description: 'Calendar, tasks, schedule, timers and an AI assistant. © 2026 Bhaskar Nayal.',
         theme_color: '#2E5334',
         // Matches the icon's own badge, so the splash behind it isn't a
         // pale rectangle around a dark tile.

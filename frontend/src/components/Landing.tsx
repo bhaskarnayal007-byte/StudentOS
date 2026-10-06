@@ -221,7 +221,7 @@ export default function Landing() {
 
       <footer className="landing-foot">
         <div className="wrap landing-foot-inner">
-          <span>Student OS</span>
+          <span>© 2026 Student OS · Created by Bhaskar Nayal</span>
           <span className="landing-foot-links">
             <Link to="/signup">Create an account</Link>
             <Link to="/signin">Sign in</Link>

@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "A productivity PWA — tasks, calendar, schedule, timers and spending — with an AI assistant that operates the app through tool calls.",
+  "author": "Bhaskar Nayal",
   "license": "MIT",
   "type": "module",
   "engines": {

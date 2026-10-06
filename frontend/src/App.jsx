@@ -17,7 +17,7 @@ import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
 import Landing from './components/Landing'
-import { Privacy, Terms } from './components/Legal'
+import { Privacy, Terms, Copyright } from './components/Legal'
 import { useSession, signOut, deleteAccount } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
@@ -184,6 +184,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
 
         <main>{children}</main>
       </div>
+      <Copyright />
     </>
   )
 }

@@ -8,6 +8,8 @@ import { Suspense, lazy } from "react";
 import { openShortcut } from "../AppLauncherSidebar.jsx";
 import { ThemeToggle } from "../../App.jsx";
 import { useStore } from "../../store.jsx";
+import { useNow } from "../../useNow.js";
+import { Copyright } from "../Legal";
 
 // three.js and react-three-fiber are more than half the app's JavaScript, and
 // this is the only screen that renders them. Splitting them out means every
@@ -29,8 +31,15 @@ type Props = {
  */
 export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props) {
   const { state } = useStore() as {
-    state: { profileName: string; shortcuts: Shortcut[] };
+    state: { profileName: string; shortcuts: Shortcut[]; timer: { endsAt: number } | null };
   };
+
+  // Octi mirrors what you're doing: headphones on while a timer runs, asleep
+  // late at night. Checked each minute so it wakes up on its own.
+  const now = useNow(60_000);
+  const hour = new Date(now).getHours();
+  const mood =
+    state.timer && state.timer.endsAt > now ? "focus" : hour >= 23 || hour < 6 ? "sleeping" : "idle";
 
   return (
     <div className="home">
@@ -59,7 +68,7 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
           {/* The stage keeps its size while the canvas loads, so nothing
               below it jumps when Octi arrives. */}
           <Suspense fallback={<div className="mascot-stage" />}>
-            <OctopusMascot onClick={() => onGoTo("Assistant")} />
+            <OctopusMascot mood={mood} onClick={() => onGoTo("Assistant")} />
           </Suspense>
         </div>
 
@@ -85,6 +94,8 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
           </div>
         </div>
       </div>
+
+      <Copyright />
     </div>
   );
 }
