@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useReducer, useState } fr
 import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
 import { pull, push, subscribe, reconcile, readRev } from './lib/cloudSync.js'
+import { descendants } from './lib/topics.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE STATE FILE. Everything the app knows lives in one object, defined here.
@@ -57,6 +58,7 @@ const emptyState = {
   timer: null,        // { endsAt, label, startedAt } or null
   focusSessions: [],  // { id, endedAt, minutes } — one per timer run to completion
   notes: [],          // { id, text, courseId?, updatedAt }
+  topics: [],         // { id, courseId, parentId, text, done, collapsed } — a subject's mind map
   theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
@@ -119,6 +121,8 @@ function reducer(state, action) {
         notes: state.notes.map(n =>
           n.courseId === action.id ? { ...n, courseId: undefined } : n,
         ),
+        // Unlike tasks and notes, a topic means nothing without its subject.
+        topics: state.topics.filter(t => t.courseId !== action.id),
       }
 
     case 'add-event':
@@ -202,6 +206,26 @@ function reducer(state, action) {
 
     case 'delete-note':
       return { ...state, notes: state.notes.filter(n => n.id !== action.id) }
+
+    // ── Mind-map topics ──
+    case 'add-topic':
+      return {
+        ...state,
+        topics: [...state.topics, { id: newId(), done: false, collapsed: false, ...action.topic }],
+      }
+
+    case 'update-topic':
+      return {
+        ...state,
+        topics: state.topics.map(t => (t.id === action.id ? { ...t, ...action.changes } : t)),
+      }
+
+    // A topic takes its whole branch with it; orphaned sub-topics would vanish
+    // from the map but linger in the data.
+    case 'delete-topic': {
+      const gone = new Set([action.id, ...descendants(state.topics, action.id)])
+      return { ...state, topics: state.topics.filter(t => !gone.has(t.id)) }
+    }
 
     // ── Quick Launch ──
     case 'add-shortcut':

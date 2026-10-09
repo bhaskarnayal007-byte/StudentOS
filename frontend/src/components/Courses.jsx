@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 
 // The same six used by Schedule and the AI tools, so a subject's colour means
@@ -44,11 +45,19 @@ export default function Courses() {
         {state.courses.map(course => {
           const mine = state.tasks.filter(t => t.courseId === course.id)
           const open = mine.filter(t => !t.done).length
+          const topics = state.topics.filter(t => t.courseId === course.id)
+          const learned = topics.filter(t => t.done).length
 
           return (
             <li key={course.id} className="item course-item">
               <span className="course-dot" style={{ background: course.color }} />
-              <span className="grow">{course.name}</span>
+              {/* The subject opens its mind map. */}
+              <Link className="grow course-link" to={`/courses/${course.id}`}>{course.name}</Link>
+              {topics.length > 0 && (
+                <span className="chip" title="Mind-map topics learned">
+                  {learned}/{topics.length} learned
+                </span>
+              )}
               <span className="chip">
                 {open === 0 ? (mine.length ? 'all done' : 'nothing yet') : `${open} open`}
               </span>
@@ -66,7 +75,8 @@ export default function Courses() {
 
       {state.courses.length > 0 && (
         <p className="muted course-note">
-          Deleting a subject keeps its tasks — they just stop belonging to it.
+          Open a subject to map out its topics. Deleting a subject keeps its tasks
+          — they just stop belonging to it — but its mind map goes with it.
         </p>
       )}
     </div>

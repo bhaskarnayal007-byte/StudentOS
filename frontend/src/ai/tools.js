@@ -1,4 +1,5 @@
 import { todayKey, toKey } from '../dates.js'
+import { descendants } from '../lib/topics.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE TOOLS.
@@ -120,7 +121,7 @@ export const TOOL_DEFS = [
     type: 'function',
     function: {
       name: 'add_note',
-      description: 'Save a note. Use for anything the user wants kept, including a summary you just wrote.',
+      description: 'Save a note. Use for anything the user wants kept, including a summary you just wrote. Not for topics or a mind map — use add_topics for those.',
       parameters: {
         type: 'object',
         properties: {
@@ -163,6 +164,54 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'add_topics',
+      description:
+        "Add topics to a subject's mind map, optionally with nested sub-topics, in one call. " +
+        'Use this for "topics", "sub-topics", "syllabus", "mind map" or "what I need to learn". ' +
+        'Send a whole branch at once (topics with their subtopics) rather than one call per topic. ' +
+        'To add sub-topics under a topic that already exists, give its name as parent.',
+      parameters: {
+        type: 'object',
+        properties: {
+          course: { type: 'string', description: 'Name of an existing subject.' },
+          parent: { type: 'string', description: 'Existing topic to add under. Omit to add directly under the subject.' },
+          topics: { type: 'array', items: topicSchema(3) },
+        },
+        required: ['course', 'topics'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'mark_topic_learned',
+      description: "Tick a mind-map topic as learned (or untick it with learned: false).",
+      parameters: {
+        type: 'object',
+        properties: {
+          course: { type: 'string' },
+          topic: { type: 'string' },
+          learned: { type: 'boolean' },
+        },
+        required: ['course', 'topic'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_topic',
+      description: 'Delete a mind-map topic and everything under it. Only when the user clearly asks.',
+      parameters: {
+        type: 'object',
+        properties: { course: { type: 'string' }, topic: { type: 'string' } },
+        required: ['course', 'topic'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'start_timer',
       description: 'Start a countdown timer for a number of minutes.',
       parameters: {
@@ -176,6 +225,14 @@ export const TOOL_DEFS = [
     },
   },
 ]
+
+// A topic with sub-topics, nested `depth` levels deep. Spelled out rather than
+// a $ref, which not every model's tool-calling accepts.
+function topicSchema(depth) {
+  const props = { name: { type: 'string' } }
+  if (depth > 1) props.subtopics = { type: 'array', items: topicSchema(depth - 1) }
+  return { type: 'object', properties: props, required: ['name'] }
+}
 
 // Kept in step with the same list in Schedule.jsx.
 const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
@@ -295,6 +352,60 @@ export function runTool(name, args, { state, dispatch }) {
       return `Deleted ${label}.`
     }
 
+    case 'add_topics': {
+      const course = findCourse(state.courses, args.course)
+      if (!course) return `There's no subject called "${args.course}". Add it first, or pick one of: ${state.courses.map(c => c.name).join(', ') || 'none yet'}.`
+      const mine = state.topics.filter(t => t.courseId === course.id)
+      let parentId = null
+      if (args.parent) {
+        const parent = findByText(mine, args.parent)
+        if (!parent) return `${course.name} has no topic called "${args.parent}".`
+        parentId = parent.id
+        if (parent.collapsed) dispatch({ type: 'update-topic', id: parent.id, changes: { collapsed: false } })
+      }
+
+      // Ids are made here, not read back from state, so a sub-topic can point
+      // at the topic added a moment earlier in this same call. State only
+      // refreshes between the model's turns, not between dispatches.
+      let added = 0
+      const add = (list, under, depth) => {
+        if (!Array.isArray(list) || depth > 6) return
+        for (const item of list) {
+          const text = (typeof item === 'string' ? item : item?.name || '').trim()
+          if (!text) continue
+          const id = crypto.randomUUID()
+          dispatch({ type: 'add-topic', topic: { id, courseId: course.id, parentId: under, text: text.slice(0, 80) } })
+          added++
+          add(item?.subtopics, id, depth + 1)
+        }
+      }
+      add(args.topics, parentId, 0)
+      if (!added) return 'No topic names were given.'
+      return `Added ${added} topic${added === 1 ? '' : 's'} to the ${course.name} mind map${args.parent ? ` under ${args.parent}` : ''}.`
+    }
+
+    case 'mark_topic_learned': {
+      const course = findCourse(state.courses, args.course)
+      if (!course) return `There's no subject called "${args.course}".`
+      const topic = findByText(state.topics.filter(t => t.courseId === course.id), args.topic)
+      if (!topic) return `${course.name} has no topic called "${args.topic}".`
+      const learned = args.learned !== false
+      dispatch({ type: 'update-topic', id: topic.id, changes: { done: learned } })
+      return `Marked "${topic.text}" as ${learned ? 'learned' : 'not learned yet'}.`
+    }
+
+    case 'delete_topic': {
+      const course = findCourse(state.courses, args.course)
+      if (!course) return `There's no subject called "${args.course}".`
+      const topic = findByText(state.topics.filter(t => t.courseId === course.id), args.topic)
+      if (!topic) return `${course.name} has no topic called "${args.topic}".`
+      const below = descendants(state.topics, topic.id).length
+      const what = below ? `"${topic.text}" and its ${below} sub-topics` : `"${topic.text}"`
+      if (!confirmDestructive(`delete ${what} from ${course.name}`)) return 'The user said no; nothing was deleted.'
+      dispatch({ type: 'delete-topic', id: topic.id })
+      return `Deleted ${what}.`
+    }
+
     case 'start_timer': {
       const mins = Number(args.minutes)
       if (!(mins > 0)) return 'minutes must be a positive number.'
@@ -353,14 +464,32 @@ function findExpense(expenses, text) {
 // The model refers to tasks by roughly what you called them, not by id.
 // Exact match first, then "contains", so "milk" finds "Buy milk".
 function findTask(tasks, text) {
+  return findByText(tasks, text)
+}
+
+// Shared by tasks and topics: anything with a `text` the model names loosely.
+function findByText(items, text) {
   const q = (text || '').trim().toLowerCase()
   if (!q) return null
   return (
-    tasks.find(t => t.text.toLowerCase() === q) ||
-    tasks.find(t => t.text.toLowerCase().includes(q)) ||
-    tasks.find(t => q.includes(t.text.toLowerCase())) ||
+    items.find(t => t.text.toLowerCase() === q) ||
+    items.find(t => t.text.toLowerCase().includes(q)) ||
+    items.find(t => t.text && q.includes(t.text.toLowerCase())) ||
     null
   )
+}
+
+/** A subject's map as nested { name, learned, subtopics }, for the prompt. */
+function outline(topics, courseId, parentId = null) {
+  return topics
+    .filter(t => t.courseId === courseId && t.parentId === parentId)
+    .map(t => {
+      const node = { name: t.text }
+      if (t.done) node.learned = true
+      const kids = outline(topics, courseId, t.id)
+      if (kids.length) node.subtopics = kids
+      return node
+    })
 }
 
 /** { Saturday: '2026-10-03', … } for the seven days after today, so "Friday"
@@ -388,6 +517,13 @@ export function systemPrompt(state) {
     thisIs: new Date().toLocaleDateString(undefined, { weekday: 'long' }),
     nextSevenDays: nextSevenDays(),
     courses: state.courses.map(c => c.name),
+    // Each subject's mind map, so "what's left in chem?" needs no tool call
+    // and new sub-topics can name a parent that really exists.
+    mindMaps: Object.fromEntries(
+      state.courses
+        .map(c => [c.name, outline(state.topics || [], c.id)])
+        .filter(([, map]) => map.length),
+    ),
     notes: state.notes.map(n => ({
       // Truncated: a term of notes in full would dominate every prompt and be
       // paid for on every message. Enough to find and summarise one.

@@ -82,3 +82,49 @@ runTool("add_task", { text: "Essay", course: "Astrophysics" }, store);
 assert.equal(store.state.tasks[1].courseId, undefined, "unknown subject means none");
 
 console.log("courses: ok");
+
+// ── add_topics / mark_topic_learned / delete_topic ─────────────────────────
+// The store stand-in applies dispatches immediately, but the tool must not rely
+// on that: in the app, state only refreshes between the model's turns.
+function topicStore() {
+  const state = { courses: [{ id: "c1", name: "Chemistry" }], topics: [] };
+  const frozen = { ...state, topics: [] }; // what the tool sees: never updated
+  return {
+    state,
+    view: { state: frozen, dispatch(a) {
+      if (a.type === "add-topic") state.topics.push({ done: false, collapsed: false, ...a.topic });
+      if (a.type === "update-topic") state.topics = state.topics.map((t) => (t.id === a.id ? { ...t, ...a.changes } : t));
+      if (a.type === "delete-topic") state.topics = state.topics.filter((t) => t.id !== a.id);
+    } },
+  };
+}
+
+let ts = topicStore();
+let said = runTool("add_topics", {
+  course: "chem",
+  topics: [{ name: "Organic", subtopics: [{ name: "Alkanes" }, { name: "Alkenes" }] }, { name: "Physical" }],
+}, ts.view);
+assert.equal(ts.state.topics.length, 4, said);
+const organic = ts.state.topics.find((t) => t.text === "Organic");
+assert.equal(organic.parentId, null);
+assert.deepEqual(
+  ts.state.topics.filter((t) => t.parentId === organic.id).map((t) => t.text),
+  ["Alkanes", "Alkenes"],
+  "sub-topics hang off the topic made in the same call",
+);
+
+// Adding under an existing topic, found by a loose name.
+ts.view.state = { ...ts.state, topics: [...ts.state.topics] };
+runTool("add_topics", { course: "Chemistry", parent: "organic", topics: [{ name: "Alkynes" }] }, ts.view);
+assert.equal(ts.state.topics.find((t) => t.text === "Alkynes").parentId, organic.id);
+
+// Unknown subject or parent: nothing added, and the model is told why.
+assert.match(runTool("add_topics", { course: "History", topics: [{ name: "X" }] }, ts.view), /no subject/i);
+assert.match(runTool("add_topics", { course: "Chemistry", parent: "Nuclear", topics: [{ name: "X" }] }, ts.view), /no topic/i);
+assert.equal(ts.state.topics.length, 5);
+
+ts.view.state = { ...ts.state, topics: [...ts.state.topics] };
+runTool("mark_topic_learned", { course: "chem", topic: "Alkanes" }, ts.view);
+assert.equal(ts.state.topics.find((t) => t.text === "Alkanes").done, true);
+
+console.log("topics tools: ok");

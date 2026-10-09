@@ -6,7 +6,8 @@ import Schedule from './components/Schedule.jsx'
 import Timers, { AlarmWatcher } from './components/Timers.jsx'
 import Assistant from './components/Assistant.jsx'
 import Courses from './components/Courses.jsx'
-import Notes from './components/Notes.jsx'
+import CourseMap from './components/CourseMap.jsx'
+import Notes, { FileTab } from './components/Notes.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
 import AppBackground from './components/AppBackground.jsx'
@@ -115,6 +116,17 @@ function AppShell() {
         <Route path={FINANCE_PATH} element={<HomePage {...panelProps} />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        {/* A note's file on its own, opened from Notes in a new tab. */}
+        <Route path="/view/:id" element={<FileTab />} />
+        {/* A subject's mind map, inside the usual frame so Courses stays lit. */}
+        <Route
+          path="/courses/:id"
+          element={
+            <Chrome financeOpen={financeOpen} onToggleFinance={toggleFinance}>
+              <CourseMap />
+            </Chrome>
+          }
+        />
 
         {SECTIONS.filter(s => s.path !== '/').map(({ path, name, Panel }) => (
           <Route
@@ -144,6 +156,9 @@ function AppShell() {
 
 /** Header, nav and sidebar — the frame every section but Home sits inside. */
 function Chrome({ financeOpen, onToggleFinance, children }) {
+  // Notes wants every pixel for writing, so the Finance card stays off it.
+  const onNotes = useLocation().pathname === '/notes'
+
   return (
     <>
       <header>
@@ -179,7 +194,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
         {/* Sidebar column: the app shortcuts, then Finance as its own card. */}
         <div className="side">
           <AppLauncherSidebar />
-          <SpendingToggle open={financeOpen} onToggle={onToggleFinance} />
+          {!onNotes && <SpendingToggle open={financeOpen} onToggle={onToggleFinance} />}
         </div>
 
         <main>{children}</main>

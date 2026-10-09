@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store.jsx";
-import { addPdfNotes } from "../../lib/pdfStore.js";
+import { ICON, addFileNotes, kindOf } from "../../lib/fileStore.js";
 import { openable } from "./SectionWidgets";
 
 type Note = { id: string; text: string; pdf?: { name: string } };
 
 const SHOWN = 4;
 
-/** The latest notes, one click from opening, and a drop target for PDFs. */
+/** The latest notes, one click from opening, and a drop target for files. */
 export default function NotesWidget() {
   const { state, dispatch } = useStore() as {
     state: { notes: Note[] };
@@ -22,7 +22,7 @@ export default function NotesWidget() {
   async function drop(e: React.DragEvent) {
     e.preventDefault();
     setDragging(false);
-    const id = await addPdfNotes(e.dataTransfer.files, dispatch);
+    const id = await addFileNotes(e.dataTransfer.files, dispatch);
     if (id) openNote(id);
   }
 
@@ -46,7 +46,7 @@ export default function NotesWidget() {
             <li key={note.id}>
               <button className="notes-item" onClick={() => openNote(note.id)}>
                 <span className="notes-item-title">
-                  {note.pdf && "📄 "}
+                  {note.pdf && ICON[kindOf(note.pdf.name) as keyof typeof ICON] + " "}
                   {note.text.split("\n").find((l) => l.trim())?.trim() || "Untitled"}
                 </span>
               </button>
@@ -55,7 +55,7 @@ export default function NotesWidget() {
         </ul>
       )}
 
-      <p className="widget-drop">Drop PDFs here to save them as notes</p>
+      <p className="widget-drop">Drop PDFs, photos, slides, docs or sheets here</p>
     </section>
   );
 }

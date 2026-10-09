@@ -15,6 +15,7 @@
   --color-base:         #F3F0EA;  /* 60% — the page */
   --color-surface:      #FFFFFF;  /* 30% — cards, panels, modals, sidebar */
   --color-text:         #1C1B19;
+  --color-heading:      var(--color-text);  /* pearl white has nothing to stand on in light */
   --color-accent:       #2E5334;  /* 10% — interactive only */
   --color-accent-hover: #25422A;
   --color-border:       #E4DFD5;
@@ -63,6 +64,7 @@
   --color-base:         #2B2E27;
   --color-surface:      #3A3D38;
   --color-text:         #EDEAE2;
+  --color-heading:      #F4F0E8;  /* pearl white: Home's widget titles */
   --color-accent:       #9BB08C;
   --color-accent-hover: #B3C4A6;
   --color-border:       #4A4D46;
@@ -89,6 +91,7 @@
     --color-base:         #2B2E27;
     --color-surface:      #3A3D38;
     --color-text:         #EDEAE2;
+    --color-heading:      #F4F0E8;
     --color-accent:       #9BB08C;
     --color-accent-hover: #B3C4A6;
     --color-border:       #4A4D46;
@@ -269,16 +272,18 @@ nav::-webkit-scrollbar { display: none; }
   padding: var(--s2) var(--s4);
   border: 1px solid transparent;
   background: none;
-  color: var(--color-text-2);
+  /* Section names are the way around the app, so they're a size up and in
+     the accent rather than greyed-out body text. */
+  color: var(--color-accent);
   font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 600;
+  font-size: var(--t-md);
+  font-weight: 700;
   border-radius: var(--r-sm);
   cursor: pointer;
   transition: color var(--fast) var(--ease), background var(--fast) var(--ease),
               transform var(--fast) var(--ease);
 }
-.tab:hover { color: var(--color-text); background: var(--color-sunken); }
+.tab:hover { color: var(--color-accent-hover); background: var(--color-accent-wash); }
 /* Active state = interactive state, so the accent belongs here. */
 .tab.active {
   background: var(--color-accent);
@@ -555,6 +560,19 @@ button.ghost:hover { color: var(--color-accent); }
               transform var(--fast) var(--ease);
 }
 .cal-day:hover { background: var(--color-accent-wash); border-color: var(--color-accent); }
+/* Square cells were sized for an 880px column; at full width they'd make the
+   month taller than the screen. Wide cells keep a sensible height instead. */
+@media (min-width: 1100px) {
+  .cal-day { aspect-ratio: auto; height: clamp(56px, 9vh, 96px); }
+  .calendar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: var(--s5);
+    align-items: start;
+  }
+  .calendar .cal-grid { margin-bottom: 0; }
+  .calendar .day-detail { padding-left: var(--s5); border-left: 1px solid var(--color-border); }
+}
 .cal-day.today { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 /* Selected = interactive state → accent. */
 .cal-day.selected {
@@ -679,6 +697,13 @@ button.ghost:hover { color: var(--color-accent); }
 .suggestion:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
 .messages { display: flex; flex-direction: column; gap: var(--s2); max-height: 48vh; overflow-y: auto; }
+
+/* On the Octi page the conversation fills the panel, input pinned to the
+   bottom, instead of a 48vh box floating at the top. */
+main:has(> .chat) { display: flex; flex-direction: column; min-height: 0; }
+main > .chat { flex: 1; min-height: 0; }
+main > .chat .messages { flex: 1; max-height: none; min-height: 0; }
+main > .chat .chat-empty { margin: auto 0; }
 
 .bubble {
   max-width: 82%;
@@ -1037,6 +1062,19 @@ button.ghost.always:hover { color: var(--color-accent); }
 .orbit-col { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
 .orbit-centre { display: grid; place-items: center; }
 
+/* On a wide screen the 880px column left most of the window empty and made
+   Home scroll. Widen it, and let each flank lay its widgets out two across. */
+@media (min-width: 1200px) {
+  .app:has(> .home) { max-width: 1480px; }
+  .home { max-width: none; }
+  .orbit-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .orbit-col > .home-buttons { grid-column: 1 / -1; }
+}
+
 .mascot-button {
   display: flex;
   flex-direction: column;
@@ -1129,8 +1167,9 @@ button.ghost.always:hover { color: var(--color-accent); }
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s2) var(--s4);
-  font-size: var(--t-sm);
+  /* A size up from a chip: these are the app's quick-launch buttons. */
+  padding: var(--s3) var(--s5);
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--color-text);
   background: var(--color-surface);
@@ -1142,7 +1181,7 @@ button.ghost.always:hover { color: var(--color-accent); }
               transform var(--fast) var(--ease);
 }
 .home-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
-.home-btn-icon { width: 17px; height: 17px; object-fit: contain; flex: none; }
+.home-btn-icon { width: 20px; height: 20px; object-fit: contain; flex: none; }
 
 /* Surface, not sunken: with the enclosing panel gone these sit directly on the
    animated background and have to be opaque enough to read against it. */
@@ -1161,9 +1200,9 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 .widget-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
 .widget-head h3 {
-  font-size: var(--t-xs);
+  font-size: 15px;
   font-weight: 700;
-  color: var(--color-text-3);
+  color: var(--color-heading);
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -1593,6 +1632,9 @@ button.ghost.always:hover { color: var(--color-accent); }
    padding. Right for the app, wrong here: it boxed every band into a narrow
    strip and let the light-theme backdrop show down both edges. */
 .app:has(> .landing) { max-width: none; padding: 0; }
+/* Every section inside the app frame (Tasks, Calendar, Timers, Octi…) uses
+   the whole window rather than an 880px column with empty sides. */
+.app:has(> .body) { max-width: none; }
 
 .landing h1, .landing h2, .landing h3 { color: var(--ink); }
 .landing .wrap {
@@ -2035,6 +2077,141 @@ button.ghost.always:hover { color: var(--color-accent); }
   border-radius: 50%;
 }
 .course-item { gap: var(--s3); }
+.course-link { color: var(--color-text); text-decoration: none; font-weight: 600; }
+.course-link:hover { color: var(--color-accent); }
+.course-link::after { content: ' →'; color: var(--color-text-3); font-weight: 400; }
+
+/* ─── Mind map ──────────────────────────────────────────────────────────────
+   One subject's topics as a top-down tree. lib/topics.js decides where every
+   card goes; this only paints them. --course is the subject's colour. */
+.course-map { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.map-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3) var(--s4);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--color-border);
+}
+.map-back { color: var(--color-text-3); text-decoration: none; font-size: var(--t-sm); }
+.map-back:hover { color: var(--color-accent); }
+.map-title { display: flex; align-items: center; gap: var(--s2); margin: 0 auto 0 0; font-size: var(--t-xl); }
+.map-progress { display: grid; gap: 4px; min-width: 140px; font-size: var(--t-xs); }
+.map-bar { height: 6px; border-radius: var(--r-pill); background: var(--color-sunken); overflow: hidden; }
+.map-bar span { display: block; height: 100%; background: var(--course, var(--color-accent)); transition: width var(--slow, 0.3s); }
+
+.map-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 60vh;
+  overflow: auto;
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.map-stage { position: relative; margin: 0 auto; }
+.map-lines { position: absolute; inset: 0; pointer-events: none; }
+.map-lines path {
+  fill: none;
+  stroke: var(--course, var(--color-accent));
+  stroke-opacity: 0.55;
+  stroke-width: 2;
+}
+.map-empty { position: absolute; left: 0; right: 0; top: 140px; }
+
+.map-node {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--course, var(--color-accent));
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  font-size: var(--t-sm);
+  transition: border-color var(--fast, 0.15s), box-shadow var(--fast, 0.15s);
+}
+.map-node:hover { border-color: var(--course, var(--color-accent)); }
+.map-node:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-focus-ring); }
+.map-node input[type='checkbox'] { flex: none; margin: 0; accent-color: var(--course, var(--color-accent)); }
+.map-text {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  font-weight: 600;
+  /* Hyphenate long words ("Thermody-namics") rather than snapping them at
+     any letter; break-word is only the fallback for one that still won't fit. */
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+/* Learned: tinted with the accent, not struck through — it's progress, not gone. */
+.map-node.done {
+  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  border-color: var(--color-accent);
+  border-top-color: var(--color-accent);
+}
+.map-node.done .map-text { color: var(--color-text); }
+.map-edit { flex: 1; min-width: 0; padding: 2px 6px; font: inherit; }
+
+/* The subject: the trunk of the tree, so it reads heavier than any topic. */
+.map-root {
+  justify-content: center;
+  background: var(--course, var(--color-accent));
+  border-color: var(--course, var(--color-accent));
+  color: #fff;
+  font-size: var(--t-md);
+  text-align: center;
+}
+.map-root .map-text { flex: none; max-width: 100%; font-weight: 700; }
+.map-root .map-icon { color: #fff; background: rgba(255, 255, 255, 0.18); }
+
+.map-fold {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  background: var(--color-sunken);
+  color: var(--color-text-2);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.map-fold:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+/* Add and delete float above the card, only when you're on it. */
+.map-actions {
+  position: absolute;
+  top: -12px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--fast, 0.15s);
+}
+.map-node:hover .map-actions,
+.map-node:focus-within .map-actions { opacity: 1; }
+.map-icon {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  background: var(--color-surface);
+  color: var(--color-text-2);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.map-icon:hover { color: var(--color-accent); border-color: var(--color-accent); }
+@media (hover: none) { .map-actions { opacity: 1; } }
 .course-chip { display: inline-flex; align-items: center; gap: 6px; }
 .course-note { display: block; margin-top: var(--s4); text-align: left; }
 
@@ -2095,74 +2272,115 @@ button.ghost.always:hover { color: var(--color-accent); }
 /* ─── Notes ─────────────────────────────────────────────────────────────────
    Two panes: the note list as its own sidebar, the open note beside it.
    Under 700px they stack, and only one shows at a time. */
+/* Notes is a writing surface, so it takes the whole window: the page drops
+   its 880px cap, and the panel stretches down to the footer. */
+.app:has(.notes, .course-map, main > .chat) {
+  max-width: none;
+  height: 100dvh;
+  /* On a short window the page scrolls rather than squashing the panel flat. */
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+}
+.app:has(.notes, .course-map, main > .chat) > .body { flex: 1; min-height: 0; align-items: stretch; }
+.app:has(.notes, .course-map, main > .chat) .side { align-self: flex-start; }
+main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+
 .notes {
+  flex: 1;
   display: grid;
-  grid-template-columns: minmax(200px, 260px) 1fr;
-  gap: var(--s4);
-  min-height: 60vh;
+  grid-template-columns: minmax(220px, 290px) 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 420px;
 }
 .notes-side {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  padding-right: var(--s4);
+  padding: var(--s4);
+  background: var(--color-sunken);
   border-right: 1px solid var(--color-border);
   min-width: 0;
+  min-height: 0;
 }
 .notes-index {
   list-style: none;
-  margin: 0;
+  margin: var(--s2) 0 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  align-content: start;
+  gap: var(--s1);
   overflow-y: auto;
-  max-height: 65vh;
+  flex: 1;
+  min-height: 0;
 }
 .notes-item {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
-  padding: var(--s2) var(--s3);
-  border: none;
+  padding: var(--s3);
+  border: 1px solid transparent;
   border-radius: var(--r-md);
   background: none;
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
+  transition: background var(--fast, 0.15s), border-color var(--fast, 0.15s);
 }
-.notes-item:hover { background: var(--color-sunken); }
-.notes-item.active { background: var(--color-sunken); box-shadow: inset 3px 0 0 var(--color-accent); }
-.notes-item-title {
-  font-weight: 600;
+.notes-item:hover { background: var(--color-surface); }
+.notes-item.active {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+.notes-item-title,
+.notes-item-snippet {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.notes-item-title { font-weight: 600; }
+.notes-item-snippet { font-size: var(--t-sm); color: var(--color-text-2); }
 .notes-item-meta { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-xs); }
 
-.notes-editor { display: flex; flex-direction: column; min-width: 0; }
+.notes-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s4) clamp(var(--s5), 4vw, 64px) var(--s5);
+}
+.notes-editor > .placeholder { margin: auto; }
 .notes-back { display: none; }
 .note-meta {
   display: flex;
   align-items: center;
   gap: var(--s2);
-  margin-bottom: var(--s3);
+  padding-bottom: var(--s3);
+  margin-bottom: var(--s4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--t-sm);
 }
 /* Pushes the timestamp and delete to the right. */
 .note-meta .muted { margin-left: auto; }
+/* Ghost buttons only appear on a hovered .item; the toolbar has none. */
+.note-meta .ghost { opacity: 1; }
 .note-body {
   flex: 1;
   width: 100%;
-  min-height: 50vh;
+  min-height: 12em;
   padding: 0;
   border: none;
   background: none;
   color: var(--color-text);
   font: inherit;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.75;
   resize: none;
+  caret-color: var(--color-accent);
 }
-.note-body:focus-visible { outline: none; }
+.note-body::placeholder { color: var(--color-text-3); font-style: italic; }
+.note-body:focus, .note-body:focus-visible { outline: none; box-shadow: none; }
 
 .notes-add { gap: var(--s2); margin-bottom: 0; }
 /* Drop target: the whole panel, outlined while a file hovers over it. */
@@ -2176,7 +2394,122 @@ button.ghost.always:hover { color: var(--color-accent); }
   background: var(--color-sunken);
 }
 .notes-pdf-open { align-self: flex-end; margin: var(--s1) 0 var(--s3); text-decoration: none; }
-.note-body-pdf { flex: none; min-height: 6em; }
+/* The area under the toolbar. Stacked, it scrolls so a tall attachment can
+   never squeeze the writing below a usable height. */
+.note-work {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.note-split .notes-image img { max-height: 45vh; }
+
+/* The drag handle only exists where the two sit side by side. */
+.note-divider {
+  display: none;
+  position: relative;
+  width: 12px;
+  cursor: col-resize;
+  touch-action: none;
+  border-radius: var(--r-pill);
+}
+.note-divider::before {
+  content: '';
+  position: absolute;
+  inset: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--color-border);
+  transition: background var(--fast, 0.15s);
+}
+.note-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 6px;
+  height: 36px;
+  transform: translateY(-50%);
+  border-radius: var(--r-pill);
+  background: var(--color-text-3);
+}
+.note-divider:hover::before,
+.note-divider:focus-visible::before,
+.note-divider:active::before { background: var(--color-accent); }
+.note-divider:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-focus-ring); }
+
+.notes-pdf-open { display: flex; gap: var(--s4); justify-content: flex-end; }
+.notes-pdf-open a { text-decoration: none; }
+
+/* "Open in new tab": just the file, wide, with no app chrome. */
+.app:has(> .file-tab) { max-width: 1200px; }
+.file-tab { display: flex; flex-direction: column; gap: var(--s3); }
+.file-tab h2 { margin: 0; order: -2; }
+/* Links up top, not after the last of sixty slides. */
+.file-tab .notes-pdf-open { order: -1; }
+.file-tab .notes-pdf { height: 85vh; }
+.file-tab .notes-image img { max-height: 85vh; }
+.note-split .notes-pdf { height: 50vh; }
+
+/* Wide screens: attachment on the left, writing on the right, both full height. */
+@media (min-width: 1100px) {
+  .note-split {
+    display: grid;
+    grid-template-columns: minmax(0, var(--split, 50%)) auto minmax(0, 1fr);
+    gap: var(--s2);
+    overflow: hidden;
+  }
+  .note-divider { display: block; }
+  /* The gutter is reserved so drawn slides adding a scrollbar don't change
+     the width and trigger yet another redraw. */
+  .note-preview { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+  .note-split .notes-pdf { flex: 1; height: auto; min-height: 0; }
+  .note-split .notes-image { display: block; flex: 1; min-height: 0; margin-bottom: 0; overflow: hidden; }
+  .note-split .notes-image img { width: 100%; height: 100%; max-height: none; }
+  .note-split .note-body { min-height: 0; height: 100%; }
+}
+
+/* The editor is a flex column that may be shorter than its contents; the
+   attachment keeps its size and the writing area is what gives way. */
+.notes-pdf, .notes-image, .notes-file { flex: none; }
+.notes-slides { flex: none; min-height: 12em; }
+/* pptx-preview boxes the whole deck into one slide-sized black scroller with
+   inline styles; let the slides stack and the column scroll them instead. */
+.notes-slides .pptx-preview-wrapper {
+  height: auto !important;
+  overflow: visible !important;
+  background: none !important;
+}
+.notes-slides .pptx-preview-slide-wrapper {
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+}
+.notes-image {
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--s3);
+  padding: var(--s3);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+}
+.notes-image img { max-width: 100%; max-height: 60vh; border-radius: var(--r-sm); object-fit: contain; }
+
+.notes-file {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+  padding: var(--s3) var(--s4);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+}
+.notes-file-icon { font-size: 28px; line-height: 1; }
+.notes-file-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.notes-file-name strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.notes-file-name .muted { font-size: var(--t-xs); }
+.notes-file .primary { text-decoration: none; }
 
 .widget-notes-list { display: grid; gap: 2px; margin: 0; }
 .widget-drop {
@@ -2191,7 +2524,9 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 @media (max-width: 700px) {
   .notes { grid-template-columns: 1fr; }
-  .notes-side { padding-right: 0; border-right: none; }
+  .notes-side { border-right: none; }
+  .app:has(.notes, .course-map, main > .chat) { height: auto; min-height: 100dvh; }
+  .notes-editor { padding: var(--s4); }
   .notes-index { max-height: none; }
   .notes-reading .notes-side,
   .notes:not(.notes-reading) .notes-editor { display: none; }

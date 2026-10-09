@@ -21,28 +21,31 @@ export default function Calendar() {
   }
 
   return (
-    <div>
-      <div className="row between">
-        <button onClick={() => shiftMonth(-1)}>‹</button>
-        <strong>{MONTH_NAMES[month]} {year}</strong>
-        <button onClick={() => shiftMonth(1)}>›</button>
-      </div>
+    <div className="calendar">
+      {/* The month and the selected day sit side by side on a wide screen. */}
+      <div className="cal-month">
+        <div className="row between">
+          <button onClick={() => shiftMonth(-1)}>‹</button>
+          <strong>{MONTH_NAMES[month]} {year}</strong>
+          <button onClick={() => shiftMonth(1)}>›</button>
+        </div>
 
-      <div className="cal-grid">
-        {WEEKDAYS.map(w => <div key={w} className="cal-head">{w}</div>)}
+        <div className="cal-grid">
+          {WEEKDAYS.map(w => <div key={w} className="cal-head">{w}</div>)}
 
-        {/* Empty cells so the 1st lands under the correct weekday. */}
-        {Array.from({ length: blanks }, (_, i) => <div key={`b${i}`} />)}
+          {/* Empty cells so the 1st lands under the correct weekday. */}
+          {Array.from({ length: blanks }, (_, i) => <div key={`b${i}`} />)}
 
-        {days.map(({ day, key }) => (
-          <DayCell
-            key={key}
-            day={day}
-            dateKey={key}
-            selected={key === selected}
-            onSelect={() => setSelected(key)}
-          />
-        ))}
+          {days.map(({ day, key }) => (
+            <DayCell
+              key={key}
+              day={day}
+              dateKey={key}
+              selected={key === selected}
+              onSelect={() => setSelected(key)}
+            />
+          ))}
+        </div>
       </div>
 
       <DayDetail dateKey={selected} state={state} dispatch={dispatch} />

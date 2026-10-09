@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './Courses.jsx'
-import { addPdfNotes, deletePdf, getPdf } from '../lib/pdfStore.js'
+import { ACCEPT, ICON, addFileNotes, deleteFile, getFile, kindOf } from '../lib/fileStore.js'
 
 /**
  * Notes, with their own sidebar: every saved note listed on the left, the one
@@ -10,7 +10,8 @@ import { addPdfNotes, deletePdf, getPdf } from '../lib/pdfStore.js'
  * the note once you tap one, with a back button.
  *
  * Still edited in place: typing writes straight to the store, no save button.
- * Drop PDFs anywhere on the panel and each becomes a note of its own.
+ * Drop files (PDFs, photos, slides, docs, sheets) anywhere on the panel and
+ * each becomes a note of its own.
  */
 export default function Notes() {
   const { state, dispatch } = useStore()
@@ -20,6 +21,13 @@ export default function Notes() {
   const fileInput = useRef(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('')
+  const [split, setSplit] = useState(() => {
+    try { return Number(localStorage.getItem(SPLIT_KEY)) || 50 } catch { return 50 }
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem(SPLIT_KEY, String(split)) } catch { /* private window */ }
+  }, [split])
 
   const open = state.notes.find(n => n.id === openId)
 
@@ -43,7 +51,7 @@ export default function Notes() {
 
   async function attach(files) {
     leave()
-    const id = await addPdfNotes(files, dispatch, filter || undefined)
+    const id = await addFileNotes(files, dispatch, filter || undefined)
     if (id) setOpenId(id)
   }
 
@@ -55,7 +63,7 @@ export default function Notes() {
 
   function remove(id) {
     dispatch({ type: 'delete-note', id })
-    deletePdf(id)
+    deleteFile(id)
     setOpenId(null)
   }
 
@@ -74,13 +82,16 @@ export default function Notes() {
       <aside className="notes-side">
         <div className="row notes-add">
           <button className="primary grow" onClick={create}>+ New note</button>
-          <button onClick={() => fileInput.current.click()} title="Add PDF notes — or drag them here">
-            + PDF
+          <button
+            onClick={() => fileInput.current.click()}
+            title="Add PDFs, photos, slides, Word docs or spreadsheets — or drag them here"
+          >
+            + File
           </button>
           <input
             ref={fileInput}
             type="file"
-            accept="application/pdf,.pdf"
+            accept={ACCEPT}
             multiple
             hidden
             onChange={e => { attach(e.target.files); e.target.value = '' }}
@@ -107,7 +118,8 @@ export default function Notes() {
                 className={note.id === openId ? 'notes-item active' : 'notes-item'}
                 onClick={() => select(note.id)}
               >
-                <span className="notes-item-title">{note.pdf && '📄 '}{title(note.text)}</span>
+                <span className="notes-item-title">{note.pdf && ICON[kindOf(note.pdf.name)] + ' '}{title(note.text)}</span>
+                {snippet(note.text) && <span className="notes-item-snippet">{snippet(note.text)}</span>}
                 <span className="notes-item-meta">
                   <CourseChip courseId={note.courseId} />
                   <span className="muted">{when(note.updatedAt)}</span>
@@ -120,7 +132,7 @@ export default function Notes() {
         {shown.length === 0 && (
           <p className="placeholder">
             {state.notes.length === 0
-              ? 'No notes yet. Write one, drop in PDFs, or ask Octi.'
+              ? 'No notes yet. Write one, drop in files, or ask Octi.'
               : 'No notes match.'}
           </p>
         )}
@@ -135,39 +147,65 @@ export default function Notes() {
                 value={open.courseId}
                 onChange={courseId => dispatch({ type: 'update-note', id: open.id, changes: { courseId } })}
               />
-              <span className="muted">{when(open.updatedAt)}</span>
+              <span className="muted">
+                {words(open.text)} words · {when(open.updatedAt)}
+              </span>
               <button className="ghost" aria-label="Delete note" onClick={() => remove(open.id)}>✕</button>
             </div>
-            {open.pdf && <PdfView id={open.id} name={open.pdf.name} />}
-            <textarea
-              key={open.id}
-              className={open.pdf ? 'note-body note-body-pdf' : 'note-body'}
-              autoFocus={!open.pdf}
-              placeholder="Anything worth keeping — a formula, what the lecturer said, a reminder to yourself. The first line is the title."
-              value={open.text}
-              onChange={e =>
-                dispatch({ type: 'update-note', id: open.id, changes: { text: e.target.value } })
+            {/* A PDF or photo sits beside the writing on a wide screen, so
+                neither squeezes the other; a file card just sits on top. */}
+            <div
+              className={
+                open.pdf && previews(open.pdf.name)
+                  ? 'note-work note-split'
+                  : 'note-work'
               }
-            />
+              style={{ '--split': `${split}%` }}
+            >
+              {open.pdf && (
+                <div className="note-preview">
+                  <FileView id={open.id} name={open.pdf.name} size={open.pdf.size} />
+                </div>
+              )}
+              {open.pdf && previews(open.pdf.name) && <Divider value={split} onChange={setSplit} />}
+              <textarea
+                key={open.id}
+                className="note-body"
+                autoFocus={!open.pdf}
+                placeholder="Anything worth keeping — a formula, what the lecturer said, a reminder to yourself. The first line is the title."
+                value={open.text}
+                onChange={e =>
+                  dispatch({ type: 'update-note', id: open.id, changes: { text: e.target.value } })
+                }
+              />
+            </div>
           </>
         ) : (
-          <p className="placeholder">Pick a note on the left, start a new one, or drop PDFs here.</p>
+          <p className="placeholder">Pick a note on the left, start a new one, or drop files here.</p>
         )}
       </section>
     </div>
   )
 }
 
-/** The browser's own PDF viewer, fed from IndexedDB. */
-function PdfView({ id, name }) {
+/**
+ * PDFs and photos the browser can show itself. Slides, Word docs and
+ * spreadsheets it can't, so those are a card that opens them in their app.
+ * ponytail: no in-page Office preview; add mammoth/SheetJS if reading them
+ * here matters more than the extra JavaScript.
+ */
+function FileView({ id, name, size, tab = false }) {
   const [url, setUrl] = useState()
   const [missing, setMissing] = useState(false)
+  const [broken, setBroken] = useState(false)
+  const kind = kindOf(name)
 
   useEffect(() => {
     let objectUrl
     setUrl(undefined)
     setMissing(false)
-    getPdf(id).then(blob => {
+    setBroken(false)
+    getFile(id).then(blob => {
       if (!blob) return setMissing(true)
       objectUrl = URL.createObjectURL(blob)
       setUrl(objectUrl)
@@ -176,14 +214,161 @@ function PdfView({ id, name }) {
   }, [id])
 
   if (missing) {
-    return <p className="placeholder">“{name}” was added on another device — PDFs stay where they were dropped.</p>
+    return <p className="placeholder">“{name}” was added on another device — files stay where they were dropped.</p>
   }
   if (!url) return null
+
+  if (kind === 'pdf') {
+    return (
+      <>
+        <iframe className="notes-pdf" src={url} title={name} />
+        <a className="widget-link notes-pdf-open" href={url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+      </>
+    )
+  }
+  if (previews(name) && kind === 'slides' && !broken) {
+    return (
+      <>
+        <SlidesView url={url} onFail={() => setBroken(true)} />
+        <span className="notes-pdf-open">
+          {!tab && (
+            <a className="widget-link" href={`/view/${id}`} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+          )}
+          <a className="widget-link" href={url} download={name}>Download ↓</a>
+        </span>
+      </>
+    )
+  }
+  // HEIC and the like count as photos but most browsers can't draw them.
+  if (kind === 'image' && !broken) {
+    return (
+      <a className="notes-image" href={url} target="_blank" rel="noreferrer" title="Open full size">
+        <img src={url} alt={name} onError={() => setBroken(true)} />
+      </a>
+    )
+  }
   return (
-    <>
-      <iframe className="notes-pdf" src={url} title={name} />
-      <a className="widget-link notes-pdf-open" href={url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
-    </>
+    <div className="notes-file">
+      <span className="notes-file-icon" aria-hidden="true">{ICON[kind] ?? '📎'}</span>
+      <span className="notes-file-name">
+        <strong>{name}</strong>
+        <span className="muted">{(size / 1024 / 1024).toFixed(1)} MB</span>
+      </span>
+      <a className="primary" href={url} download={name}>Download</a>
+    </div>
+  )
+}
+
+/** Whether a file is shown in the page, rather than as a card to download. */
+function previews(name) {
+  const kind = kindOf(name)
+  return kind === 'pdf' || kind === 'image' || (kind === 'slides' && /\.pptx$/i.test(name))
+}
+
+/**
+ * A .pptx drawn slide by slide. The renderer (and the charting library it
+ * pulls in) is fetched only when a deck is opened, so nothing else pays for it.
+ */
+function SlidesView({ url, onFail }) {
+  const box = useRef(null)
+  const [width, setWidth] = useState(0)
+
+  // Redrawn at the new width once a resize settles, not on every pixel of a drag.
+  useEffect(() => {
+    let timer
+    const observer = new ResizeObserver(([entry]) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => setWidth(Math.round(entry.contentRect.width)), 200)
+    })
+    observer.observe(box.current)
+    return () => { observer.disconnect(); clearTimeout(timer) }
+  }, [])
+
+  useEffect(() => {
+    if (!width) return
+    const node = box.current
+    let previewer
+    let cancelled = false
+    Promise.all([import('pptx-preview'), fetch(url).then(r => r.arrayBuffer())])
+      .then(([{ init }, buf]) => {
+        if (cancelled) return
+        previewer = init(node, { width, height: Math.round((width * 9) / 16), mode: 'list' })
+        return previewer.preview(buf)
+      })
+      .catch(() => !cancelled && onFail())
+    return () => {
+      cancelled = true
+      previewer?.destroy()
+      node.innerHTML = ''
+    }
+  }, [url, width])
+
+  return <div ref={box} className="notes-slides" />
+}
+
+const SPLIT_KEY = 'notes-split'
+
+/** The handle between an attachment and the writing: drag it, or use the arrow keys. */
+function Divider({ value, onChange }) {
+  const clamp = n => Math.min(80, Math.max(20, Math.round(n)))
+
+  function drag(e) {
+    const handle = e.currentTarget
+    const box = handle.parentElement.getBoundingClientRect()
+    handle.setPointerCapture(e.pointerId)
+    document.body.style.userSelect = 'none'
+    const move = ev => onChange(clamp(((ev.clientX - box.left) / box.width) * 100))
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', () => {
+      handle.removeEventListener('pointermove', move)
+      document.body.style.userSelect = ''
+    }, { once: true })
+  }
+
+  function key(e) {
+    const step = { ArrowLeft: -5, ArrowRight: 5 }[e.key]
+    if (step) { e.preventDefault(); onChange(clamp(value + step)) }
+  }
+
+  return (
+    <div
+      className="note-divider"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize preview and notes"
+      aria-valuenow={value}
+      aria-valuemin={20}
+      aria-valuemax={80}
+      tabIndex={0}
+      onPointerDown={drag}
+      onKeyDown={key}
+      onDoubleClick={() => onChange(50)}
+      title="Drag to resize · double-click to reset"
+    />
+  )
+}
+
+/** A note's file on a page of its own, for "Open in new tab". */
+export function FileTab() {
+  const { id } = useParams()
+  const { state } = useStore()
+  const note = state.notes.find(n => n.id === id)
+
+  useEffect(() => {
+    if (note) document.title = `${title(note.text)} · Student OS`
+  }, [note])
+
+  return (
+    <div className="file-tab">
+      {note?.pdf ? (
+        <>
+          <h2>{title(note.text)}</h2>
+          <FileView id={id} name={note.pdf.name} size={note.pdf.size} tab />
+        </>
+      ) : (
+        <p className="placeholder">This file isn't on this device.</p>
+      )}
+    </div>
   )
 }
 
@@ -191,6 +376,15 @@ function PdfView({ id, name }) {
 function title(text) {
   const line = text.split('\n').find(l => l.trim())
   return line ? line.trim().slice(0, 60) : 'Untitled'
+}
+
+/** The line after the title, as a preview in the list. */
+function snippet(text) {
+  return text.split('\n').filter(l => l.trim())[1]?.trim().slice(0, 90) ?? ''
+}
+
+function words(text) {
+  return text.split(/\s+/).filter(Boolean).length
 }
 
 /** "3 minutes ago" is noise on a note; the day it was written is not. */

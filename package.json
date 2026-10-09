@@ -2,7 +2,7 @@
   "name": "student-os",
   "private": true,
   "version": "1.0.0",
-  "description": "A productivity PWA — tasks, calendar, schedule, timers and spending — with an AI assistant that operates the app through tool calls.",
+  "description": "A productivity PWA \u2014 tasks, calendar, schedule, timers and spending \u2014 with an AI assistant that operates the app through tool calls.",
   "author": "Bhaskar Nayal",
   "license": "MIT",
   "type": "module",
@@ -23,9 +23,11 @@
     "smoke": "npm run smoke --workspace backend"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "rollup": "npm:@rollup/wasm-node@^4.64.3"
   },
   "allowScripts": {
     "esbuild@0.28.2": true
-  }
+  },
+  "//rollup": "Aliased to rollup's official WebAssembly build: Windows Application Control blocks the native .node binary on this machine, which stopped vite starting. Slower to build, needs no native binary. Drop the alias once the binary is allowed."
 }
