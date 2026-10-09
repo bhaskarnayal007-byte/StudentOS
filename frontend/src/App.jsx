@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import Tasks from './components/Tasks.jsx'
 import Calendar from './components/Calendar.jsx'
 import Schedule from './components/Schedule.jsx'
@@ -11,8 +11,12 @@ import Notes, { FileTab } from './components/Notes.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
 import AppBackground from './components/AppBackground.jsx'
-import SpendingDashboard from './components/finance/SpendingDashboard'
 import SpendingToggle from './components/finance/SpendingToggle'
+
+// The dashboard's charts (recharts and its dependencies) were about a third of
+// the JavaScript every screen downloaded. It's an overlay opened on demand, so
+// it can arrive on demand too.
+const SpendingDashboard = lazy(() => import('./components/finance/SpendingDashboard'))
 import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
@@ -146,7 +150,11 @@ function AppShell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {financeOpen && <SpendingDashboard onClose={closeFinance} />}
+      {financeOpen && (
+        <Suspense fallback={null}>
+          <SpendingDashboard onClose={closeFinance} />
+        </Suspense>
+      )}
 
       {/* Octi sits outside <Routes> so he survives every navigation. */}
       <OctiDock />

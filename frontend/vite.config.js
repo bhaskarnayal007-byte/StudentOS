@@ -50,6 +50,17 @@ export default defineConfig({
         // the app opens with no network at all. Your DATA was already offline —
         // it lives in localStorage. This step is about the code itself.
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // The .pptx viewer is 1.3 MB that most people never use. Precaching
+        // it made every install download it; instead it's cached the first
+        // time a deck is opened, and works offline from then on.
+        globIgnores: ['**/pptx-preview*.js'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => /\/assets\/pptx-preview.*\.js$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'pptx-viewer', expiration: { maxEntries: 2 } },
+          },
+        ],
       },
     }),
   ],

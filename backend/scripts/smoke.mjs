@@ -2,8 +2,8 @@ import "dotenv/config";
 import { supabase } from "../src/lib/supabase.js";
 
 // End-to-end check against a running server: creates a throwaway user, gets a
-// real token, exercises the protected routes, then deletes the user again.
-// The `items` row goes with it via `on delete cascade`.
+// real token, exercises the protected routes, then deletes the user again
+// through the app's own "Delete account" route.
 
 const API = `http://localhost:${process.env.PORT || 3001}`;
 const email = `smoke-${Date.now()}@example.com`;
@@ -44,36 +44,20 @@ const token = session.session.access_token;
 const auth = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
 // ── the actual assertions ───────────────────────────────────────────────────
-const noToken = await fetch(`${API}/api/data/items`);
+// Every route but /health needs a real token. (App data no longer passes
+// through this server: it syncs straight to Supabase under row-level security.)
+const noToken = await fetch(`${API}/api/auth/me`);
 check("rejects a request with no token", noToken.status === 401, `got ${noToken.status}`);
 
-const badToken = await fetch(`${API}/api/data/items`, { headers: { Authorization: "Bearer nonsense" } });
+const badToken = await fetch(`${API}/api/auth/me`, { headers: { Authorization: "Bearer nonsense" } });
 check("rejects a bad token", badToken.status === 401, `got ${badToken.status}`);
+
+const aiNoToken = await fetch(`${API}/api/ai/generate`, { method: "POST" });
+check("AI route rejects a request with no token", aiNoToken.status === 401, `got ${aiNoToken.status}`);
 
 const me = await fetch(`${API}/api/auth/me`, { headers: auth });
 const meBody = await me.json();
 check("GET /api/auth/me returns this user", me.ok && meBody.id === userId);
-
-const post = await fetch(`${API}/api/data/items`, {
-  method: "POST", headers: auth, body: JSON.stringify({ title: "smoke test" }),
-});
-const posted = await post.json();
-check("POST /api/data/items creates a row", post.status === 201 && posted.title === "smoke test",
-  post.status === 201 ? "" : JSON.stringify(posted));
-
-// The row must come back scoped to this user, with user_id set from the token.
-const list = await fetch(`${API}/api/data/items`, { headers: auth });
-const items = await list.json();
-check("GET /api/data/items returns it", Array.isArray(items) && items.length === 1);
-check("row is scoped to the caller", items[0]?.user_id === userId);
-
-// A client must not be able to write a row onto someone else's account.
-const spoof = await fetch(`${API}/api/data/items`, {
-  method: "POST", headers: auth,
-  body: JSON.stringify({ title: "spoofed", user_id: "00000000-0000-0000-0000-000000000000" }),
-});
-const spoofed = await spoof.json();
-check("ignores a client-supplied user_id", spoofed.user_id === userId);
 
 if (process.env.AI_API_KEY) {
   const ai = await fetch(`${API}/api/ai/generate`, {
@@ -87,7 +71,11 @@ if (process.env.AI_API_KEY) {
   console.log("  skip  AI route (AI_API_KEY is not set)");
 }
 
-await supabase.auth.admin.deleteUser(userId);
+// "Delete account" in the app: the user removes themselves with their own token.
+const del = await fetch(`${API}/api/auth/me`, { method: "DELETE", headers: auth });
+const { data: after } = await supabase.auth.admin.getUserById(userId);
+check("DELETE /api/auth/me deletes the account", del.status === 204 && !after?.user, `got ${del.status}`);
+if (after?.user) await supabase.auth.admin.deleteUser(userId); // never leave a test user behind
 
 const failures = results.filter((r) => !r.pass).length;
 console.log(failures ? `\n${failures} failed.\n` : "\nAll passed. Test user deleted.\n");
