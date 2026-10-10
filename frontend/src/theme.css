@@ -1777,73 +1777,184 @@ button.ghost.always:hover { color: var(--color-accent); }
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* ─── Hero ─── */
-.hero {
+/* ─── The mark ───
+   LogoWheel paints in currentColor. Everywhere on this page it is the warm
+   off-white of the type, with the leaf green as light around it. */
+.landing .wheel { display: block; color: var(--ink); overflow: visible; }
+.wheel .wheel-turn, .wheel .wheel-handle, .wheel .wheel-spoke, .wheel .wheel-hub {
+  transform-box: view-box;
+  transform-origin: 256px 256px;
+}
+
+/* Top bar: the wheel turns as you scroll, a full turn over the page, like
+   it is being steered. Scroll-driven where supported, still elsewhere. */
+.brand-wheel { flex: none; filter: drop-shadow(0 0 10px rgba(168, 200, 154, 0.35)); }
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .brand-wheel .wheel-turn { animation: wheel-steer linear both; animation-timeline: scroll(root); }
+  }
+}
+@keyframes wheel-steer { to { transform: rotate(360deg); } }
+.landing-brand { color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
+.landing-brand:hover .brand-wheel { filter: drop-shadow(0 0 14px rgba(168, 200, 154, 0.6)); }
+
+/* Huge and barely there, turning slowly behind everything. */
+.landing-watermark {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: min(1400px, 150vw) !important;
+  height: auto !important;
+  translate: -50% -50%;
+  opacity: 0.016;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .landing-watermark .wheel-turn { animation: wheel-idle 140s linear infinite; }
+}
+@keyframes wheel-idle { to { transform: rotate(360deg); } }
+.landing > section, .landing > footer { position: relative; z-index: 1; }
+
+/* ─── Intro ───
+   One full screen: wheel and Octi, the name, the promise. The sequence is set
+   by animation-delay, so it plays once on load with no script:
+     0.1s  the rim draws, the wheel spins in
+     0.7s  spokes grow from the hub
+     1.1s  handles pop on, one after another
+     1.9s  Octi bobs up beside it
+     2.1s  "Student OS" rises letter by letter
+     2.9s  the line, the buttons, then the top bar */
+.intro {
   position: relative;
+  min-height: calc(100svh - 68px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s4);
+  padding: clamp(32px, 6vh, 72px) clamp(20px, 4vw, 56px) clamp(48px, 8vh, 96px);
   overflow: hidden;
-  min-height: min(88vh, 820px);
+  text-align: center;
+}
+.intro-glow {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: min(1100px, 130vw);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: radial-gradient(circle,
+    rgba(168, 200, 154, 0.2) 0%,
+    rgba(168, 200, 154, 0.06) 34%,
+    transparent 64%);
+}
+
+.intro-lockup {
+  position: relative;
   display: flex;
   align-items: center;
-  padding-block: var(--section);
+  justify-content: center;
 }
-/* A source for the light, off to the right where the character sits. */
-.hero-glow {
-  position: absolute;
-  top: 44%;
-  right: -6%;
-  width: min(900px, 86vw);
+.intro-wheel {
+  position: relative;
+  width: clamp(160px, 27vh, 290px);
   aspect-ratio: 1;
-  translate: 0 -50%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle,
-    rgba(168, 200, 154, 0.16) 0%,
-    rgba(168, 200, 154, 0.05) 38%,
-    transparent 68%
-  );
+  filter: drop-shadow(0 0 28px rgba(168, 200, 154, 0.35));
 }
-.hero-art {
+/* A ring of light that pulses out once the wheel stops. */
+.intro-wheel::after {
+  content: '';
   position: absolute;
-  top: 50%;
-  right: clamp(-130px, -5vw, 0px);
-  translate: 0 -50%;
-  width: min(640px, 53vw);
+  inset: 8%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(168, 200, 154, 0.5);
+  opacity: 0;
+}
+.intro-octi {
+  position: relative;
+  width: clamp(190px, 33vh, 350px);
+  margin-left: clamp(-64px, -3vw, -24px);
   pointer-events: none;
 }
-.hero-art .mascot-stage { width: 100%; }
-.hero-art .mascot-caption { display: none; }
-.hero-art .mascot-button { cursor: default; padding: 0; background: none; border: none; }
+.intro-octi .mascot-stage { width: 100%; }
+.intro-octi .mascot-caption { display: none; }
+/* width: 100% matters: the button otherwise shrinks to its only content, the
+   canvas, which sizes itself to the button — and Octi collapses to 5px. */
+.intro-octi .mascot-button { width: 100%; cursor: default; padding: 0; background: none; border: none; }
+.intro-octi-still { width: 72%; margin: 14%; }
 
-.hero-copy { position: relative; width: 100%; }
-.eyebrow {
-  display: inline-block;
-  margin-bottom: var(--s5);
-  padding: 6px 13px;
-  border-radius: var(--r-pill);
+.intro-word {
+  margin: var(--s2) 0 0;
+  font-size: clamp(52px, 9vw, 128px);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
+}
+.intro-word span[style] { display: inline-block; }
+.intro-os { color: var(--leaf); }
+.intro-lead {
+  max-width: 48ch;
+  margin: 0;
   color: var(--ink-2);
-  font-size: 10px;
+  font-size: clamp(18px, 1.7vw, 23px);
+  line-height: 1.45;
+  text-wrap: balance;
+}
+.intro-lead span { color: var(--ink); }
+.intro-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s5); margin-top: var(--s3); }
+.intro-more {
+  color: var(--ink-2);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  box-shadow: inset 0 0 0 1px rgba(246, 244, 238, 0.11), inset 0 1px 0 var(--edge-top);
+  text-decoration: none;
+  transition: color 400ms var(--swing);
 }
-.hero h1 {
-  max-width: 11ch;
-  margin: 0 0 var(--s5);
-  font-size: clamp(48px, 8.4vw, 124px);
-  line-height: 0.94;
-  letter-spacing: -0.04em;
+.intro-more:hover { color: var(--leaf); }
+.intro-fine { color: var(--ink-3); font-size: var(--t-sm); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The wheel builds itself. */
+  .wheel-intro .wheel-turn { animation: wheel-spin-in 2.1s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .wheel-intro .wheel-rim {
+    stroke-dasharray: var(--rim-len);
+    animation: wheel-draw 1.1s 0.1s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+  .wheel-intro .wheel-hub { animation: wheel-pop 0.5s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .wheel-intro .wheel-spoke { animation: wheel-grow 0.45s calc(0.7s + var(--i) * 45ms) cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .wheel-intro .wheel-handle { animation: wheel-handle 0.55s calc(1.1s + var(--i) * 70ms) cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .intro-wheel::after { animation: wheel-ring 1.4s 2.2s ease-out both; }
+
+  /* Octi arrives, then keeps a gentle float. */
+  .intro-octi { animation: octi-arrive 0.9s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  .intro-word span[style] { animation: letter-rise 0.7s calc(2.1s + var(--i) * 45ms) var(--swing) both; }
+  .intro-lead { animation: fade-up 0.8s 2.85s var(--swing) both; }
+  .intro-actions { animation: fade-up 0.8s 3.05s var(--swing) both; }
+  .intro-fine { animation: fade-up 0.8s 3.2s var(--swing) both; }
+  .landing-bar:has(~ .intro) { animation: fade-in 0.8s 3.1s ease both; }
 }
-.hero-lead {
-  max-width: 34ch;
-  margin: 0 0 var(--s6);
-  color: var(--ink-2);
-  font-size: clamp(17px, 1.5vw, 21px);
-  line-height: 1.5;
-  text-wrap: pretty;
+@keyframes wheel-spin-in { from { transform: rotate(-240deg) scale(0.7); } to { transform: none; } }
+@keyframes wheel-draw { from { stroke-dashoffset: var(--rim-len); } to { stroke-dashoffset: 0; } }
+@keyframes wheel-pop { from { transform: scale(0); } to { transform: none; } }
+@keyframes wheel-grow { from { transform: scale(0); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes wheel-handle { from { transform: scale(0.55); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes wheel-ring {
+  from { opacity: 0.9; transform: scale(0.9); }
+  to   { opacity: 0;   transform: scale(1.7); }
 }
-.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s5); }
-.hero-fine { color: var(--ink-3); font-size: var(--t-sm); }
+@keyframes octi-arrive {
+  from { opacity: 0; transform: translate(-60px, 40px) scale(0.5) rotate(-12deg); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes letter-rise {
+  from { opacity: 0; transform: translateY(0.45em); filter: blur(8px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
 
 /* ─── Section furniture ─── */
 .landing h2 {
@@ -1880,99 +1991,126 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .plate img { display: block; width: 100%; }
 
-/* ─── Say it once ───
-   The product carried by type. Each row is a sentence someone says, and the
-   things it turns into, set as a specimen rather than a screenshot: a dark app
-   shot on a dark page is muddy at any size, and a whole interface shrunk into
-   a card shows a visitor nothing they can read. */
-.says { padding-block: var(--section); }
-.says-lead {
+/* ─── How it helps ─── */
+.helps { padding-block: var(--section); }
+.eyebrow {
+  display: inline-block;
+  margin-bottom: var(--s5);
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  color: var(--leaf);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.25), inset 0 1px 0 var(--edge-top);
+}
+.helps-lead, .says-lead {
   max-width: 48ch;
-  margin: calc(var(--s6) * -1) 0 var(--section);
+  margin: calc(var(--s6) * -1 + var(--s3)) 0 clamp(36px, 5vw, 64px);
   color: var(--ink-2);
   font-size: var(--t-lg);
   line-height: 1.55;
 }
-.say-list {
+.helps-grid {
   display: grid;
-  gap: clamp(28px, 4vw, 56px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(14px, 1.6vw, 24px);
   margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: say;
 }
-.say-list > li {
+.help-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: clamp(22px, 2.2vw, 32px);
+  border-radius: var(--r-plate);
+  background: linear-gradient(180deg, rgba(246, 244, 238, 0.06), rgba(246, 244, 238, 0.015));
+  box-shadow: inset 0 1px 0 var(--edge-top), inset 0 0 0 1px rgba(246, 244, 238, 0.06), 0 28px 60px -24px var(--edge-low);
+  transition: transform 600ms var(--swing), box-shadow 600ms var(--swing), opacity 900ms var(--swing), filter 900ms var(--swing);
+}
+.help-card:hover {
+  transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 var(--edge-top), inset 0 0 0 1px rgba(168, 200, 154, 0.28), 0 36px 70px -24px var(--edge-low);
+}
+.help-icon {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: clamp(20px, 4vw, 64px);
-  align-items: center;
-  padding-top: clamp(24px, 3vw, 44px);
-  /* A rule that fades before the edge, so the list is not ruled like a table. */
-  background: linear-gradient(90deg, rgba(246, 244, 238, 0.2), transparent 85%) top left / 100% 1px no-repeat;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: var(--leaf);
+  font-size: 22px;
+  background: rgba(168, 200, 154, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.25);
 }
-.say-list blockquote {
-  margin: 0;
-  color: var(--ink);
-  font-size: clamp(22px, 2.9vw, 40px);
-  line-height: 1.18;
-  letter-spacing: -0.025em;
-  text-wrap: pretty;
-}
-.say-did { display: flex; align-items: center; gap: var(--s4); }
-.say-arrow { color: var(--leaf); font-size: var(--t-xl); line-height: 1; }
-.say-did ul {
+.help-card h3 { margin: var(--s2) 0 0; font-size: var(--t-lg); letter-spacing: -0.015em; line-height: 1.25; }
+.help-card p { margin: 0; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.6; }
+.help-bits {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s2);
-  margin: 0;
-  padding: 0;
+  gap: 6px;
+  margin: auto 0 0;
+  padding: var(--s3) 0 0;
   list-style: none;
 }
-.say-did code {
+.help-bits li {
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: 12px;
+  box-shadow: inset 0 0 0 1px rgba(246, 244, 238, 0.1);
+}
+
+/* ─── Or just tell Octi ───
+   The product as a conversation: the sentence you'd type, and the tools Octi
+   ran for it — the real names from src/ai/tools.js. */
+.says { padding-block: var(--section); }
+.says-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+}
+.says-octi { width: 96px; margin-bottom: var(--s5); filter: drop-shadow(0 12px 30px rgba(168, 200, 154, 0.25)); }
+.says-lead { margin-bottom: var(--s5); }
+.says-foot { max-width: 44ch; margin: 0; color: var(--ink-3); font-size: var(--t-md); line-height: 1.6; }
+
+.chat-demo { display: grid; gap: var(--s5); margin: 0; padding: 0; list-style: none; }
+.chat-demo > li { display: grid; gap: var(--s2); }
+.demo-you {
+  justify-self: end;
+  max-width: 88%;
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 20px 20px 6px 20px;
+  color: var(--ink);
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.4;
+  background: rgba(246, 244, 238, 0.08);
+  box-shadow: inset 0 1px 0 var(--edge-top);
+}
+.demo-octi { display: flex; align-items: center; gap: var(--s3); }
+.demo-octi img { flex: none; width: 34px; height: 34px; object-fit: contain; }
+.demo-octi ul { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.demo-octi code {
   display: inline-block;
-  padding: 7px 13px;
+  padding: 6px 12px;
   border-radius: var(--r-pill);
   color: var(--leaf);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
-  letter-spacing: 0.01em;
-  /* Inset edges rather than a border: lit on top, dark underneath. */
   box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.26), inset 0 1px 0 rgba(246, 244, 238, 0.14);
 }
-.says-foot {
-  max-width: 46ch;
-  margin: var(--section) 0 0;
-  color: var(--ink-3);
-  font-size: var(--t-md);
-  line-height: 1.6;
-}
-
-/* ─── What you get ───
-   Hairline-topped columns rather than eight boxes, which would read as a
-   pricing table. */
-.band > .does { padding-inline: 0; }
-.does-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s6) clamp(20px, 3vw, 48px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.does-grid li {
-  padding-top: var(--s4);
-  /* A gradient rule rather than a flat line: it fades out before the column
-     edge, so the grid does not look ruled. */
-  background: linear-gradient(90deg, rgba(246, 244, 238, 0.22), transparent) top left / 100% 1px no-repeat;
-}
-.does-grid h3 { margin: 0 0 var(--s2); font-size: var(--t-md); letter-spacing: -0.01em; }
-.does-grid p { margin: 0; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.6; }
+.demo-octi code::before { content: '✓ '; opacity: 0.7; }
 
 /* ─── Install ─── */
 .install { padding-block: var(--section); }
 .install-lead {
   max-width: 50ch;
-  margin: calc(var(--s6) * -1) 0 var(--section);
+  margin: calc(var(--s6) * -1 + var(--s3)) 0 var(--section);
   color: var(--ink-2);
   font-size: var(--t-lg);
   line-height: 1.55;
@@ -2010,7 +2148,15 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 
 /* ─── Closer ─── */
-.closer { padding-block: var(--section); }
+.closer { padding-block: var(--section); text-align: center; }
+.closer p { margin-inline: auto !important; }
+.closer-wheel {
+  width: clamp(110px, 14vw, 170px);
+  margin: 0 auto var(--s6);
+  filter: drop-shadow(0 0 30px rgba(168, 200, 154, 0.35));
+}
+.closer-wheel .wheel { transition: transform 1.6s var(--swing); }
+.closer-wheel:hover .wheel { transform: rotate(180deg); }
 .closer p {
   max-width: 52ch;
   margin: 0 0 var(--s6);
@@ -2030,39 +2176,27 @@ button.ghost.always:hover { color: var(--color-accent); }
   font-size: var(--t-sm);
 }
 .landing-foot a { color: var(--ink-2); }
+.landing-foot-brand { display: flex; align-items: center; gap: var(--s2); }
 
 /* ─── Narrow ─── */
+@media (max-width: 1080px) {
+  .helps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 900px) {
-  .say-list > li { grid-template-columns: 1fr; gap: var(--s4); }
-  .does-grid { grid-template-columns: repeat(2, 1fr); }
+  .says-inner { grid-template-columns: 1fr; }
   .install-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: row; gap: var(--s5); }
   .install-steps > div { flex: 1; }
 }
 
 @media (max-width: 620px) {
-  /* Octi stops being a backdrop and takes his own place in the stack: behind
-     the headline at this width he would make it unreadable. Taking him out of
-     absolute positioning makes him a flex sibling, so the hero stacks too. */
-  .hero {
-    min-height: auto;
-    flex-direction: column;
-    align-items: stretch;
-    padding-block: clamp(40px, 12vw, 72px) var(--section);
-  }
-  .hero-art {
-    position: static;
-    translate: none;
-    width: min(240px, 58vw);
-    margin: var(--s6) auto 0;
-  }
-  /* He is first in the DOM because he is the backdrop on a wide screen;
-     stacked, that puts a wordless portrait above the fold. */
-  .hero-copy { order: -1; }
-  .hero h1 { max-width: none; }
-  .hero-glow { top: 30%; right: -30%; width: 120vw; }
-  .does-grid { grid-template-columns: 1fr; }
+  .intro { min-height: calc(100svh - 60px); gap: var(--s3); }
+  .intro-wheel { width: clamp(110px, 30vw, 150px); }
+  .intro-octi { width: clamp(130px, 38vw, 180px); margin-left: -18px; }
+  .intro-word { font-size: clamp(44px, 14vw, 64px); }
+  .helps-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: column; }
+  .landing-foot-inner { flex-direction: column; align-items: flex-start; }
   :root { --r-tray: 24px; --r-plate: 17px; }
 }
 

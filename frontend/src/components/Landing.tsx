@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useReveal } from "../lib/useReveal.js";
+import LogoWheel from "./LogoWheel";
 
 // Same reasoning as HomePage: three.js is the heaviest thing we ship, and a
 // stranger deciding whether to sign up shouldn't wait for it to paint.
@@ -24,23 +25,61 @@ const SENTENCES: { said: string; did: string[] }[] = [
     did: ["add_task", "add_note"],
   },
   {
+    said: "Map out organic chem: alkanes, alkenes and alcohols",
+    did: ["add_topics"],
+  },
+  {
     said: "Gym every Monday 7 to 9, and wake me at 6:30 tomorrow",
     did: ["add_schedule_block", "set_alarm"],
   },
 ];
 
-/** What the app actually does. Dense on purpose: a student deciding in ten
- *  seconds wants the whole list, not three adjectives. */
-const DOES: [string, string][] = [
-  ["Deadlines", "To-dos with dates and priorities, sorted so the next thing is first."],
-  ["Timetable", "Your weekly blocks, and what is on now or next."],
-  ["Subjects", "Every task and note filed under the course it belongs to."],
-  ["Notes", "Lecture notes kept per subject, editable in place."],
-  ["Focus", "A timer that logs the session, and a week you can look back at."],
-  ["Spending", "What went where this month, by category."],
-  ["Octi", "Tell him in a sentence. He does it, and says what he touched."],
-  ["Offline", "Keeps working with no signal, catches up when you are back."],
+/** How it helps, in the four jobs a term actually throws at a student. */
+const HELPS: { icon: string; title: string; body: string; bits: string[] }[] = [
+  {
+    icon: "◷",
+    title: "Never miss a deadline",
+    body: "Every due date, class and exam in one timeline, sorted so the next thing is always on top.",
+    bits: ["Tasks & priorities", "Calendar", "Weekly timetable"],
+  },
+  {
+    icon: "✣",
+    title: "See the whole subject",
+    body: "Map each course as a tree of topics and sub-topics, and tick them off as you learn them.",
+    bits: ["Mind maps", "Progress per subject"],
+  },
+  {
+    icon: "❏",
+    title: "Keep every note together",
+    body: "Notes filed by subject, with the lecture slides, PDFs and photos open right beside them.",
+    bits: ["PDF & slides", "Photos & docs"],
+  },
+  {
+    icon: "◉",
+    title: "Focus, then switch off",
+    body: "A study timer that logs your week, a spending tracker, and it all keeps working offline.",
+    bits: ["Focus timer", "Spending", "Offline"],
+  },
 ];
+
+/** "Student OS", one span per letter so the intro can raise them in turn. */
+function Wordmark() {
+  const word = (text: string, from: number, className?: string) =>
+    [...text].map((ch, i) => (
+      <span key={from + i} className={className} style={{ "--i": from + i } as React.CSSProperties}>
+        {ch}
+      </span>
+    ));
+  return (
+    <h1 className="intro-word" aria-label="Student OS">
+      <span aria-hidden="true">
+        {word("Student", 0)}
+        <span className="intro-space"> </span>
+        {word("OS", 8, "intro-os")}
+      </span>
+    </h1>
+  );
+}
 
 /** The pill CTA. The arrow lives in its own well flush to the right inner
  *  padding, and leans out on hover, which makes the press feel mechanical. */
@@ -81,12 +120,16 @@ export default function Landing() {
           is what stops it looking like printer toner. */}
       <div className="grain" aria-hidden="true" />
 
+      {/* The mark, huge and barely there, turning behind the whole page. */}
+      <LogoWheel size="100%" className="landing-watermark" />
+
       <header className="landing-bar">
         <div className="wrap landing-bar-inner">
-          <span className="landing-brand">
-            <img src="/logo-mark.png" alt="" className="brand-mark" />
+          <a href="#top" className="landing-brand" aria-label="Student OS, back to top">
+            {/* Turns with the scroll, like a wheel being steered. */}
+            <LogoWheel size={34} className="brand-wheel" />
             Student OS
-          </span>
+          </a>
           <nav className="landing-nav">
             {/* Always present, whether or not the browser offers its own
                 install prompt: the page is how people get the app, so there
@@ -97,47 +140,81 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="hero">
-        {/* Warm light behind the character, so the ground has a source rather
-            than being an even field of near-black. */}
-        <div className="hero-glow" aria-hidden="true" />
+      {/* The opening: the wheel builds itself and spins to a stop, Octi bobs
+          up beside it, then the name and the promise. Everything after this
+          is the explanation. */}
+      <section className="intro" id="top">
+        <div className="intro-glow" aria-hidden="true" />
 
-        <div className="hero-art" aria-hidden="true">
-          <Suspense fallback={null}>
-            <OctopusMascot onClick={() => {}} />
-          </Suspense>
+        <div className="intro-lockup">
+          <div className="intro-wheel">
+            <LogoWheel size="100%" intro title="Student OS logo" />
+          </div>
+          <div className="intro-octi" aria-hidden="true">
+            <Suspense fallback={<img src="/mascot.png" alt="" className="intro-octi-still" />}>
+              <OctopusMascot onClick={() => {}} />
+            </Suspense>
+          </div>
         </div>
 
-        <div className="wrap hero-copy">
-          <span className="eyebrow" data-reveal>For first years</span>
-          <h1 data-reveal>Your term, handled.</h1>
-          <p className="hero-lead" data-reveal>
-            Deadlines, timetable, notes and money in one place. Tell Octi what
-            happened and he files it.
+        <Wordmark />
+        <p className="intro-lead">
+          Steer your whole term from one place. <span>Octi does the paperwork.</span>
+        </p>
+        <div className="intro-actions">
+          <Cta>Start for free</Cta>
+          <a href="#helps" className="intro-more">See how it helps ↓</a>
+        </div>
+        <span className="intro-fine">Free. No card. Works offline.</span>
+      </section>
+
+      <section className="helps" id="helps">
+        <div className="wrap">
+          <span className="eyebrow" data-reveal>Built for first years</span>
+          <h2 data-reveal>How Student OS helps</h2>
+          <p className="helps-lead" data-reveal>
+            Everything a term throws at you, in one place that keeps itself tidy.
           </p>
-          <div className="hero-actions" data-reveal>
-            <Cta>Start for free</Cta>
-            <span className="hero-fine">Free. No card. Works offline.</span>
-          </div>
+
+          <ul className="helps-grid">
+            {HELPS.map(({ icon, title, body, bits }, i) => (
+              <li key={title} className="help-card" data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
+                <span className="help-icon" aria-hidden="true">{icon}</span>
+                <h3>{title}</h3>
+                <p>{body}</p>
+                <ul className="help-bits">
+                  {bits.map((b) => <li key={b}>{b}</li>)}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      {/* The product, as type. Each row is a sentence someone says and the
-          things it turns into. */}
-      <section className="says">
-        <div className="wrap">
-          <h2 data-reveal>Say it once.</h2>
-          <p className="says-lead" data-reveal>
-            Octi reads the date, the subject and the amount out of the sentence,
-            then does every part of it.
-          </p>
+      {/* The product, as a conversation: what you say, and what Octi does
+          with it, using the real tool names. */}
+      <section className="says band">
+        <div className="wrap says-inner">
+          <div className="says-copy">
+            <img src="/mascot.png" alt="" className="says-octi" data-reveal />
+            <h2 data-reveal>Or just tell Octi.</h2>
+            <p className="says-lead" data-reveal>
+              Say it the way you would to a friend. Octi reads the date, the
+              subject and the amount out of the sentence, then does every part
+              of it.
+            </p>
+            <p className="says-foot" data-reveal>
+              He shows you everything he touched, every time, and asks before
+              deleting anything.
+            </p>
+          </div>
 
-          <ol className="say-list">
+          <ol className="chat-demo">
             {SENTENCES.map(({ said, did }, i) => (
               <li key={said} data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
-                <blockquote>“{said}”</blockquote>
-                <div className="say-did">
-                  <span className="say-arrow" aria-hidden="true">↳</span>
+                <p className="demo-you">{said}</p>
+                <div className="demo-octi">
+                  <img src="/mascot.png" alt="" />
                   <ul>
                     {did.map((tool) => (
                       <li key={tool}><code>{tool}</code></li>
@@ -147,25 +224,6 @@ export default function Landing() {
               </li>
             ))}
           </ol>
-
-          <p className="says-foot" data-reveal>
-            He shows you every one of those, every time. And asks first before
-            deleting anything.
-          </p>
-        </div>
-      </section>
-
-      <section className="band">
-        <div className="wrap does">
-          <h2 data-reveal>What you get</h2>
-          <ul className="does-grid">
-            {DOES.map(([name, line], i) => (
-              <li key={name} data-reveal style={{ transitionDelay: `${(i % 4) * 60}ms` }}>
-                <h3>{name}</h3>
-                <p>{line}</p>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
@@ -212,8 +270,14 @@ export default function Landing() {
       </section>
 
       <section className="wrap closer">
-        <h2 data-reveal>It is free, and it stays yours.</h2>
-        <p data-reveal>Your notes and your spending are visible to you and nobody else.</p>
+        <div className="closer-wheel" data-reveal>
+          <LogoWheel size="100%" title="Student OS logo" />
+        </div>
+        <h2 data-reveal>Your term, handled.</h2>
+        <p data-reveal>
+          It is free, and it stays yours. Your notes and your spending are
+          visible to you and nobody else.
+        </p>
         <div data-reveal>
           <Cta>Start for free</Cta>
         </div>
@@ -221,7 +285,10 @@ export default function Landing() {
 
       <footer className="landing-foot">
         <div className="wrap landing-foot-inner">
-          <span>© 2026 Student OS · Created by Bhaskar Nayal</span>
+          <span className="landing-foot-brand">
+            <LogoWheel size={22} />
+            © 2026 Student OS · Created by Bhaskar Nayal
+          </span>
           <span className="landing-foot-links">
             <Link to="/signup">Create an account</Link>
             <Link to="/signin">Sign in</Link>
