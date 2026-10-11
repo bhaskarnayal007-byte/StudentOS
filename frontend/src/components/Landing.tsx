@@ -62,6 +62,17 @@ const HELPS: { icon: string; title: string; body: string; bits: string[] }[] = [
   },
 ];
 
+/**
+ * Slices of the halo above and below the face (which is slice 0). Each slice
+ * draws the balls at the width a sphere has at that height, so stacked they
+ * read as round; past the thin middle band only the balls and hub remain.
+ */
+const SLICES = [-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7].map((d) => ({
+  d,
+  k: Math.sqrt(1 - (d / 8) ** 2),
+  cap: Math.abs(d) > 2,
+}));
+
 /** "Student OS", one span per letter so the intro can raise them in turn. */
 function Wordmark() {
   const word = (text: string, from: number, className?: string) =>
@@ -140,14 +151,25 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* The opening: the wheel builds itself and spins to a stop, Octi bobs
-          up beside it, then the name and the promise. Everything after this
+      {/* The opening: the wheel builds itself alone and spins to a stop, then
+          lifts to hover over Octi's head as he rises in, then the name and the
+          promise. Everything after this
           is the explanation. */}
       <section className="intro" id="top">
         <div className="intro-glow" aria-hidden="true" />
 
         <div className="intro-lockup">
           <div className="intro-wheel">
+            {/* Slices stacked through the face give the halo real depth once
+                it tilts. Flat SVG layers in CSS 3D; no WebGL needed. */}
+            {SLICES.map(({ d, k, cap }) => (
+              <LogoWheel
+                key={d}
+                size="100%"
+                className={`wheel-edge${cap ? " wheel-cap" : ""}`}
+                style={{ "--d": d, "--k": k } as React.CSSProperties}
+              />
+            ))}
             <LogoWheel size="100%" intro title="Student OS logo" />
           </div>
           <div className="intro-octi" aria-hidden="true">

@@ -1822,9 +1822,10 @@ button.ghost.always:hover { color: var(--color-accent); }
      0.1s  the rim draws, the wheel spins in
      0.7s  spokes grow from the hub
      1.1s  handles pop on, one after another
-     1.9s  Octi bobs up beside it
-     2.1s  "Student OS" rises letter by letter
-     2.9s  the line, the buttons, then the top bar */
+     2.3s  the wheel lifts and shrinks, Octi rises beneath it
+     3.2s  "Student OS" rises letter by letter
+     3.9s  the line, the buttons, then the top bar
+   The wheel then hovers over Octi's head for good. */
 .intro {
   position: relative;
   min-height: calc(100svh - 68px);
@@ -1852,17 +1853,43 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 
 .intro-lockup {
+  --wheel: clamp(84px, 13vh, 140px);
+  --octi: clamp(130px, 20vh, 220px);
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 .intro-wheel {
   position: relative;
-  width: clamp(160px, 27vh, 290px);
+  z-index: 1;
+  width: var(--wheel);
+  /* Pulls Octi up so the wheel floats just clear of his head. */
+  margin-bottom: calc(var(--octi) * -0.13);
+  /* Laid flat over his head like a halo, seen from just above. */
+  transform: perspective(600px) rotateX(62deg);
   aspect-ratio: 1;
-  filter: drop-shadow(0 0 28px rgba(168, 200, 154, 0.35));
+  transform-style: preserve-3d;
 }
+/* The glow sits on the face only: a filter on the wrapper would flatten the 3D. */
+.intro-wheel > .wheel-intro {
+  position: relative;
+  filter: drop-shadow(0 0 22px rgba(168, 200, 154, 0.35));
+}
+/* The slices: lit from above, so each is lighter the higher it sits, and the
+   balls and hub shrink like a sphere's cross-sections (--k, set in Landing). */
+.intro-wheel > .wheel-edge {
+  position: absolute;
+  inset: 0;
+  /* One step is a ball's radius / 8 (27 of the 512 viewBox, 8 slices to
+     the pole), so the stack is exactly as deep as a ball is wide. */
+  transform: translateZ(calc(var(--d) * var(--wheel) * 27 / 512 / 8));
+  color: color-mix(in oklab, var(--ink) calc(72% + var(--d) * 4%), #1d2a1a);
+}
+.wheel-edge .wheel-handle circle { r: calc(27px * var(--k)); }
+.wheel-edge .wheel-hub { r: calc(30px * var(--k)); }
+.wheel-cap .wheel-rim, .wheel-cap .wheel-spoke, .wheel-cap .wheel-handle rect { display: none; }
 /* A ring of light that pulses out once the wheel stops. */
 .intro-wheel::after {
   content: '';
@@ -1874,8 +1901,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .intro-octi {
   position: relative;
-  width: clamp(190px, 33vh, 350px);
-  margin-left: clamp(-64px, -3vw, -24px);
+  width: var(--octi);
   pointer-events: none;
 }
 .intro-octi .mascot-stage { width: 100%; }
@@ -1924,15 +1950,27 @@ button.ghost.always:hover { color: var(--color-accent); }
   .wheel-intro .wheel-spoke { animation: wheel-grow 0.45s calc(0.7s + var(--i) * 45ms) cubic-bezier(0.22, 1, 0.36, 1) both; }
   .wheel-intro .wheel-handle { animation: wheel-handle 0.55s calc(1.1s + var(--i) * 70ms) cubic-bezier(0.34, 1.56, 0.64, 1) both; }
   .intro-wheel::after { animation: wheel-ring 1.4s 2.2s ease-out both; }
+  /* The edge is hidden while the face builds, and appears as it tilts. */
+  .intro-wheel > .wheel-edge { animation: fade-in 0.6s 2.5s ease both; }
+  /* The face becomes the middle slice, so it takes the middle shade. */
+  .intro-wheel > .wheel-intro { animation: face-shade 0.6s 2.5s ease both; }
 
-  /* Octi arrives, then keeps a gentle float. */
-  .intro-octi { animation: octi-arrive 0.9s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  /* Built big and alone in the middle, then lifted onto Octi's head, where
+     it keeps hovering. The hover moves `translate`, so it doesn't fight the lift's transform. */
+  .intro-wheel { animation: wheel-lift 1s 2.3s cubic-bezier(0.65, 0, 0.35, 1) both, wheel-hover 3.2s 3.3s ease-in-out infinite alternate; }
 
-  .intro-word span[style] { animation: letter-rise 0.7s calc(2.1s + var(--i) * 45ms) var(--swing) both; }
-  .intro-lead { animation: fade-up 0.8s 2.85s var(--swing) both; }
-  .intro-actions { animation: fade-up 0.8s 3.05s var(--swing) both; }
-  .intro-fine { animation: fade-up 0.8s 3.2s var(--swing) both; }
-  .landing-bar:has(~ .intro) { animation: fade-in 0.8s 3.1s ease both; }
+  /* Octi rises in under it once the wheel has made room. */
+  .intro-octi { animation: octi-arrive 0.9s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  .intro-word span[style] { animation: letter-rise 0.7s calc(3.2s + var(--i) * 45ms) var(--swing) both; }
+  .intro-lead { animation: fade-up 0.8s 3.9s var(--swing) both; }
+  .intro-actions { animation: fade-up 0.8s 4.1s var(--swing) both; }
+  .intro-fine { animation: fade-up 0.8s 4.25s var(--swing) both; }
+  .landing-bar:has(~ .intro) { animation: fade-in 0.8s 4.1s ease both; }
+}
+/* Without the intro the face is already the middle slice. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-wheel > .wheel-intro { color: color-mix(in oklab, var(--ink) 72%, #1d2a1a); }
 }
 @keyframes wheel-spin-in { from { transform: rotate(-240deg) scale(0.7); } to { transform: none; } }
 @keyframes wheel-draw { from { stroke-dashoffset: var(--rim-len); } to { stroke-dashoffset: 0; } }
@@ -1943,8 +1981,15 @@ button.ghost.always:hover { color: var(--color-accent); }
   from { opacity: 0.9; transform: scale(0.9); }
   to   { opacity: 0;   transform: scale(1.7); }
 }
+/* From the centre of the lockup at 2.2x, up to the resting spot. */
+@keyframes wheel-lift {
+  from { transform: perspective(600px) translateY(calc(var(--octi) * 0.45)) scale(2.2) rotateX(0deg); }
+  to   { transform: perspective(600px) translateY(0) scale(1) rotateX(62deg); }
+}
+@keyframes face-shade { to { color: color-mix(in oklab, var(--ink) 72%, #1d2a1a); } }
+@keyframes wheel-hover { to { translate: 0 -10px; } }
 @keyframes octi-arrive {
-  from { opacity: 0; transform: translate(-60px, 40px) scale(0.5) rotate(-12deg); }
+  from { opacity: 0; transform: translateY(50px) scale(0.6); }
   to   { opacity: 1; transform: none; }
 }
 @keyframes letter-rise {
@@ -2191,8 +2236,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 @media (max-width: 620px) {
   .intro { min-height: calc(100svh - 60px); gap: var(--s3); }
-  .intro-wheel { width: clamp(110px, 30vw, 150px); }
-  .intro-octi { width: clamp(130px, 38vw, 180px); margin-left: -18px; }
+  .intro-lockup { --wheel: clamp(70px, 20vw, 100px); --octi: clamp(110px, 32vw, 150px); }
   .intro-word { font-size: clamp(44px, 14vw, 64px); }
   .helps-grid { grid-template-columns: 1fr; }
   .install-steps { flex-direction: column; }

@@ -18,11 +18,13 @@ export default function LogoWheel({
   intro = false,
   className = "",
   title,
+  style,
 }: {
   size?: number | string;
   intro?: boolean;
   className?: string;
   title?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <svg
@@ -33,7 +35,7 @@ export default function LogoWheel({
       role={title ? "img" : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}
-      style={{ "--rim-len": RIM_LEN } as React.CSSProperties}
+      style={{ "--rim-len": RIM_LEN, ...style } as React.CSSProperties}
     >
       <g className="wheel-turn">
         {/* The outer <g> holds each piece's angle; the inner element is what

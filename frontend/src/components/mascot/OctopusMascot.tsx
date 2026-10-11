@@ -36,6 +36,10 @@ export default function OctopusMascot({ onClick, mood = "idle" }: { onClick: () 
         <Canvas
           // Cap at 2: past that it costs 4x the pixels for no visible gain.
           dpr={[1, 2]}
+          // Measure layout size, not the on-screen box: otherwise a CSS scale
+          // on an ancestor (the landing entrance, the hover zoom) gets baked
+          // into the canvas and Octi jumps size on the next scroll.
+          resize={{ offsetSize: true }}
           shadows={{ type: PCFSoftShadowMap }}
           // A longer lens (lower fov, camera further back) flattens the
           // perspective. Wide-angle on a small round character bulges the
