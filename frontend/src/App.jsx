@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useState } from 'react'
 import Tasks from './components/Tasks.jsx'
 import Calendar from './components/Calendar.jsx'
@@ -22,8 +22,9 @@ import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
 import Landing from './components/Landing'
-import { Privacy, Terms, Copyright } from './components/Legal'
-import { useSession, signOut, deleteAccount } from './auth/useSession.js'
+import { Privacy, Terms } from './components/Legal'
+import Settings from './components/Settings.jsx'
+import { useSession } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
 // component that draws it. Adding a section later = one line here plus one
@@ -120,6 +121,7 @@ function AppShell() {
         <Route path={FINANCE_PATH} element={<HomePage {...panelProps} />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/settings" element={<Settings />} />
         {/* A note's file on its own, opened from Notes in a new tab. */}
         <Route path="/view/:id" element={<FileTab />} />
         {/* A subject's mind map, inside the usual frame so Courses stays lit. */}
@@ -178,9 +180,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
           </h1>
           <div className="titlebar-actions">
             <SyncBadge />
-            <ThemeToggle />
-            <button className="theme-toggle" onClick={signOut}>Sign out</button>
-            <button className="theme-toggle danger" onClick={confirmDeleteAccount}>Delete account</button>
+            <SettingsButton />
           </div>
         </div>
 
@@ -207,7 +207,6 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
 
         <main>{children}</main>
       </div>
-      <Copyright />
     </>
   )
 }
@@ -230,35 +229,14 @@ function SyncBadge() {
   )
 }
 
-// Cycles System → Light → Dark. The store writes the choice to <html> as
-// data-theme; 'system' removes the attribute so the OS preference applies.
-const ORDER = ['system', 'light', 'dark']
-const LABEL = { system: 'Auto', light: 'Light', dark: 'Dark' }
-
-export function ThemeToggle() {
-  const { state, dispatch } = useStore()
-  const next = ORDER[(ORDER.indexOf(state.theme) + 1) % ORDER.length]
-
+/** Theme, account and legal all live on /settings. */
+export function SettingsButton() {
   return (
-    <button
-      className="theme-toggle"
-      onClick={() => dispatch({ type: 'set-theme', value: next })}
-      aria-label={`Theme: ${LABEL[state.theme]}. Switch to ${LABEL[next]}.`}
-    >
-      {LABEL[state.theme]}
-    </button>
+    <Link to="/settings" className="theme-toggle settings-btn" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </Link>
   )
-}
-
-/** Irreversible, so it asks for the word, not just an OK click. */
-async function confirmDeleteAccount() {
-  const typed = window.prompt(
-    'This permanently deletes your account and everything in it: tasks, notes, PDFs, schedule, spending. It cannot be undone.\n\nType DELETE to confirm.',
-  )
-  if (typed?.trim() !== 'DELETE') return
-  try {
-    await deleteAccount()
-  } catch (err) {
-    window.alert(err.message)
-  }
 }

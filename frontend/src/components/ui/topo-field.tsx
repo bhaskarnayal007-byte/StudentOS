@@ -384,11 +384,10 @@ function readAutomaticMode(): TopoFieldMode {
   if (typeof document === "undefined" || typeof window === "undefined")
     return "dark";
   const root = document.documentElement;
-  const declared = root.dataset.scheme ?? root.dataset.theme;
+  const declared = root.dataset.scheme;
   if (declared === "light" || declared === "dark") return declared;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  // Themes declare their color-scheme in CSS, so any data-theme id resolves.
+  return getComputedStyle(root).colorScheme.trim() === "dark" ? "dark" : "light";
 }
 
 function useAutomaticMode(enabled: boolean) {

@@ -4,7 +4,7 @@ import { Color, type Group, type Mesh, type MeshPhysicalMaterial } from "three";
 import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes.js";
 import { getHoverTarget } from "./hoverTarget";
 import { useIdleState } from "./useIdleState";
-import { useThemeMode } from "./useThemeMode";
+import { useOctiColour, useThemeMode } from "./useThemeMode";
 
 // ─── Body and tentacles: one blobby surface ──────────────────────────────────
 // Octi is built from metaballs: one big soft ball for the body and a chain of
@@ -88,14 +88,11 @@ export type Mood = "idle" | "happy" | "focus" | "sleeping";
 
 const EYE_SEGMENTS: [number, number] = [32, 24];
 
-// Body colour per theme, from the brand palette: #F8FAFF white with #DCE6FF
-// lavender in the shading. Octi is the same white in both themes; light mode
-// just takes less from the environment so it doesn't blow out against a pale
-// page, and leans on the blue rim (see Lighting) to hold its edge.
-const SKIN = {
-  dark: { body: "#f8faff", env: 0.85 },
-  light: { body: "#f4f7ff", env: 0.6 },
-};
+// The body colour comes from the theme's --octi token in theme.css (white in
+// the classic themes). Light schemes take less from the environment so he
+// doesn't blow out against a pale page, and lean on the blue rim (see
+// Lighting) to hold his edge.
+const ENV = { dark: 0.85, light: 0.6 };
 
 function damp(current: number, target: number, t: number, delta: number) {
   return current + (target - current) * (1 - Math.pow(1 - t, delta * 60));
@@ -141,14 +138,15 @@ export default function OctopusModel({ mood = "idle" }: { mood?: Mood }) {
   const idle = useIdleState();
   const { gl } = useThree();
   const mode = useThemeMode();
+  const colour = useOctiColour();
 
   // Re-created only when the theme changes, not every frame.
   const target = useMemo(
     () => ({
-      body: new Color(SKIN[mode].body),
-      env: SKIN[mode].env,
+      body: new Color(colour),
+      env: ENV[mode],
     }),
-    [mode],
+    [colour, mode],
   );
 
   const look = useRef({ x: 0, y: 0 });

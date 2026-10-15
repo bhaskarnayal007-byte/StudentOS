@@ -9,7 +9,9 @@
    accent reading as ~10% of the page instead of decoration smeared everywhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-:root {
+/* [data-theme="light"] too, so an element can opt back into light inside a
+   dark page (the Settings theme cards do). */
+:root, [data-theme="light"] {
   --font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
   --color-base:         #F3F0EA;  /* 60% — the page */
@@ -19,6 +21,8 @@
   --color-accent:       #2E5334;  /* 10% — interactive only */
   --color-accent-hover: #25422A;
   --color-border:       #E4DFD5;
+  --color-danger:       #c0564b;
+  --octi:               #f4f7ff;  /* Octi's body, 3D and the corner dock */
 
   /* Derived, so components never hardcode an rgba(). Both are the token
      itself at reduced strength — no new hues enter the system. */
@@ -29,8 +33,11 @@
   --color-focus-ring:  color-mix(in srgb, var(--color-accent) 28%, transparent);
   --color-sunken:      color-mix(in srgb, var(--color-base) 60%, var(--color-surface));
 
-  /* Type scale */
-  --t-xs: 12px; --t-sm: 14px; --t-md: 16px; --t-lg: 19px; --t-xl: 23px; --t-2xl: 33px;
+  /* Type scale. --fs is the Text size setting (Settings), written to <html>
+     by the store; every font-size in this file is multiplied by it. */
+  --fs: 1;
+  --t-xs: calc(12px * var(--fs)); --t-sm: calc(14px * var(--fs)); --t-md: calc(16px * var(--fs));
+  --t-lg: calc(19px * var(--fs)); --t-xl: calc(23px * var(--fs)); --t-2xl: calc(33px * var(--fs));
 
   /* Space, 4px rhythm */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 22px; --s6: 32px;
@@ -65,6 +72,7 @@
   --color-surface:      #3A3D38;
   --color-text:         #EDEAE2;
   --color-heading:      #F4F0E8;  /* pearl white: Home's widget titles */
+  --octi:               #f8faff;
   --color-accent:       #9BB08C;
   --color-accent-hover: #B3C4A6;
   --color-border:       #4A4D46;
@@ -84,6 +92,91 @@
   color-scheme: dark;
 }
 
+/* ─── Aesthetic themes ───────────────────────────────────────────────────────
+   Each is a whole look: colours, font, corners, shadows. They only override
+   tokens, so every component follows without rules of its own. color-scheme
+   is what the backdrop and Octi read to pick their light or dark variant.
+   Adding one = a block here plus a line in Settings.jsx's THEMES. */
+[data-theme="minimal"] {
+  --font-family: 'Inter', system-ui, sans-serif;
+  --color-base:         #FAFAFA;
+  --color-surface:      #FFFFFF;
+  --color-text:         #111111;
+  --color-heading:      #000000;
+  --color-accent:       #111111;
+  --color-accent-hover: #000000;
+  --color-border:       #111111;  /* black hairline outlines on every surface */
+  --color-accent-ink:   #FFFFFF;
+  --r-sm: 2px; --r: 4px; --r-lg: 6px;
+  --shadow: none;
+  --shadow-lg: none;
+  --lift: -1px;
+  --octi: #D4D4D4;  /* soft grey, so he still reads on white */
+  color-scheme: light;
+}
+
+[data-theme="y2k"] {
+  --font-family: 'Syne', 'Trebuchet MS', sans-serif;
+  --color-base:         #E6E9F7;  /* chrome lilac */
+  --color-surface:      #FBFBFF;
+  --color-text:         #17122F;  /* dark steel ink */
+  --color-heading:      #2B0F6B;
+  --color-accent:       #FF2E9A;  /* hot pink */
+  --color-accent-hover: #E0157F;
+  --color-border:       #C4CBEF;
+  --color-accent-ink:   #FFFFFF;
+  --color-accent-wash:  color-mix(in srgb, #2EE6FF 22%, transparent);  /* cyan glints */
+  --r-sm: 12px; --r: 18px; --r-lg: 26px;
+  --shadow:    inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(110, 80, 255, 0.18);
+  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 28px rgba(110, 80, 255, 0.28);
+  --octi: #FF8AD0;  /* bubblegum */
+  color-scheme: light;
+}
+
+[data-theme="academia"] {
+  --font-family: 'EB Garamond', Georgia, serif;
+  --color-base:         #1E1915;
+  --color-surface:      #2A231D;
+  --color-text:         #E8DCC8;
+  --color-heading:      #F3E9D6;
+  --color-accent:       #C9A45C;  /* old gold */
+  --color-accent-hover: #DDBB76;
+  --color-border:       #3F342A;
+  --color-accent-ink:   #1E1915;
+  --color-accent-wash:  color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --color-focus-ring:   color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --color-sunken:       color-mix(in srgb, var(--color-base) 55%, var(--color-surface));
+  --r-sm: 3px; --r: 5px; --r-lg: 8px;
+  --shadow:    0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
+  --halo: rgba(0, 0, 0, 0.72);
+  --edge: rgba(0, 0, 0, 0.5);
+  --octi: #E3CFA6;  /* parchment */
+  color-scheme: dark;
+}
+
+[data-theme="terminal"] {
+  --font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-base:         #070B07;
+  --color-surface:      #0D150D;
+  --color-text:         #B8F5B0;
+  --color-heading:      #D6FFD0;
+  --color-accent:       #39FF6A;  /* phosphor */
+  --color-accent-hover: #7DFF9C;
+  --color-border:       #1F3A1F;
+  --color-accent-ink:   #031003;
+  --color-accent-wash:  color-mix(in srgb, var(--color-accent) 14%, transparent);
+  --color-focus-ring:   color-mix(in srgb, var(--color-accent) 40%, transparent);
+  --color-sunken:       color-mix(in srgb, var(--color-base) 55%, var(--color-surface));
+  --r-sm: 0; --r: 0; --r-lg: 0;
+  --shadow:    0 0 0 1px #1F3A1F;
+  --shadow-lg: 0 0 0 1px #1F3A1F, 0 0 24px rgba(57, 255, 106, 0.12);
+  --halo: rgba(0, 0, 0, 0.8);
+  --edge: rgba(0, 0, 0, 0.6);
+  --octi: #5CFF85;  /* phosphor */
+  color-scheme: dark;
+}
+
 /* No explicit choice → follow the OS. `:not([data-theme])` means an explicit
    light choice still wins on a dark system. */
 @media (prefers-color-scheme: dark) {
@@ -92,6 +185,7 @@
     --color-surface:      #3A3D38;
     --color-text:         #EDEAE2;
     --color-heading:      #F4F0E8;
+    --octi:               #f8faff;
     --color-accent:       #9BB08C;
     --color-accent-hover: #B3C4A6;
     --color-border:       #4A4D46;
@@ -216,7 +310,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: var(--s3);
-  font-size: 40px;
+  font-size: calc(40px * var(--fs));
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.05;
@@ -553,7 +647,7 @@ button.ghost:hover { color: var(--color-accent); }
   width: 34px; height: 34px;
   padding: 0;
   display: grid; place-items: center;
-  font-size: 20px; line-height: 1;
+  font-size: calc(20px * var(--fs)); line-height: 1;
   background: var(--color-sunken);
   border: 1px solid var(--color-border);
   border-radius: var(--r-pill);
@@ -648,7 +742,7 @@ button.ghost:hover { color: var(--color-accent); }
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--fs));
   line-height: 1.5;
   color: var(--color-text);
   background: color-mix(in srgb, var(--c) 16%, transparent);
@@ -657,12 +751,12 @@ button.ghost:hover { color: var(--color-accent); }
 }
 .cal-chip b { font-weight: 700; color: var(--color-text-2); }
 .cal-chip.done { text-decoration: line-through; opacity: 0.6; }
-.cal-more { padding-left: 6px; font-size: 11px; color: var(--color-text-3); }
+.cal-more { padding-left: 6px; font-size: calc(11px * var(--fs)); color: var(--color-text-3); }
 @media (max-width: 620px) {
   /* Too narrow for titles: chips become coloured bars. */
   .cal-day { min-height: 54px; padding: 4px; }
   .cal-month .cal-chip { height: 5px; padding: 0; border-left: none; background: var(--c); font-size: 0; }
-  .cal-more { font-size: 10px; padding: 0; }
+  .cal-more { font-size: calc(10px * var(--fs)); padding: 0; }
 }
 
 /* ── Week ── */
@@ -688,14 +782,14 @@ button.ghost:hover { color: var(--color-accent); }
 .cal-week-day.selected .cal-num { box-shadow: 0 0 0 2px var(--color-accent); }
 .cal-allday { background: var(--color-sunken); border-bottom: 1px solid var(--color-border); }
 .cal-allday > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 4px; border-left: 1px solid var(--color-border); }
-.cal-allday-label { align-self: center; font-size: 10px; color: var(--color-text-3); text-align: center; }
+.cal-allday-label { align-self: center; font-size: calc(10px * var(--fs)); color: var(--color-text-3); text-align: center; }
 .cal-week-scroll { max-height: min(62vh, 640px); overflow-y: auto; }
 .cal-week-body { position: relative; }
 .cal-hours { position: relative; }
 .cal-hours span {
   position: absolute; right: 8px;
   translate: 0 -50%;
-  font-size: 10.5px; color: var(--color-text-3);
+  font-size: calc(10.5px * var(--fs)); color: var(--color-text-3);
   font-variant-numeric: tabular-nums;
 }
 .cal-hours span:first-child { translate: 0 2px; }
@@ -711,7 +805,7 @@ button.ghost:hover { color: var(--color-accent); }
   left: 3px; right: 3px;
   overflow: hidden;
   padding: 2px 6px;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--fs));
   line-height: 1.35;
   border-radius: 6px;
 }
@@ -730,7 +824,7 @@ button.ghost:hover { color: var(--color-accent); }
   border-left: 3px solid var(--c);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
-.cal-event b { display: block; font-size: 10.5px; color: var(--color-text-2); }
+.cal-event b { display: block; font-size: calc(10.5px * var(--fs)); color: var(--color-text-2); }
 .cal-now { position: absolute; left: 0; right: 0; z-index: 2; height: 2px; background: #D0574A; }
 .cal-now::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #D0574A; }
 
@@ -768,7 +862,7 @@ button.ghost:hover { color: var(--color-accent); }
 .agenda-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .agenda-body > :first-child { overflow-wrap: anywhere; color: var(--color-text); text-decoration: none; }
 .agenda-body a:hover { color: var(--color-accent); text-decoration: underline; }
-.agenda-body small { font-size: 11px; color: var(--color-text-3); text-transform: capitalize; }
+.agenda-body small { font-size: calc(11px * var(--fs)); color: var(--color-text-3); text-transform: capitalize; }
 .agenda-item:hover .ghost, .agenda-item:focus-within .ghost { opacity: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -789,7 +883,7 @@ button.ghost:hover { color: var(--color-accent); }
 }
 
 .sched-hour {
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   color: var(--color-text-3);
   text-align: right;
   padding-right: var(--s2);
@@ -842,7 +936,7 @@ button.ghost:hover { color: var(--color-accent); }
   border-radius: var(--r);
 }
 /* The countdown is read, not clicked — text token, not accent. */
-.countdown .big { font-size: 62px; font-weight: 400; line-height: 1; letter-spacing: -0.03em; }
+.countdown .big { font-size: calc(62px * var(--fs)); font-weight: 400; line-height: 1; letter-spacing: -0.03em; }
 .countdown.finished { border-color: var(--color-accent); background: var(--color-accent-wash); }
 .countdown.finished .big { color: var(--color-accent); animation: pulse 1.5s var(--ease) infinite; }
 
@@ -1167,7 +1261,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 
 .login-mark { width: 64px; height: 64px; align-self: center; border-radius: 15px; }
-.login-card h1 { font-size: 34px; letter-spacing: -0.025em; }
+.login-card h1 { font-size: calc(34px * var(--fs)); letter-spacing: -0.025em; }
 .login-sub { margin: 0 0 var(--s3); color: var(--color-text-2); font-size: var(--t-sm); }
 .login-card .field { text-align: left; margin: 0; }
 .login-card .field .grow { width: 100%; }
@@ -1214,7 +1308,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 
 .home-top h2 {
-  font-size: 40px;
+  font-size: calc(40px * var(--fs));
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -1304,9 +1398,9 @@ button.ghost.always:hover { color: var(--color-accent); }
   font-weight: 700;
 }
 .mascot-zzz span { animation: drift 2.4s ease-in-out infinite; opacity: 0; }
-.mascot-zzz span:nth-child(1) { font-size: 13px; }
-.mascot-zzz span:nth-child(2) { font-size: 17px; animation-delay: 0.4s; }
-.mascot-zzz span:nth-child(3) { font-size: 22px; animation-delay: 0.8s; }
+.mascot-zzz span:nth-child(1) { font-size: calc(13px * var(--fs)); }
+.mascot-zzz span:nth-child(2) { font-size: calc(17px * var(--fs)); animation-delay: 0.4s; }
+.mascot-zzz span:nth-child(3) { font-size: calc(22px * var(--fs)); animation-delay: 0.8s; }
 @keyframes drift {
   0% { opacity: 0; transform: translateY(6px); }
   30%, 70% { opacity: 1; }
@@ -1372,7 +1466,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 
 .widget-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
 .widget-head h3 {
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   font-weight: 700;
   color: var(--color-heading);
   text-transform: uppercase;
@@ -1406,7 +1500,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 .widget-timer { justify-content: space-between; }
 .widget-countdown { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
 .widget-clock {
-  font-size: 38px;
+  font-size: calc(38px * var(--fs));
   font-weight: 300;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -1430,11 +1524,11 @@ button.ghost.always:hover { color: var(--color-accent); }
   color: inherit;
 }
 .widget-figure span { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.07em; }
-.widget-figure strong { font-size: 27px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.widget-figure strong { font-size: calc(27px * var(--fs)); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .widget-figure:hover strong { color: var(--color-accent); }
 
 @media (max-width: 620px) {
-  .home-top h2, .login-card h1 { font-size: 28px; }
+  .home-top h2, .login-card h1 { font-size: calc(28px * var(--fs)); }
   .home { gap: var(--s4); }
 
   /* One column, and the mascot moves to the top — it's the primary action, so
@@ -1480,7 +1574,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   height: 36px;
   /* The glyph, not an icon font: set in the app's serif at a weight that
      matches the headings. */
-  font-size: 22px;
+  font-size: calc(22px * var(--fs));
   font-weight: 700;
   line-height: 1;
   color: var(--color-text-2);
@@ -1565,7 +1659,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   letter-spacing: 0.07em;
 }
 
-.fin-stat-value { font-size: 27px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.fin-stat-value { font-size: calc(27px * var(--fs)); line-height: 1.15; font-variant-numeric: tabular-nums; }
 .fin-stat-value.fin-stat-sm { font-size: var(--t-lg); }
 .fin-muted { color: var(--color-text-3); font-weight: 400; }
 
@@ -1641,7 +1735,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   .fin-backdrop { padding: var(--s3); }
   .fin-body, .fin-head { padding: var(--s4); }
   .fin-amount { width: 100%; }
-  .fin-stat-value { font-size: 23px; }
+  .fin-stat-value { font-size: calc(23px * var(--fs)); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1649,11 +1743,11 @@ button.ghost.always:hover { color: var(--color-accent); }
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 620px) {
   .app { padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom)); }
-  header h1 { font-size: 30px; margin-bottom: var(--s3); }
+  header h1 { font-size: calc(30px * var(--fs)); margin-bottom: var(--s3); }
   .brand-mark { width: 34px; height: 34px; }
   main { padding: var(--s4); margin-top: 0; }
   .sched-scroll { margin: 0 calc(var(--s4) * -1); padding: 0 var(--s4); }
-  .countdown .big { font-size: 48px; }
+  .countdown .big { font-size: calc(48px * var(--fs)); }
 
   .row > input, .row > select { min-width: 0; }
   .grow { flex-basis: 100%; }
@@ -1699,6 +1793,16 @@ button.ghost.always:hover { color: var(--color-accent); }
 .octi-dock:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgb(0 0 0 / 0.22); }
 .octi-dock.open { border-color: var(--color-accent); }
 .octi-dock img { width: 38px; height: 38px; object-fit: contain; }
+/* The PNG is a white Octi. Multiplying the theme's --octi over it, clipped to
+   his shape, recolours the body and leaves the black eyes black. */
+.octi-tint { position: relative; display: block; width: 38px; height: 38px; }
+.octi-tint::after {
+  content: ''; position: absolute; inset: 0;
+  background: var(--octi);
+  mix-blend-mode: multiply;
+  -webkit-mask: url(/mascot.png) center / contain no-repeat;
+  mask: url(/mascot.png) center / contain no-repeat;
+}
 
 .octi-panel {
   position: fixed;
@@ -1763,7 +1867,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   /* Octi has his own button down there; a tab for him as well wastes one of
      the five slots that actually have to fit. */
   nav .tab[href="/octi"] { display: none; }
-  .sync-badge { font-size: 10px; }
+  .sync-badge { font-size: calc(10px * var(--fs)); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1941,7 +2045,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   height: 30px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.14);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   transition: transform 500ms var(--swing), background 500ms var(--swing);
 }
 .landing .cta:hover .cta-arrow {
@@ -2216,7 +2320,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   padding: 6px 13px;
   border-radius: var(--r-pill);
   color: var(--leaf);
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2em;
@@ -2259,7 +2363,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   height: 46px;
   border-radius: 14px;
   color: var(--leaf);
-  font-size: 22px;
+  font-size: calc(22px * var(--fs));
   background: rgba(168, 200, 154, 0.1);
   box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.25);
 }
@@ -2277,7 +2381,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   padding: 4px 10px;
   border-radius: var(--r-pill);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   box-shadow: inset 0 0 0 1px rgba(246, 244, 238, 0.1);
 }
 
@@ -2318,7 +2422,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   border-radius: var(--r-pill);
   color: var(--leaf);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   box-shadow: inset 0 0 0 1px rgba(168, 200, 154, 0.26), inset 0 1px 0 rgba(246, 244, 238, 0.14);
 }
 .demo-octi code::before { content: '✓ '; opacity: 0.7; }
@@ -2556,7 +2660,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   border-radius: var(--r-pill);
   background: var(--color-surface);
   color: var(--color-text-2);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   line-height: 1;
   cursor: pointer;
 }
@@ -2724,7 +2828,7 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
   background: none;
   color: var(--color-text);
   font: inherit;
-  font-size: 17px;
+  font-size: calc(17px * var(--fs));
   line-height: 1.75;
   resize: none;
   caret-color: var(--color-accent);
@@ -2855,7 +2959,7 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
   border: 1px solid var(--color-border);
   border-radius: var(--r-md);
 }
-.notes-file-icon { font-size: 28px; line-height: 1; }
+.notes-file-icon { font-size: calc(28px * var(--fs)); line-height: 1; }
 .notes-file-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .notes-file-name strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .notes-file-name .muted { font-size: var(--t-xs); }
@@ -2925,7 +3029,7 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
 }
 
 /* Delete account sits next to Sign out but shouldn't look like it. */
-.theme-toggle.danger:hover { color: #c0564b; border-color: #c0564b; }
+.theme-toggle.danger:hover { color: var(--color-danger); border-color: var(--color-danger); }
 
 /* Creator credit at the foot of every screen. */
 .copyright {
@@ -2936,3 +3040,137 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
 }
 .copyright a { color: inherit; }
 .copyright a:hover { color: var(--color-accent); }
+
+/* Settings: reuses the legal page frame; the Settings link is a pill button. */
+a.theme-toggle { text-decoration: none; }
+.settings-row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.theme-toggle.active { color: var(--color-accent); border-color: var(--color-accent); }
+.settings-btn { display: inline-flex; align-items: center; padding: var(--s1); }
+.settings-row { align-items: center; }
+.settings-status { font-size: var(--t-xs); color: var(--color-text-3); }
+
+/* Theme picker: each card carries its own data-theme, so these tokens are the
+   card's theme, not the page's. */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--s3); }
+.theme-card {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s2);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+  font-family: var(--font-family);
+  text-align: left;
+  cursor: pointer;
+}
+.theme-card[aria-checked="true"] { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.theme-swatch {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; padding: 0 var(--s3);
+  background: var(--color-base);
+  border-radius: var(--r-sm);
+  font-size: var(--t-xl); font-weight: 700;
+}
+.theme-swatch::after { content: ''; width: 14px; height: 14px; border-radius: 50%; background: var(--color-accent); }
+/* Auto is light or dark depending on the device, so it shows both. */
+.theme-swatch.split { background: linear-gradient(90deg, #F3F0EA 50%, #2B2E27 50%); color: #8A8C84; }
+.theme-name { font-size: var(--t-sm); font-weight: 600; }
+
+/* Y2K: metal lettering, a touch heavier than the other themes.
+   Every letter is steel ink with a white glint under it and a dark edge over
+   it, which reads as embossed metal and works on any element. A gradient
+   clipped to the glyphs (true chrome) would wipe out the background of any
+   chip or button it touched, so that's kept to headings and the sparkle,
+   which have no background of their own. */
+[data-theme="y2k"] body {
+  font-weight: 500;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 -0.5px 0 rgba(26, 18, 64, 0.35);
+}
+/* White on pink doesn't want a white glint under it. */
+[data-theme="y2k"] :is(button.primary, a.primary, .tab.active) { text-shadow: 0 1px 0 rgba(120, 0, 60, 0.35); }
+
+/* Chrome lettering, after the brushed-silver logo style: a banded silver
+   gradient (bright top, dark horizon line, bright return) with fine brushed
+   streaks over it, a hairline dark edge so it holds on the pale page, and a
+   cold blue-white glow. The gradient is clipped to the glyphs, so text-shadow
+   would show through them; filter drop-shadows sit behind instead. */
+[data-theme="y2k"] {
+  --chrome:
+    repeating-linear-gradient(97deg, transparent 0 3px, rgba(255, 255, 255, 0.22) 3px 4px, rgba(20, 22, 40, 0.06) 4px 6px),
+    linear-gradient(180deg, #C9CEE0 0%, #858BA6 22%, #42475F 44%, #0E1022 50%, #5F6680 58%, #9EA4BC 78%, #2A2E45 100%);
+  /* Small headings: just a crisp edge and a little lift. */
+  --chrome-edge:
+    drop-shadow(0 0 0.5px #1A1240) drop-shadow(0 1px 1px rgba(26, 18, 64, 0.35));
+  /* Big titles: plus the cold blue-white glow. */
+  --chrome-glow:
+    drop-shadow(0 0 0.6px #1A1240) drop-shadow(0 0 0.6px #1A1240)
+    drop-shadow(0 0 7px rgba(150, 180, 255, 0.7)) drop-shadow(0 3px 3px rgba(26, 18, 64, 0.3));
+}
+[data-theme="y2k"] :is(h1, h2, h3, h4),
+[data-theme="y2k"] .home-name {
+  font-family: 'Orbitron', 'Syne', sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: var(--chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+}
+[data-theme="y2k"] :is(h1, h2, h3, h4) { filter: var(--chrome-edge); }
+
+/* The big titles get the full logo treatment: a forward lean, a sparkle
+   and an orbit swoosh. Both are absolutely positioned, so they stay out of
+   header h1's flex row. */
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1) {
+  position: relative;
+  width: fit-content;
+  transform: skewX(-8deg);
+  filter: var(--chrome-glow);
+}
+[data-theme="y2k"] header h1 img { transform: skewX(8deg); }  /* keep the logo square */
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1)::before {
+  content: '✦';
+  position: absolute;
+  top: -0.45em;
+  right: 18%;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 0.6em;
+  background: var(--chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  pointer-events: none;
+}
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1)::after {
+  /* The swoosh, carrying the second star where it crosses the bottom left. */
+  content: '✦';
+  display: flex;
+  align-items: flex-end;
+  padding-left: 7%;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 0.5em;
+  line-height: 0.6;
+  color: #C9CEE2;
+  position: absolute;
+  inset: -22% -5% -26% -5%;
+  border: 2px solid transparent;
+  border-top-color: rgba(200, 208, 235, 0.95);
+  border-bottom-color: rgba(120, 128, 160, 0.9);
+  border-radius: 50%;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+/* Octi's sparkle: the same chrome, a bigger four-point star with a cold glow.
+   Pinned to the serif's ✦ (Syne's fallback draws a much smaller one). */
+[data-theme="y2k"] .mascot-sparkle {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: clamp(30px, 4.5vw, 44px);
+  background: var(--chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: var(--chrome-glow) drop-shadow(0 0 10px rgba(220, 230, 255, 0.9));
+}

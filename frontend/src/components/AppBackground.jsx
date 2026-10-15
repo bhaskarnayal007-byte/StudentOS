@@ -27,15 +27,11 @@ function readBackdrop() {
     return { mode: 'light', paper: '#F3F0EA', ink: '#2E5334' }
   }
   const root = document.documentElement
-  const declared = root.dataset.theme
-  const mode =
-    declared === 'light' || declared === 'dark'
-      ? declared
-      : window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-
   const styles = getComputedStyle(root)
+  // Every theme in theme.css declares its color-scheme, including Auto's
+  // prefers-color-scheme rule, so this is right for any theme id.
+  const mode = styles.colorScheme.trim() === 'dark' ? 'dark' : 'light'
+
   const token = (name, fallback) => styles.getPropertyValue(name).trim() || fallback
 
   return {

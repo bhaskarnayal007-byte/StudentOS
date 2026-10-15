@@ -59,7 +59,8 @@ const emptyState = {
   focusSessions: [],  // { id, endedAt, minutes } — one per timer run to completion
   notes: [],          // { id, text, courseId?, updatedAt }
   topics: [],         // { id, courseId, parentId, text, done, collapsed } — a subject's mind map
-  theme: 'system',    // 'system' | 'light' | 'dark' — drives data-theme
+  theme: 'system',    // 'system' | 'dark' | an aesthetic id from Settings — drives data-theme
+  textSize: 1,        // multiplier for every font size — drives --fs on <html>
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
   profileName: '',
@@ -261,6 +262,9 @@ function reducer(state, action) {
 
     case 'set-theme':
       return { ...state, theme: action.value }
+
+    case 'set-text-size':
+      return { ...state, textSize: action.value }
 
     // Swap in a different account's data wholesale. The only action that
     // replaces state rather than editing it.
@@ -501,6 +505,12 @@ export function StoreProvider({ children }) {
   // in theme.css takes over — one source of truth, no JS media listener.
   useEffect(() => {
     const root = document.documentElement
+    // Light is no longer a choice of its own (Auto covers it); move anyone
+    // still on it over to Auto.
+    if (state.theme === 'light') {
+      dispatch({ type: 'set-theme', value: 'system' })
+      return
+    }
     if (state.theme === 'system') root.removeAttribute('data-theme')
     else root.dataset.theme = state.theme
 
@@ -510,6 +520,11 @@ export function StoreProvider({ children }) {
       localStorage.setItem(THEME_KEY, state.theme)
     } catch { /* private mode */ }
   }, [state.theme])
+
+  // theme.css multiplies every font size by --fs.
+  useEffect(() => {
+    document.documentElement.style.setProperty('--fs', String(state.textSize))
+  }, [state.textSize])
 
   return (
     <StoreContext.Provider value={{ state, dispatch, sync }}>{children}</StoreContext.Provider>

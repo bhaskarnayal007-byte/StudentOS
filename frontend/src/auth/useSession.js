@@ -80,3 +80,9 @@ export async function deleteAccount() {
 export function signOut() {
   return supabase.auth.signOut()
 }
+
+/** Rename on the account itself, so the name follows the user to any device. */
+export async function setName(name) {
+  const { error } = await supabase.auth.updateUser({ data: { name } })
+  if (error) throw error
+}

@@ -61,7 +61,9 @@ export default function OctiDock() {
         aria-label={open ? "Close Octi" : "Ask Octi"}
         aria-expanded={open}
       >
-        <img src="/mascot.png" alt="" />
+        <span className="octi-tint">
+          <img src="/mascot.png" alt="" />
+        </span>
       </button>
     </>
   );

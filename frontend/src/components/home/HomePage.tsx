@@ -6,10 +6,9 @@ import TimerWidget from "./TimerWidget";
 import TodayStrip from "./TodayStrip";
 import { Suspense, lazy } from "react";
 import { openShortcut } from "../AppLauncherSidebar.jsx";
-import { ThemeToggle } from "../../App.jsx";
+import { SettingsButton } from "../../App.jsx";
 import { useStore } from "../../store.jsx";
 import { useNow } from "../../useNow.js";
-import { Copyright } from "../Legal";
 
 // three.js and react-three-fiber are more than half the app's JavaScript, and
 // this is the only screen that renders them. Splitting them out means every
@@ -47,9 +46,8 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
         <h2>
           Hello, <span className="home-name">{state.profileName || "there"}</span>
         </h2>
-        {/* The theme control lives in the header Home no longer renders, so it
-            needs a place here or it becomes unreachable from this screen. */}
-        <ThemeToggle />
+        {/* Home has no header, so Settings needs its own way in here. */}
+        <SettingsButton />
       </header>
 
       {/* Above everything, because it is the question people open the app
@@ -95,7 +93,6 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
         </div>
       </div>
 
-      <Copyright />
     </div>
   );
 }

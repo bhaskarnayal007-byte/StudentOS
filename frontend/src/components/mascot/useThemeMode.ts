@@ -4,24 +4,25 @@ export type ThemeMode = "light" | "dark";
 
 function read(): ThemeMode {
   if (typeof document === "undefined") return "dark";
-  const declared = document.documentElement.dataset.theme;
-  if (declared === "light" || declared === "dark") return declared;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Every theme in theme.css declares its color-scheme, so this covers the
+  // aesthetic themes as well as Auto/Light/Dark.
+  return getComputedStyle(document.documentElement).colorScheme.trim() === "dark" ? "dark" : "light";
 }
 
 /**
- * Watches the `data-theme` attribute the store writes to <html>.
+ * Re-reads a computed style of <html> whenever the `data-theme` attribute the
+ * store writes there changes.
  *
  * Observing the attribute rather than reading the store matters: React runs
  * child effects before parent effects, so a child reacting to a store change
  * sees the DOM from *before* StoreProvider wrote the new theme, and ends up
  * one switch behind. The observer fires after the attribute actually changes.
  */
-export function useThemeMode(): ThemeMode {
-  const [mode, setMode] = useState<ThemeMode>(read);
+function useRootStyle<T>(readValue: () => T): T {
+  const [value, setValue] = useState<T>(readValue);
 
   useEffect(() => {
-    const update = () => setMode(read());
+    const update = () => setValue(readValue());
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const observer = new MutationObserver(update);
 
@@ -38,5 +39,15 @@ export function useThemeMode(): ThemeMode {
     };
   }, []);
 
-  return mode;
+  return value;
 }
+
+export const useThemeMode = (): ThemeMode => useRootStyle(read);
+
+/** Octi's body colour: the active theme's --octi token in theme.css. */
+export const useOctiColour = (): string =>
+  useRootStyle(() =>
+    typeof document === "undefined"
+      ? "#f8faff"
+      : getComputedStyle(document.documentElement).getPropertyValue("--octi").trim() || "#f8faff",
+  );
