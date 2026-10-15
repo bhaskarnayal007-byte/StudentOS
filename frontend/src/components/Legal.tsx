@@ -51,6 +51,12 @@ export function Privacy() {
           Google account.
         </li>
         <li>
+          <strong>Google Calendar, if you connect it.</strong> Read-only access to the events in your
+          primary calendar. They are fetched by your browser and shown on the Calendar page only;
+          they are never sent to or stored on our servers, and access lapses after an hour or when
+          you disconnect.
+        </li>
+        <li>
           <strong>What you put in the app.</strong> Tasks, courses, notes, calendar events,
           schedule blocks, timers and focus sessions, expenses, app shortcuts, and your settings.
         </li>
@@ -85,7 +91,7 @@ export function Privacy() {
       <h2>Who else processes it</h2>
       <ul>
         <li><strong>Supabase</strong>: sign-in and storing your synced data.</li>
-        <li><strong>Google</strong>: only if you choose to sign in with Google.</li>
+        <li><strong>Google</strong>: only if you choose to sign in with Google or connect Google Calendar.</li>
         <li>
           <strong>Our AI provider</strong> (currently Groq): when you talk to Octi, your messages
           and the data needed to answer them are sent through our server to the provider to

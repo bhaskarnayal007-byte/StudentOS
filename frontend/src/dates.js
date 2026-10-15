@@ -25,7 +25,26 @@ export function monthGrid(year, month) {
     const date = new Date(year, month, i + 1)
     return { day: i + 1, key: toKey(date) }
   })
-  return { blanks, days }
+  // The tail of last month and the head of next, so the grid is whole weeks.
+  const prevDays = Array.from({ length: blanks }, (_, i) => {
+    const date = new Date(year, month, i - blanks + 1)
+    return { day: date.getDate(), key: toKey(date) }
+  })
+  const trailing = (7 - ((blanks + daysInMonth) % 7)) % 7
+  const nextDays = Array.from({ length: trailing }, (_, i) => {
+    const date = new Date(year, month + 1, i + 1)
+    return { day: i + 1, key: toKey(date) }
+  })
+  return { blanks, days, prevDays, nextDays }
+}
+
+// The seven days (Sunday first) of the week containing `date`.
+export function weekDays(date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay())
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+    return { date: d, day: d.getDate(), key: toKey(d) }
+  })
 }
 
 export const MONTH_NAMES = [
