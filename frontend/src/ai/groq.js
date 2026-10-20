@@ -1,4 +1,5 @@
 import { TOOL_DEFS, runTool, systemPrompt } from './tools.js'
+import { matchCommand } from './commands.js'
 import { API_URL, accessToken } from '../lib/supabase.js'
 
 // One HTTP request — but to our own backend, not to Groq. The API key used to
@@ -61,6 +62,12 @@ async function callModel(messages) {
 // its confirmation is a round. 8 leaves room for a multi-step request and
 // still stops a confused model looping forever.
 export async function ask({ history, userText, getState, dispatch, maxRounds = 8 }) {
+  // Known commands skip the model entirely: instant, free, works offline.
+  const cmd = matchCommand(userText)
+  if (cmd) {
+    return { text: runTool(cmd.name, cmd.args, { state: getState(), dispatch }), actions: [cmd.name] }
+  }
+
   const messages = [
     { role: 'system', content: systemPrompt(getState()) },
     ...history,
