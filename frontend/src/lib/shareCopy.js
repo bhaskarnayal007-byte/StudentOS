@@ -32,7 +32,7 @@ export function importShare({ kind, payload }, state, dispatch) {
 
   if (kind === 'event') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.date || '')) throw new Error('That event has no valid date.')
-    dispatch({ type: 'add-event', event: { title: String(payload.title || 'Event'), date: payload.date, time: payload.time || '' } })
+    dispatch({ type: 'add-event', event: { title: String(payload.title || 'Event'), date: payload.date, time: String(payload.time || '') } })
     return `Added to your calendar on ${payload.date}.`
   }
 

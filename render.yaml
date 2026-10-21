@@ -1,0 +1,36 @@
+# Render Blueprint for the backend (the AI proxy).
+# Render → New → Blueprint → pick this repo. Secrets marked `sync: false` are
+# asked for in the dashboard and never live in the repo.
+#
+# ponytail: free plan sleeps after ~15 idle minutes, so the first Octi AI reply
+# after a quiet spell takes up to a minute. Template commands ("25 min timer")
+# never touch the backend and stay instant. Move to a paid plan when real
+# users notice.
+services:
+  - type: web
+    name: student-os-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --legacy-peer-deps
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: AI_MODEL
+        value: llama-3.3-70b-versatile
+      # Your Vercel URL, e.g. https://student-os.vercel.app (no trailing slash).
+      - key: FRONTEND_URL
+        sync: false
+      - key: ALLOWED_EMAILS
+        sync: false
+      # The AI key's total daily token quota, split evenly across active users.
+      - key: AI_DAILY_TOKENS
+        value: "100000"
