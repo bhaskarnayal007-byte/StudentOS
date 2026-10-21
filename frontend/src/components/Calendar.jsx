@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { MONTH_NAMES, WEEKDAYS, monthGrid, todayKey, toKey, weekDays } from '../dates.js'
 import useGoogleCalendar from '../lib/useGoogleCalendar.js'
+import ShareButton from './ShareButton.jsx'
 
 const GOOGLE_COLOR = '#5B7FBF'
 // The week view's visible day. Earlier and later items are pinned to the edges.
@@ -274,6 +275,7 @@ function DayDetail({ dateKey, items, dispatch }) {
                   : <span>{it.title}</span>}
                 <small>{it.source === 'google' ? 'Google Calendar' : it.source}</small>
               </span>
+              {it.source === 'event' && <ShareButton kind="event" item={it} />}
               {it.source === 'event' && (
                 <button className="ghost" onClick={() => dispatch({ type: 'delete-event', id: it.id })} aria-label={`Delete ${it.title}`}>
                   ✕

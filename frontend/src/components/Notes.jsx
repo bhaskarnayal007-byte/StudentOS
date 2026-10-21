@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './Courses.jsx'
+import ShareButton from './ShareButton.jsx'
 import { ACCEPT, ICON, addFileNotes, deleteFile, getFile, kindOf } from '../lib/fileStore.js'
 
 /**
@@ -150,6 +151,7 @@ export default function Notes() {
               <span className="muted">
                 {words(open.text)} words · {when(open.updatedAt)}
               </span>
+              <ShareButton kind="note" item={open} />
               <button className="ghost" aria-label="Delete note" onClick={() => remove(open.id)}>✕</button>
             </div>
             {/* A PDF or photo sits beside the writing on a wide screen, so

@@ -3174,3 +3174,102 @@ a.theme-toggle { text-decoration: none; }
   text-shadow: none;
   filter: var(--chrome-glow) drop-shadow(0 0 10px rgba(220, 230, 255, 0.9));
 }
+
+/* ── Friends, avatars and the share island ─────────────────────────────── */
+.avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface));
+  border: 1px solid var(--color-border);
+}
+.avatar-picker { display: inline-flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.avatar-btn { position: relative; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+.avatar-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.avatar-edit {
+  position: absolute; right: -2px; bottom: -2px;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  font-size: 12px;
+  color: var(--color-surface);
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+}
+
+.home-top { align-items: center; }
+.home-hello { display: flex; align-items: center; gap: var(--s3); }
+.home-avatar { display: inline-flex; border-radius: 50%; }
+.home-top-actions { display: flex; align-items: center; gap: var(--s2); }
+.friends-btn { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); text-decoration: none; }
+
+.friends-me { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s4); }
+.friends-me .avatar-picker { margin: 0; }
+.friends-me p { margin: 0; }
+.tag-hint { margin: var(--s1) 0 0; font-size: var(--t-xs); color: var(--color-text-3); }
+.tag-free { color: var(--color-accent); }
+.tag-taken, .tag-invalid { color: var(--color-danger); }
+
+.share { position: relative; display: inline-flex; }
+.share-island {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  right: 0;
+  z-index: 60;
+  width: min(280px, calc(100vw - 32px));
+  padding: var(--s3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  transform-origin: top right;
+  animation: island-in 220ms var(--ease);
+}
+@keyframes island-in { from { opacity: 0; transform: scale(0.85) translateY(-6px); } }
+.share-island > p { margin: var(--s2); }
+.share-friends { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); max-height: 260px; overflow-y: auto; }
+.share-friend {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%;
+  padding: var(--s2);
+  font: inherit; color: inherit; text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.share-friend:hover { background: var(--color-sunken); }
+.share-friend[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+.share-friend-tag { flex: 1; font-weight: 600; }
+.share-check {
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  font-size: 12px; color: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: 50%;
+}
+.share-friend[aria-pressed="true"] .share-check { color: var(--color-surface); background: var(--color-accent); border-color: var(--color-accent); }
+.share-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin-top: var(--s3); }
+
+/* On a phone the island floats at the bottom, in thumb reach. */
+@media (max-width: 600px) {
+  .share-island {
+    position: fixed;
+    top: auto; right: 16px; left: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: auto;
+    transform-origin: bottom center;
+    animation-name: island-up;
+  }
+  @keyframes island-up { from { opacity: 0; transform: translateY(24px) scale(0.95); } }
+}
+@media (prefers-reduced-motion: reduce) { .share-island { animation: none; } }

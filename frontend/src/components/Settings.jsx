@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { signOut, deleteAccount, setName } from '../auth/useSession.js'
 import { Copyright } from './Legal'
+import { TagForm } from './Friends.jsx'
+import { setTag, useMyProfile } from '../lib/social.js'
+import { AvatarPicker } from './Avatar.jsx'
 
 // Multipliers for --fs in theme.css.
 const TEXT_SIZES = [
@@ -35,6 +38,9 @@ export default function Settings() {
       <h2>Your name</h2>
       {/* key re-seeds the field once the stored name arrives after a reload. */}
       <NameForm key={state.profileName} current={state.profileName} />
+
+      <h2>Your tag and picture</h2>
+      <TagSetting name={state.profileName} />
 
       <h2>Theme</h2>
       <div className="theme-grid" role="radiogroup" aria-label="Theme">
@@ -111,6 +117,31 @@ function NameForm({ current }) {
       <button className="theme-toggle" disabled={!trimmed || trimmed === current}>Save</button>
       {status && <span className="settings-status" role="status">{status}</span>}
     </form>
+  )
+}
+
+/** The @tag friends find you by, and the picture they see. */
+function TagSetting({ name }) {
+  const profile = useMyProfile()
+  const [status, setStatus] = useState('')
+
+  async function save(next) {
+    setStatus('Saving…')
+    try {
+      await setTag(next, name || '')
+      setStatus('Saved')
+    } catch (err) {
+      setStatus(err.message)
+    }
+  }
+
+  if (profile === undefined) return null
+  return (
+    <>
+      {profile && <AvatarPicker profile={profile} size={64} />}
+      <TagForm key={profile?.tag} current={profile?.tag ?? ''} onSave={save} />
+      {status && <span className="settings-status" role="status">{status}</span>}
+    </>
   )
 }
 

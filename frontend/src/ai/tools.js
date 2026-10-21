@@ -235,7 +235,7 @@ function topicSchema(depth) {
 }
 
 // Kept in step with the same list in Schedule.jsx.
-const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
+export const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
 
 // Runs one tool call. Returns a short string that goes BACK to the model, so it
 // knows whether it worked and can say something sensible to you.
@@ -480,7 +480,7 @@ function findByText(items, text) {
 }
 
 /** A subject's map as nested { name, learned, subtopics }, for the prompt. */
-function outline(topics, courseId, parentId = null) {
+export function outline(topics, courseId, parentId = null) {
   return topics
     .filter(t => t.courseId === courseId && t.parentId === parentId)
     .map(t => {

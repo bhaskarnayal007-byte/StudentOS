@@ -24,6 +24,7 @@ import OctiDock from './components/OctiDock'
 import Landing from './components/Landing'
 import { Privacy, Terms } from './components/Legal'
 import Settings from './components/Settings.jsx'
+import Friends from './components/Friends.jsx'
 import { useSession } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
@@ -38,6 +39,7 @@ export const SECTIONS = [
   { path: '/schedule', name: 'Schedule', Panel: Schedule },
   { path: '/timers', name: 'Timers', Panel: Timers },
   { path: '/octi', name: 'Octi', Panel: Assistant },
+  { path: '/friends', name: 'Friends', Panel: Friends },
 ]
 
 // Callers still say onGoTo('Tasks') by name; this is how a name becomes a URL.

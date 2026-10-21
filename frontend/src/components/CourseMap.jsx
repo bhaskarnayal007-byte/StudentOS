@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { NODE_H, NODE_W, descendants, layout, progress } from '../lib/topics.js'
+import ShareButton from './ShareButton.jsx'
 
 // Breathing room around the tree inside the scrollable canvas.
 const PAD = 32
@@ -70,6 +71,7 @@ export default function CourseMap() {
             <span className="map-bar"><span style={{ width: `${(done / mine.length) * 100}%` }} /></span>
           </div>
         )}
+        {mine.length > 0 && <ShareButton kind="map" item={course} />}
         <button className="primary" onClick={() => add(null)}>+ Add topic</button>
       </header>
 
