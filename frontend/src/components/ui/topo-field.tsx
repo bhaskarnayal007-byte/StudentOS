@@ -293,23 +293,39 @@ const topoFieldSource = `<!DOCTYPE html>
             const timeLocation = gl.getUniformLocation(program, "u_time");
             const dprLocation = gl.getUniformLocation(program, "u_dpr");
 
+            // Phones: a full-resolution shader redrawn 60 times a second behind
+            // the page made scrolling flicker. Soft lines look the same at 1x
+            // and 30fps, at a fraction of the work.
+            const phone = window.innerWidth <= 620;
+            const frameMs = phone ? 1000 / 30 : 0;
+
             function resizeCanvas() {
-                const dpr = window.devicePixelRatio || 1;
-                canvas.width = window.innerWidth * dpr;
-                canvas.height = window.innerHeight * dpr;
+                const dpr = phone ? 1 : (window.devicePixelRatio || 1);
+                const w = Math.round(window.innerWidth * dpr);
+                const h = Math.round(window.innerHeight * dpr);
+                // Setting the size clears the canvas, so only do it on a real change.
+                if (w === canvas.width && h === canvas.height) return;
+                canvas.width = w;
+                canvas.height = h;
                 gl.viewport(0, 0, canvas.width, canvas.height);
                 gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
                 gl.uniform1f(dprLocation, dpr);
+                // Repaint now rather than leave it blank until the next frame.
+                gl.uniform1f(timeLocation, (performance.now() - startTime) * 0.001);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
             }
 
+            let startTime = performance.now();
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
 
-            let startTime = performance.now();
+            let last = 0;
             function render(time) {
+                requestAnimationFrame(render);
+                if (time - last < frameMs) return;
+                last = time;
                 gl.uniform1f(timeLocation, (time - startTime) * 0.001);
                 gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-                requestAnimationFrame(render);
             }
             requestAnimationFrame(render);
         }

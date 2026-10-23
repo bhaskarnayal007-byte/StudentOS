@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { WEEKDAYS } from '../dates.js'
 
@@ -13,7 +13,12 @@ const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240'
 
 export default function Schedule() {
   const { state, dispatch } = useStore()
-  const [form, setForm] = useState({ title: '', day: 1, startHour: 9, endHour: 10, color: COLORS[0] })
+  // On a phone the week doesn't fit, so it shows one day, today to start.
+  const phone = useMatchMedia('(max-width: 620px)')
+  const [day, setDay] = useState(() => new Date().getDay())
+  const days = phone ? [day] : WEEKDAYS.map((_, i) => i)
+  const col = d => (phone ? 2 : d + 2)
+  const [form, setForm] = useState({ title: '', day: phone ? day : 1, startHour: 9, endHour: 10, color: COLORS[0] })
 
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
 
@@ -39,8 +44,29 @@ export default function Schedule() {
     set('title', '')
   }
 
+  function pickDay(d) {
+    setDay(d)
+    set('day', d)
+  }
+
   return (
     <div>
+      {phone && (
+        <div className="sched-days" role="group" aria-label="Day">
+          {WEEKDAYS.map((w, i) => (
+            <button
+              key={w}
+              type="button"
+              aria-pressed={i === day}
+              className={i === day ? 'theme-toggle active' : 'theme-toggle'}
+              onClick={() => pickDay(i)}
+            >
+              {w}
+            </button>
+          ))}
+        </div>
+      )}
+
       <form className="row" onSubmit={submit}>
         <input
           className="grow"
@@ -65,13 +91,13 @@ export default function Schedule() {
         {/* One CSS Grid: column 1 = hour labels, columns 2-8 = the week.
             Row 1 = day headers, then one row per hour. */}
         <div
-          className="sched"
+          className={phone ? 'sched sched-one' : 'sched'}
           style={{ gridTemplateRows: `28px repeat(${hours.length}, 34px)` }}
         >
           <div className="sched-corner" />
-          {WEEKDAYS.map((w, i) => (
-            <div key={w} className="sched-dayhead" style={{ gridColumn: i + 2, gridRow: 1 }}>
-              {w}
+          {days.map(d => (
+            <div key={d} className="sched-dayhead" style={{ gridColumn: col(d), gridRow: 1 }}>
+              {WEEKDAYS[d]}
             </div>
           ))}
 
@@ -83,21 +109,21 @@ export default function Schedule() {
 
           {/* Empty cells, purely for the grid lines you see. */}
           {hours.map((h, i) =>
-            WEEKDAYS.map((_, d) => (
-              <div key={`${h}-${d}`} className="sched-cell" style={{ gridColumn: d + 2, gridRow: i + 2 }} />
+            days.map(d => (
+              <div key={`${h}-${d}`} className="sched-cell" style={{ gridColumn: col(d), gridRow: i + 2 }} />
             )),
           )}
 
           {/* The blocks. `grid-row: A / B` spans rows — that's what makes a
               2-hour block twice as tall, with no height calculation at all. */}
-          {state.scheduleBlocks.map(b => (
+          {state.scheduleBlocks.filter(b => days.includes(b.day)).map(b => (
             <button
               key={b.id}
               className="sched-block"
               title="Click to remove"
               onClick={() => dispatch({ type: 'delete-block', id: b.id })}
               style={{
-                gridColumn: b.day + 2,
+                gridColumn: col(b.day),
                 gridRow: `${b.startHour - START_HOUR + 2} / ${b.endHour - START_HOUR + 2}`,
                 background: b.color,
               }}
@@ -113,6 +139,18 @@ export default function Schedule() {
       )}
     </div>
   )
+}
+
+/** True while the media query matches, following it as the window changes. */
+function useMatchMedia(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const media = window.matchMedia(query)
+    const update = () => setMatches(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [query])
+  return matches
 }
 
 // 9 → "9 AM", 13 → "1 PM"

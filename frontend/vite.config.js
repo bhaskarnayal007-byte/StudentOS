@@ -43,9 +43,31 @@ export default defineConfig({
           // is why it's a separate, inset rendering, not the same file.
           { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Puts Student OS in Android's share sheet, so a PDF or deck in
+        // WhatsApp can be shared straight into Notes. Handled by
+        // public/share-target-sw.js. iOS doesn't support this for web apps.
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [{
+              name: 'files',
+              accept: [
+                'application/pdf', 'image/*', 'text/*',
+                'application/msword', 'application/vnd.ms-powerpoint', 'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                '.pdf', '.ppt', '.pptx', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt',
+              ],
+            }],
+          },
+        },
       },
 
       workbox: {
+        importScripts: ['share-target-sw.js'],
         // Files precached at install time = the app shell. With these cached,
         // the app opens with no network at all. Your DATA was already offline —
         // it lives in localStorage. This step is about the code itself.

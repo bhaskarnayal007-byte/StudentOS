@@ -16,7 +16,7 @@ import { ACCEPT, ICON, addFileNotes, deleteFile, getFile, kindOf } from '../lib/
  */
 export default function Notes() {
   const { state, dispatch } = useStore()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const [openId, setOpenId] = useState(params.get('id'))
   const [dragging, setDragging] = useState(false)
   const fileInput = useRef(null)
@@ -55,6 +55,15 @@ export default function Notes() {
     const id = await addFileNotes(files, dispatch, filter || undefined)
     if (id) setOpenId(id)
   }
+
+  // Files shared in from another app (see public/share-target-sw.js). Checked
+  // on every visit, not only on ?shared=1: someone signed out when they shared
+  // lands on sign-in first, and the files wait until Notes is next opened.
+  useEffect(() => {
+    takeSharedFiles().then(files => { if (files.length) attach(files) })
+    if (params.has('shared')) setParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function drop(e) {
     e.preventDefault()
@@ -188,6 +197,31 @@ export default function Notes() {
       </section>
     </div>
   )
+}
+
+/**
+ * Empties the share-target cache into File objects. Each entry is deleted as
+ * it is read, and a second caller while one is running gets nothing, so a
+ * double-run effect can't file the same share twice.
+ */
+let taking = false
+async function takeSharedFiles() {
+  if (taking || !('caches' in window)) return []
+  taking = true
+  try {
+    const cache = await caches.open('shared-files')
+    const files = []
+    for (const req of await cache.keys()) {
+      const res = await cache.match(req)
+      await cache.delete(req)
+      if (!res) continue
+      const name = decodeURIComponent(res.headers.get('X-File-Name') || 'shared file')
+      files.push(new File([await res.blob()], name, { type: res.headers.get('Content-Type') || '' }))
+    }
+    return files
+  } finally {
+    taking = false
+  }
 }
 
 /**

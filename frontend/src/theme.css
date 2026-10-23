@@ -878,6 +878,12 @@ button.ghost:hover { color: var(--color-accent); }
 .sched-scroll { overflow-x: auto; margin: 0 calc(var(--s5) * -1); padding: 0 var(--s5); }
 .sched { display: grid; grid-template-columns: 50px repeat(7, minmax(74px, 1fr)); min-width: 560px; }
 .sched-corner { grid-column: 1; grid-row: 1; }
+/* Phones: the chosen day alone, the full width, no sideways scroll. */
+.sched.sched-one { grid-template-columns: 50px minmax(0, 1fr); min-width: 0; }
+.sched-one .sched-cell { border-right: 1px solid var(--color-border); }
+.sched-one .sched-block { font-size: var(--t-sm); }
+.sched-days { display: flex; gap: 4px; margin-bottom: var(--s3); }
+.sched-days .theme-toggle { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0; font-size: var(--t-sm); }
 
 .sched-dayhead {
   text-align: center;

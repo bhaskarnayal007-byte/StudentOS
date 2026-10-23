@@ -24,6 +24,7 @@ import OctiDock from './components/OctiDock'
 import Landing from './components/Landing'
 import { Privacy, Terms } from './components/Legal'
 import Settings from './components/Settings.jsx'
+import AppLinksTest from './components/AppLinksTest.jsx'
 import Friends from './components/Friends.jsx'
 import { useSession } from './auth/useSession.js'
 
@@ -124,6 +125,8 @@ function AppShell() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/settings" element={<Settings />} />
+        {/* TEMPORARY: see AppLinksTest.jsx. */}
+        <Route path="/applinks" element={<AppLinksTest />} />
         {/* A note's file on its own, opened from Notes in a new tab. */}
         <Route path="/view/:id" element={<FileTab />} />
         {/* A subject's mind map, inside the usual frame so Courses stays lit. */}
