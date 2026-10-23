@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useReveal } from "../lib/useReveal.js";
+import { syncThemeColor } from "../lib/themeColor.js";
 import LogoWheel from "./LogoWheel";
 
 // Same reasoning as HomePage: three.js is the heaviest thing we ship, and a
@@ -124,6 +125,12 @@ function Cta({ to, onClick, children }: { to?: string; onClick?: () => void; chi
 export default function Landing() {
   const install = useInstallPrompt();
   useReveal([install]);
+
+  // Phone bars go near-black here, and back to the theme once signed in.
+  useEffect(() => {
+    syncThemeColor();
+    return () => requestAnimationFrame(syncThemeColor);
+  }, []);
 
   return (
     <div className="landing" data-theme="dark">

@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/test-scoped-storage.mjs && node scripts/test-cloud-sync.mjs && node scripts/test-tools.mjs && node scripts/test-commands.mjs && node scripts/test-share.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs"
+    "test": "node scripts/test-scoped-storage.mjs && node scripts/test-cloud-sync.mjs && node scripts/test-tools.mjs && node scripts/test-commands.mjs && node scripts/test-share.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs && node scripts/test-native-app.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import Tasks from './components/Tasks.jsx'
 import Calendar from './components/Calendar.jsx'
 import Schedule from './components/Schedule.jsx'
@@ -162,6 +162,7 @@ function AppShell() {
 
       {/* Octi sits outside <Routes> so he survives every navigation. */}
       <OctiDock />
+      <MobileDock />
     </>
   )
 }
@@ -210,6 +211,36 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
         <main>{children}</main>
       </div>
     </>
+  )
+}
+
+/**
+ * Phones only (CSS hides it above 620px): every section in one pill floating
+ * at the bottom, on every screen including Home, swiped sideways. The header
+ * nav is hidden on phones so there is only ever one bar.
+ */
+function MobileDock() {
+  const { pathname } = useLocation()
+  const ref = useRef(null)
+
+  // Keep the current section in view after navigating to it.
+  useEffect(() => {
+    ref.current?.querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [pathname])
+
+  return (
+    <nav className="dock" ref={ref} aria-label="Sections">
+      {SECTIONS.map(({ path, name }) => (
+        <NavLink
+          key={path}
+          to={path}
+          end={path === '/'}
+          className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+        >
+          {name}
+        </NavLink>
+      ))}
+    </nav>
   )
 }
 

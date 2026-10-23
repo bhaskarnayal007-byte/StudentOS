@@ -233,6 +233,10 @@ body {
 
 h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.2; }
 
+/* Overscroll and the phone's safe-area strips show html, not body. */
+html { background: var(--color-base); }
+html:has(.landing) { background: #14150F; }
+
 /* ── Dark-mode legibility ──
    text-shadow rather than -webkit-text-stroke: a stroke thickens the glyphs
    themselves, which on a serif at 13-16px fills in the counters and muddies
@@ -628,7 +632,9 @@ button.ghost:hover { color: var(--color-accent); }
    ═══════════════════════════════════════════════════════════════════════════ */
 /* Every item carries its colour in --c: the accent for your events, the
    course colour for tasks, Google's blue for synced events. */
-.calendar { display: grid; gap: var(--s5); }
+/* minmax(0, …): an unsized grid column grows to its content and pushed the
+   page wider than a phone. */
+.calendar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
 @media (min-width: 1100px) {
   .calendar { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); align-items: start; }
 }
@@ -757,7 +763,7 @@ button.ghost:hover { color: var(--color-accent); }
   /* Too narrow for titles: chips become coloured bars. */
   .cal-day { min-height: 54px; padding: 4px; }
   .cal-month .cal-chip { height: 5px; padding: 0; border-left: none; background: var(--c); font-size: 0; }
-  .cal-more { font-size: calc(10px * var(--fs)); padding: 0; }
+  .cal-more { font-size: var(--t-xs); padding: 0; }
 }
 
 /* ── Week ── */
@@ -1757,19 +1763,42 @@ button.ghost.always:hover { color: var(--color-accent); }
   .item { flex-wrap: wrap; }
   .item .grow { flex-basis: auto; }
 
-  .body { flex-direction: column; }
+  /* stretch, not the desktop flex-start: in a column, flex-start sizes main to
+     its widest content (the 560px schedule grid), which made the whole page
+     wider than the phone and Android zoomed out to fit it. */
+  .body { flex-direction: column; align-items: stretch; }
   .side { position: static; width: 100%; order: 2; margin-top: var(--s3); }
 
-  nav {
+  /* Under 16px, iOS zooms the page in when a field is tapped. */
+  input, select, textarea { font-size: max(16px, var(--t-sm)); }
+  /* Thumb-sized edit/remove on the app shortcuts. */
+  .launch-tools .ghost { min-width: 40px; min-height: 40px; }
+
+  /* The dock replaces the header nav on phones. */
+  header nav { display: none; }
+  .dock {
     position: fixed;
     z-index: 20;
     left: var(--s3);
     right: var(--s3);
     bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+    border-radius: var(--r-pill);
     box-shadow: var(--shadow-lg);
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
   }
-  .tab { font-size: var(--t-xs); padding: var(--s2) 6px; min-width: 0; }
+  /* Swiped, not squeezed: each tab keeps its full name and a thumb-sized target. */
+  .dock .tab {
+    flex: none;
+    min-height: 44px;
+    padding: var(--s2) var(--s4);
+    border-radius: var(--r-pill);
+    font-size: var(--t-sm);
+    scroll-snap-align: center;
+  }
 }
+.dock { display: none; }
+@media (max-width: 620px) { .dock { display: flex; } }
 
 /* ─── Octi, docked ──────────────────────────────────────────────────────────
    A floating button on every screen, and the panel it opens. Both are fixed,
@@ -1865,10 +1894,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 @media (max-width: 620px) {
   .octi-dock { bottom: calc(var(--s3) + 58px + env(safe-area-inset-bottom)); }
   .octi-panel { bottom: calc(var(--s3) + 58px + 56px + var(--s2) + env(safe-area-inset-bottom)); }
-  /* Octi has his own button down there; a tab for him as well wastes one of
-     the five slots that actually have to fit. */
-  nav .tab[href="/octi"] { display: none; }
-  .sync-badge { font-size: calc(10px * var(--fs)); }
+
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

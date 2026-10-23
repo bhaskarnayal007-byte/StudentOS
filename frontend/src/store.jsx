@@ -3,6 +3,7 @@ import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
 import { pull, push, subscribe, reconcile, readRev } from './lib/cloudSync.js'
 import { descendants } from './lib/topics.js'
+import { syncThemeColor } from './lib/themeColor.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE STATE FILE. Everything the app knows lives in one object, defined here.
@@ -502,7 +503,8 @@ export function StoreProvider({ children }) {
 
   // Put the choice on <html> as data-theme, which is what the CSS reads.
   // 'system' removes the attribute entirely so the prefers-color-scheme rule
-  // in theme.css takes over — one source of truth, no JS media listener.
+  // in theme.css takes over. The only JS listener is for the phone's
+  // theme-color, which CSS can't reach.
   useEffect(() => {
     const root = document.documentElement
     // Light is no longer a choice of its own (Auto covers it); move anyone
@@ -513,12 +515,19 @@ export function StoreProvider({ children }) {
     }
     if (state.theme === 'system') root.removeAttribute('data-theme')
     else root.dataset.theme = state.theme
+    syncThemeColor()
 
     // Also kept outside the per-user slice, so the login screen — where there
     // is no user — still renders in the theme this device chose.
     try {
       localStorage.setItem(THEME_KEY, state.theme)
     } catch { /* private mode */ }
+
+    // Auto follows the OS, which can flip light/dark while the app is open.
+    if (state.theme !== 'system') return
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    media.addEventListener('change', syncThemeColor)
+    return () => media.removeEventListener('change', syncThemeColor)
   }, [state.theme])
 
   // theme.css multiplies every font size by --fs. 1.125 is the base bump

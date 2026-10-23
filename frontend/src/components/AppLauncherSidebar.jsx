@@ -17,12 +17,13 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '../store.jsx'
 import AddAppModal from './AddAppModal.jsx'
+import { nativeAppUrl, phonePlatform } from '../lib/nativeApp.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUICK LAUNCH
 //
 // A vertical strip of shortcuts to external sites. Clicking one opens it in a
-// new tab. Deliberately NOT an iframe: Docs, Notion and Duolingo all send
+// new tab, or in its own app on a phone. Deliberately NOT an iframe: Docs, Notion and Duolingo all send
 // X-Frame-Options / frame-ancestors headers that make embedding fail, and the
 // failure is a blank white box with no error — the worst kind.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,8 +96,28 @@ export default function AppLauncherSidebar() {
 // Used by the sidebar and by the home screen's app buttons.
 // noopener,noreferrer matters: without noopener the opened page gets a
 // window.opener handle back to this app and can navigate it elsewhere.
+const openWeb = url => window.open(url, '_blank', 'noopener,noreferrer')
+
+// On a phone, known sites open in their own app instead of a browser tab.
 export function openShortcut(url) {
-  window.open(url, '_blank', 'noopener,noreferrer')
+  const platform = phonePlatform()
+  const appUrl = nativeAppUrl(url, platform)
+  if (!appUrl) return openWeb(url)
+
+  // Android's intent URL falls back to the website by itself.
+  if (platform === 'android') {
+    window.location.href = appUrl
+    return
+  }
+
+  // iOS says nothing when the app isn't installed. If we're still on screen
+  // shortly after, it didn't open, so show the website instead.
+  // ponytail: timing heuristic, the only signal iOS gives a web app.
+  const timer = setTimeout(() => openWeb(url), 1500)
+  const opened = () => { if (document.hidden) clearTimeout(timer) }
+  document.addEventListener('visibilitychange', opened, { once: true })
+  window.addEventListener('pagehide', () => clearTimeout(timer), { once: true })
+  window.location.href = appUrl
 }
 
 // ─── One shortcut ────────────────────────────────────────────────────────────
