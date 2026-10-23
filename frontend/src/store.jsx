@@ -521,9 +521,10 @@ export function StoreProvider({ children }) {
     } catch { /* private mode */ }
   }, [state.theme])
 
-  // theme.css multiplies every font size by --fs.
+  // theme.css multiplies every font size by --fs. 1.125 is the base bump
+  // (see theme.css), so the Settings multipliers stay 0.9 / 1 / 1.15 / 1.3.
   useEffect(() => {
-    document.documentElement.style.setProperty('--fs', String(state.textSize))
+    document.documentElement.style.setProperty('--fs', String(state.textSize * 1.125))
   }, [state.textSize])
 
   return (

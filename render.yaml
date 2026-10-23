@@ -25,7 +25,7 @@ services:
       - key: AI_BASE_URL
         value: https://api.groq.com/openai/v1
       - key: AI_MODEL
-        value: llama-3.3-70b-versatile
+        value: openai/gpt-oss-120b
       # Your Vercel URL, e.g. https://student-os.vercel.app (no trailing slash).
       - key: FRONTEND_URL
         sync: false

@@ -14,7 +14,7 @@ const router = Router();
 // URL that already ends in "/" produces a double slash, which some gateways
 // 404 on.
 const BASE_URL = (process.env.AI_BASE_URL ?? "https://api.groq.com/openai/v1").replace(/\/+$/, "");
-const DEFAULT_MODEL = process.env.AI_MODEL ?? "llama-3.3-70b-versatile";
+const DEFAULT_MODEL = process.env.AI_MODEL ?? "openai/gpt-oss-120b";
 const TIMEOUT_MS = 30_000;
 
 // The agent loop makes up to 4 calls per user message, so this is roughly

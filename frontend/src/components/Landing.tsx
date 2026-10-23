@@ -144,8 +144,16 @@ export default function Landing() {
           <nav className="landing-nav">
             {/* Always present, whether or not the browser offers its own
                 install prompt: the page is how people get the app, so there
-                has to be something to press that says so. */}
-            <a href="#get-it" className="landing-get">Get the app</a>
+                has to be something to press that says so. Where the browser
+                can install it, pressing this installs it; elsewhere it goes
+                to the steps. */}
+            <a
+              href="#get-it"
+              className="landing-get"
+              onClick={install ? (e) => { e.preventDefault(); install(); } : undefined}
+            >
+              Get the app
+            </a>
             <Link to="/signin" className="landing-signin">Sign in</Link>
           </nav>
         </div>
