@@ -6,6 +6,16 @@
 // files them like any dropped file. Loaded into the generated sw.js via
 // workbox importScripts, ahead of workbox's own routes.
 
+// Tapping a timer or alarm notification brings the app forward (or opens it).
+self.addEventListener('notificationclick', event => {
+  event.notification.close()
+  event.waitUntil((async () => {
+    const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    if (open.length) return open[0].focus()
+    return self.clients.openWindow('/timers')
+  })())
+})
+
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url)
   if (event.request.method !== 'POST' || url.pathname !== '/share-target') return

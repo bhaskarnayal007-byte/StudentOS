@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
-import { useNow, beep } from '../useNow.js'
+import { useNow, ring } from '../useNow.js'
 import FocusWeek from './FocusWeek.jsx'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,8 +157,10 @@ export function AlarmWatcher() {
 
   useEffect(() => {
     if (due.length === 0) return
-    alert_(due.map(a => a.label).join(', '))
+    // Mark them rung BEFORE making any noise, so nothing that goes wrong while
+    // alerting can leave them due and ringing again on every reload.
     dispatch({ type: 'fire-alarms', ids: due.map(a => a.id) })
+    ring(due.map(a => a.label).join(', '))
     // Depend on the id list, not the array — a new array every render would
     // re-run this effect forever.
   }, [dueIds]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -171,7 +173,6 @@ export function AlarmWatcher() {
     }
     if (timerRang.current) return
     timerRang.current = true
-    alert_(`${state.timer.label} finished`)
 
     // A timer that ran its course is a focus session. Cancelling one isn't,
     // which is why this lives here and not in clear-timer.
@@ -179,16 +180,10 @@ export function AlarmWatcher() {
     const minutes = Math.round(((endsAt - (startedAt ?? endsAt)) / 60_000))
     // Older timers have no startedAt, and a sub-minute run isn't worth a row.
     if (minutes >= 1) dispatch({ type: 'log-focus', endedAt: endsAt, minutes })
+    ring(`${state.timer.label} finished`)
   }, [timerDone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
-}
-
-function alert_(label) {
-  beep()
-  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    new Notification('Student OS', { body: label, icon: '/pwa-192.png' })
-  }
 }
 
 function requestNotificationPermission() {

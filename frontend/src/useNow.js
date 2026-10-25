@@ -31,7 +31,28 @@ export function beep() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
     osc.start()
     osc.stop(ctx.currentTime + 0.6)
+    // Phones cap how many audio contexts a page may hold; release this one.
+    osc.onended = () => ctx.close()
   } catch {
     // Browser blocked audio (usually: no user interaction yet). Not fatal.
   }
+}
+
+// Never throws. It used to call `new Notification()`, which Android Chrome
+// refuses with "Illegal constructor": inside AlarmWatcher's effect (Timers.jsx)
+// that error took down the whole app (beep, then a blank screen), and since the finished timer is
+// saved, every reload rang and crashed again.
+export function ring(label) {
+  beep()
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+  const options = { body: label, icon: '/pwa-192.png' }
+  // The service worker route works everywhere, phones included.
+  if (!navigator.serviceWorker) return desktopNotification(options)
+  navigator.serviceWorker.getRegistration()
+    .then(reg => (reg ? reg.showNotification('Student OS', options) : desktopNotification(options)))
+    .catch(() => desktopNotification(options))
+}
+
+function desktopNotification(options) {
+  try { new Notification('Student OS', options) } catch { /* phones: no constructor */ }
 }
