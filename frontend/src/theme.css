@@ -1831,7 +1831,13 @@ button.ghost.always:hover { color: var(--color-accent); }
   }
 }
 .dock { display: none; }
-@media (max-width: 620px) { .dock { display: flex; } }
+@media (max-width: 620px) {
+  .dock { display: flex; }
+  /* Not on phones: Octi has his own floating button, Friends is linked from
+     Home, and the app shortcuts are better opened from the phone itself. */
+  .dock .tab[href="/octi"], .dock .tab[href="/friends"] { display: none; }
+  .launcher, .home-buttons { display: none; }
+}
 
 /* ─── Octi, docked ──────────────────────────────────────────────────────────
    A floating button on every screen, and the panel it opens. Both are fixed,
