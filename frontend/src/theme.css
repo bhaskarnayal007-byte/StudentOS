@@ -1780,7 +1780,7 @@ button.ghost.always:hover { color: var(--color-accent); }
 @media (max-width: 620px) {
   .app {
     padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom));
-    /* Full screen on phones: keep clear of the camera cutout. */
+    /* Keep clear of the camera cutout wherever the page reaches it. */
     padding-top: calc(var(--s4) + env(safe-area-inset-top));
   }
   header h1 { font-size: calc(30px * var(--fs)); margin-bottom: var(--s3); }

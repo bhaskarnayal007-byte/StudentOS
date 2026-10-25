@@ -33,10 +33,10 @@ export default defineConfig({
         // Matches the icon's own badge, so the splash behind it isn't a
         // pale rectangle around a dark tile.
         background_color: '#090408',
+        // Not fullscreen: that hid the clock, battery and the phone's own
+        // navigation buttons. The status bar takes the page colour instead
+        // (theme-color, see lib/themeColor.js).
         display: 'standalone', // ← this is the line that removes browser chrome
-        // Full screen where supported: the background reaches every edge,
-        // and the status bar slides in on a swipe down. Standalone otherwise.
-        display_override: ['fullscreen', 'standalone'],
         start_url: '/',
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
