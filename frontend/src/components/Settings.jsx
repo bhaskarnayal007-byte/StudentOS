@@ -20,6 +20,7 @@ const TEXT_SIZES = [
 const THEMES = [
   ['system', 'Auto'],
   ['dark', 'Dark'],
+  ['truedark', 'True dark'],
   ['minimal', 'Minimalist'],
   ['y2k', 'Y2K'],
   ['academia', 'Dark academia'],

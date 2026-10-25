@@ -112,8 +112,31 @@
   --shadow: none;
   --shadow-lg: none;
   --lift: -1px;
-  --octi: #D4D4D4;  /* soft grey, so he still reads on white */
+  --octi: #FF6B1A;  /* orange: the one warm thing on black and white, so he stands out */
   color-scheme: light;
+}
+
+/* Pure black, white as the accent. Surfaces are only a step off black so
+   cards still read as cards. */
+[data-theme="truedark"] {
+  --font-family: 'Inter', system-ui, sans-serif;
+  --color-base:         #000000;
+  --color-surface:      #0E0E0E;
+  --color-text:         #F2F2F2;
+  --color-heading:      #FFFFFF;
+  --color-accent:       #FFFFFF;
+  --color-accent-hover: #D9D9D9;
+  --color-border:       #262626;
+  --color-accent-ink:   #000000;
+  --color-accent-wash:  color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --color-focus-ring:   color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --color-sunken:       #070707;
+  --shadow:    0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 0 0 1px #262626, 0 12px 32px rgba(0, 0, 0, 0.8);
+  --halo: rgba(0, 0, 0, 0.85);
+  --edge: rgba(0, 0, 0, 0.6);
+  --octi: #FFFFFF;
+  color-scheme: dark;
 }
 
 [data-theme="y2k"] {
@@ -1755,7 +1778,11 @@ button.ghost.always:hover { color: var(--color-accent); }
    SMALL SCREENS
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 620px) {
-  .app { padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom)); }
+  .app {
+    padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom));
+    /* Full screen on phones: keep clear of the camera cutout. */
+    padding-top: calc(var(--s4) + env(safe-area-inset-top));
+  }
   header h1 { font-size: calc(30px * var(--fs)); margin-bottom: var(--s3); }
   .brand-mark { width: 34px; height: 34px; }
   main { padding: var(--s4); margin-top: 0; }
