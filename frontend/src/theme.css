@@ -2009,6 +2009,18 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .landing-brand { display: flex; align-items: center; gap: var(--s3); font-size: var(--t-lg); font-weight: 700; }
 .landing-nav { display: flex; align-items: center; gap: var(--s2); }
+/* It's a <nav>, so it would otherwise pick up the app's tab-bar box. */
+.landing-nav { padding: 0; border: none; background: none; outline: none; overflow: visible; }
+/* Phones: everything on one line. Without this the brand and both pills
+   wrapped onto two and three lines and grew into tall uneven blobs. */
+@media (max-width: 620px) {
+  .landing-bar-inner { gap: var(--s2); }
+  .landing-bar-inner.wrap { padding-inline: 16px; }  /* beats .landing .wrap */
+  .landing-brand { gap: var(--s2); font-size: var(--t-md); white-space: nowrap; }
+  .landing-brand .wheel { width: 28px; height: 28px; }
+  .landing-nav { flex: none; gap: 6px; }
+  .landing-get, .landing-signin { padding: 8px 14px; white-space: nowrap; line-height: 1.2; }
+}
 /* The download door, always present. Filled, because it is the thing the page
    exists to offer; sign-in next to it stays quiet. */
 .landing-get {
@@ -3025,7 +3037,7 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
    They keep their own width and the bar scrolls instead, with a fade on the
    right edge so there is some sign there is more. */
 @media (max-width: 620px) {
-  nav {
+  .dock {
     /* Room for the fade, and for Octi's dock above it. */
     padding-right: var(--s5);
     -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
