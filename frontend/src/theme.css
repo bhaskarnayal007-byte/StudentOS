@@ -3063,6 +3063,14 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
   .notes-reading .notes-side,
   .notes:not(.notes-reading) .notes-editor { display: none; }
   .notes-back { display: inline-flex; }
+
+  /* The toolbar didn't fit one line and the panel clips overflow, so delete
+     (last in the row) was cut off on phones. It wraps now, with back, share
+     and delete first so they are always on screen. */
+  .note-meta { flex-wrap: wrap; row-gap: var(--s2); }
+  .notes-back { order: -3; white-space: nowrap; }
+  .note-meta > .share { order: -2; margin-left: auto; }
+  .note-meta > [aria-label="Delete note"] { order: -1; min-width: 40px; min-height: 40px; }
 }
 
 /* The bottom bar outgrew the screen once Courses and Notes arrived: seven tabs
