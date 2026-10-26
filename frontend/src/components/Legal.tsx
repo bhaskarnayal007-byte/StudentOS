@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
-// ponytail: placeholder until there's a real support address — replace before
-// these pages go live, the policy promises people a way to reach you.
-const CONTACT = "[your contact email]";
-const UPDATED = "3 October 2026";
+// Where the policy promises people can reach us. A link, so it opens their mail app.
+const EMAIL = "archive.solutions007@gmail.com";
+const CONTACT = <a href={`mailto:${EMAIL}`}>{EMAIL}</a>;
+const UPDATED = "26 October 2026";
 
 export const CREATOR = "Bhaskar Nayal";
 

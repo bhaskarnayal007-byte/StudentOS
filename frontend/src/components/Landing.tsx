@@ -207,7 +207,7 @@ export default function Landing() {
 
       <section className="helps" id="helps">
         <div className="wrap">
-          <span className="eyebrow" data-reveal>Built for first years</span>
+          <span className="eyebrow" data-reveal>Built for college</span>
           <h2 data-reveal>How Student OS helps</h2>
           <p className="helps-lead" data-reveal>
             Everything a term throws at you, in one place that keeps itself tidy.
