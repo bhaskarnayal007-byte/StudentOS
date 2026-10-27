@@ -25,6 +25,8 @@ import Landing from './components/Landing'
 import { Privacy, Terms } from './components/Legal'
 import Settings from './components/Settings.jsx'
 import Friends from './components/Friends.jsx'
+import Chat from './components/Chat.jsx'
+import { useUnread } from './lib/chat.js'
 import { useSession } from './auth/useSession.js'
 
 // One entry per section: the URL it lives at, the label in the nav, and the
@@ -40,6 +42,7 @@ export const SECTIONS = [
   { path: '/timers', name: 'Timers', Panel: Timers },
   { path: '/octi', name: 'Octi', Panel: Assistant },
   { path: '/friends', name: 'Friends', Panel: Friends },
+  { path: '/chat', name: 'Chats', Panel: Chat },
 ]
 
 // Callers still say onGoTo('Tasks') by name; this is how a name becomes a URL.
@@ -195,7 +198,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
               end={path === '/'}
               className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
             >
-              {name}
+              <SectionLabel name={name} />
             </NavLink>
           ))}
         </nav>
@@ -212,6 +215,16 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
       </div>
     </>
   )
+}
+
+/** A tab's name, plus the unread count on Chats. */
+function SectionLabel({ name }) {
+  return name === 'Chats' ? <>{name}<ChatsBadge /></> : name
+}
+
+function ChatsBadge() {
+  const unread = useUnread()
+  return unread > 0 ? <span className="unread-badge" aria-label={`${unread} unread`}>{unread > 99 ? '99+' : unread}</span> : null
 }
 
 /**
@@ -237,7 +250,7 @@ function MobileDock() {
           end={path === '/'}
           className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
         >
-          {name}
+          <SectionLabel name={name} />
         </NavLink>
       ))}
     </nav>

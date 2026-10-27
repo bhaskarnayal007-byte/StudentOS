@@ -3359,3 +3359,98 @@ a.theme-toggle { text-decoration: none; }
   @keyframes island-up { from { opacity: 0; transform: translateY(24px) scale(0.95); } }
 }
 @media (prefers-reduced-motion: reduce) { .share-island { animation: none; } }
+
+/* ─── Chats ──────────────────────────────────────────────────────────────────
+   Built on the Notes layout (.notes, .notes-side, .notes-editor): list on the
+   left, open chat on the right, one at a time under 700px. */
+.messenger-item { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s3); }
+.messenger-item-text { display: grid; gap: 2px; min-width: 0; }
+.messenger-item-side { display: grid; justify-items: end; gap: 4px; }
+.messenger-group-icon {
+  width: 36px; height: 36px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--color-accent-wash);
+  color: var(--color-accent);
+  font-weight: 700;
+}
+.unread-badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: var(--t-xs); font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/* Next to "Chats" in the header tabs and the phone dock. */
+.tab .unread-badge { margin-left: 6px; }
+.tab.active .unread-badge { background: var(--color-accent-ink); color: var(--color-accent); }
+
+.messenger-pane { padding: 0; }
+.messenger-chat, .messenger-new { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.messenger-new { gap: var(--s3); padding: var(--s4); }
+.messenger-head {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--color-border);
+}
+.messenger-head h3 { margin: 0; }
+/* Ghost buttons are hidden until hover elsewhere; here they're the controls. */
+.messenger-head .ghost { opacity: 1; }
+.messenger-head-text { display: grid; min-width: 0; flex: 1; }
+.messenger-head-text small { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.messenger-leave { opacity: 1; margin-left: auto; }
+
+.messenger-messages {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: var(--s4);
+}
+.messenger-older { opacity: 1; align-self: center; margin-bottom: var(--s2); }
+.messenger-day {
+  align-self: center; margin: var(--s3) 0 var(--s2);
+  font-size: var(--t-xs); color: var(--color-text-3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.bubble-row { display: flex; flex-direction: column; align-items: flex-start; }
+.bubble-row.mine { align-items: flex-end; }
+.messenger-sender { margin: var(--s2) 0 2px var(--s2); color: var(--color-text-2); font-weight: 600; }
+.msg {
+  max-width: min(78%, 560px);
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-lg);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+.bubble-row.mine .msg { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+.msg time { display: block; margin-top: 2px; font-size: calc(11px * var(--fs)); opacity: 0.7; text-align: right; }
+
+.messenger-compose {
+  display: flex; align-items: flex-end; gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.messenger-compose textarea { flex: 1; resize: none; max-height: 140px; field-sizing: content; min-height: 44px; }
+.messenger-closed { padding: var(--s3) var(--s4); text-align: center; }
+
+@media (max-width: 700px) {
+  /* The page scrolls on phones (see .notes above), so keep the composer in
+     reach: stuck to the bottom, just above the dock. */
+  .messenger-messages { overflow: visible; }
+  /* main clips for Notes; here it would make the sticky composer stick to
+     main's edge instead of the screen's. */
+  main:has(> .messenger) { overflow: visible; }
+  .messenger-compose {
+    position: sticky;
+    bottom: calc(var(--s3) + 58px + env(safe-area-inset-bottom));
+    z-index: 5;
+    border-radius: var(--r-lg);
+  }
+  .msg { max-width: 85%; }
+}

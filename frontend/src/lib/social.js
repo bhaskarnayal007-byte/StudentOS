@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 
-async function me() {
+export async function me() {
   const { data } = await supabase.auth.getSession()
   const id = data.session?.user?.id
   if (!id) throw new Error('Sign in first.')
@@ -14,7 +14,7 @@ async function me() {
 
 // Supabase returns { data, error }; turn the error into a throw so callers can
 // use one try/catch and show the message.
-function ok({ data, error }) {
+export function ok({ data, error }) {
   if (error) throw new Error(error.code === '23505' ? 'That tag is taken.' : error.message)
   return data
 }
