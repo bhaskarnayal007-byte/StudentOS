@@ -1833,9 +1833,9 @@ button.ghost.always:hover { color: var(--color-accent); }
 .dock { display: none; }
 @media (max-width: 620px) {
   .dock { display: flex; }
-  /* Not on phones: Octi has his own floating button, Friends is linked from
-     Home, and the app shortcuts are better opened from the phone itself. */
-  .dock .tab[href="/octi"], .dock .tab[href="/friends"] { display: none; }
+  /* Not on phones: Octi has his own floating button, Friends and Chats have
+     buttons on Home, and the app shortcuts are better opened from the phone. */
+  .dock .tab[href="/octi"], .dock .tab[href="/friends"], .dock .tab[href="/chat"] { display: none; }
   .launcher, .home-buttons { display: none; }
 }
 
@@ -3291,7 +3291,18 @@ a.theme-toggle { text-decoration: none; }
 .home-top { align-items: center; }
 .home-hello { display: flex; align-items: center; gap: var(--s3); }
 .home-avatar { display: inline-flex; border-radius: 50%; }
-.home-top-actions { display: flex; align-items: center; gap: var(--s2); }
+.home-top-actions { display: flex; align-items: flex-start; gap: var(--s2); }
+/* Settings with the round Chats button directly beneath it. */
+.home-top-stack { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.home-chat-btn {
+  position: relative;
+  width: 52px; height: 52px;
+  padding: 0;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.home-chat-btn .unread-badge { position: absolute; top: -4px; right: -4px; }
 .friends-btn { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); text-decoration: none; }
 
 .friends-me { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s4); }

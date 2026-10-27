@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { descendants, layout, progress } from "../src/lib/topics.js";
+import { INDENT, descendants, layout, outline, progress } from "../src/lib/topics.js";
 
 // Chemistry → Organic (Alkanes, Alkenes), Inorganic. Biology is another subject.
 const t = (id, parentId, extra = {}) => ({ id, courseId: "chem", parentId, text: id, done: false, collapsed: false, ...extra });
@@ -36,5 +36,16 @@ assert.deepEqual(progress(topics, "organic"), { done: 1, total: 2 });
 tree = layout([], "chem");
 assert.equal(tree.nodes.length, 1);
 assert.ok(tree.width > 0 && tree.height > 0);
+
+// Phones: an outline, one row per topic in reading order, children indented.
+tree = outline(topics, "chem", 300);
+assert.deepEqual(tree.nodes.map((n) => (n.topic ? n.topic.id : null)), [null, "organic", "alkanes", "alkenes", "inorganic"]);
+assert.ok(tree.nodes.every((n, i) => i === 0 || n.y > tree.nodes[i - 1].y), "each row below the last");
+assert.equal(at(tree, "alkanes").x, 2 * INDENT, "sub-topics indented twice");
+assert.equal(at(tree, "organic").w, 300 - INDENT, "rows fill the width left after the indent");
+assert.ok(tree.width <= 300, "fits the space given");
+assert.equal(tree.edges.length, 4);
+tree = outline(topics.map((x) => (x.id === "organic" ? { ...x, collapsed: true } : x)), "chem", 300);
+assert.equal(tree.nodes.length, 3, "folding hides the branch in the outline too");
 
 console.log("topics: ok");

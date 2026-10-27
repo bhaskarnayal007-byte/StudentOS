@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
-import { NODE_H, NODE_W, descendants, layout, progress } from '../lib/topics.js'
+import { INDENT, NODE_H, NODE_W, descendants, layout, outline, progress } from '../lib/topics.js'
+import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 import ShareButton from './ShareButton.jsx'
 
-// Breathing room around the tree inside the scrollable canvas.
-const PAD = 32
+// Breathing room around the tree inside the scrollable canvas; less on phones.
+const PAD_WIDE = 32
+const PAD_PHONE = 10
 
 /**
  * A subject's mind map: the subject at the top, topics beneath it, sub-topics
@@ -18,8 +20,24 @@ export default function CourseMap() {
   const [editing, setEditing] = useState(null)
   const course = state.courses.find(c => c.id === id)
 
-  const tree = useMemo(() => layout(state.topics, id), [state.topics, id])
+  // Phones get an indented outline that reads top to bottom; the wide
+  // top-down tree only fits a bigger screen.
+  const phone = useMatchMedia(PHONE)
+  const PAD = phone ? PAD_PHONE : PAD_WIDE
   const canvas = useRef(null)
+  const [canvasW, setCanvasW] = useState(0)
+  useEffect(() => {
+    const el = canvas.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setCanvasW(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [Boolean(course)]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const tree = useMemo(
+    () => (phone ? outline(state.topics, id, Math.max(0, canvasW - PAD * 2)) : layout(state.topics, id)),
+    [state.topics, id, phone, canvasW, PAD],
+  )
   const rootX = tree.nodes.find(n => !n.topic)?.x ?? 0
 
   // A wide tree opens centred on the subject, not scrolled to its left edge.
@@ -81,6 +99,11 @@ export default function CourseMap() {
             {tree.edges.map(({ from, to }) => {
               const a = at.get(from)
               const b = at.get(to)
+              if (phone) {
+                // Elbow: down from just inside the parent's left edge, across to the child.
+                const x = a.x + PAD + INDENT / 2
+                return <path key={to} d={`M${x} ${a.y + PAD + NODE_H} V${b.y + PAD + NODE_H / 2} H${b.x + PAD}`} />
+              }
               const x1 = a.x + PAD + NODE_W / 2
               const y1 = a.y + PAD + NODE_H
               const x2 = b.x + PAD + NODE_W / 2
@@ -90,7 +113,7 @@ export default function CourseMap() {
             })}
           </svg>
 
-          {tree.nodes.map(({ topic, x, y }) =>
+          {tree.nodes.map(({ topic, x, y, w = NODE_W }) =>
             topic ? (
               <TopicNode
                 key={topic.id}
@@ -98,6 +121,7 @@ export default function CourseMap() {
                 topics={state.topics}
                 x={x + PAD}
                 y={y + PAD}
+                w={w}
                 editing={editing === topic.id}
                 onEdit={setEditing}
                 onAdd={add}
@@ -108,7 +132,7 @@ export default function CourseMap() {
               <div
                 key="root"
                 className="map-node map-root"
-                style={{ left: x + PAD, top: y + PAD, width: NODE_W, height: NODE_H }}
+                style={{ left: x + PAD, top: y + PAD, width: w, height: NODE_H }}
                 tabIndex={0}
                 onKeyDown={e => {
                   if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === 'Tab')) {
@@ -134,7 +158,7 @@ export default function CourseMap() {
   )
 }
 
-function TopicNode({ topic, topics, x, y, editing, onEdit, onAdd, onRemove, dispatch }) {
+function TopicNode({ topic, topics, x, y, w, editing, onEdit, onAdd, onRemove, dispatch }) {
   const card = useRef(null)
   const settled = useRef(false)
   const branch = progress(topics, topic.id)
@@ -175,7 +199,7 @@ function TopicNode({ topic, topics, x, y, editing, onEdit, onAdd, onRemove, disp
     <div
       ref={card}
       className={'map-node' + (topic.done ? ' done' : '')}
-      style={{ left: x, top: y, width: NODE_W, height: NODE_H }}
+      style={{ left: x, top: y, width: w, height: NODE_H }}
       tabIndex={0}
       onKeyDown={key}
       onDoubleClick={() => onEdit(topic.id)}

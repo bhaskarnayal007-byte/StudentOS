@@ -73,3 +73,36 @@ export function layout(topics, courseId) {
     height: (deepest + 1) * (NODE_H + GAP_Y) - GAP_Y,
   }
 }
+
+export const INDENT = 22
+const ROW_GAP = 10
+
+/**
+ * The same tree as an indented outline, for phones: one topic per row in
+ * reading order, each child indented under its parent. Nothing goes sideways,
+ * so it reads top to bottom on a narrow screen. Nodes stretch to `width` (the
+ * space available) minus their indent, and never narrower than `minW`.
+ */
+export function outline(topics, courseId, width, minW = 150) {
+  const mine = topics.filter(t => t.courseId === courseId)
+  const kids = parent => mine.filter(t => t.parentId === parent)
+  const nodes = []
+  const edges = []
+  let widest = 0
+
+  function place(topic, depth) {
+    const id = topic ? topic.id : null
+    const x = depth * INDENT
+    const w = Math.max(minW, width - x)
+    widest = Math.max(widest, x + w)
+    nodes.push({ topic, x, y: nodes.length * (NODE_H + ROW_GAP), w, depth })
+    for (const child of topic?.collapsed ? [] : kids(id)) {
+      edges.push({ from: id, to: child.id })
+      place(child, depth + 1)
+    }
+  }
+
+  place(null, 0)
+
+  return { nodes, edges, width: widest, height: nodes.length * (NODE_H + ROW_GAP) - ROW_GAP }
+}

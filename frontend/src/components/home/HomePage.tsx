@@ -10,6 +10,7 @@ import { SettingsButton } from "../../App.jsx";
 import { Link } from "react-router-dom";
 import Avatar from "../Avatar.jsx";
 import { useMyProfile } from "../../lib/social.js";
+import { useUnread } from "../../lib/chat.js";
 import { useStore } from "../../store.jsx";
 import { useNow } from "../../useNow.js";
 
@@ -68,7 +69,12 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
             </svg>
             <span>Friends</span>
           </Link>
-          <SettingsButton />
+          {/* Chats sits right under Settings: round and a size up, with the
+              unread count on it. On phones this replaces the dock tab. */}
+          <div className="home-top-stack">
+            <SettingsButton />
+            <ChatsButton />
+          </div>
         </div>
       </header>
 
@@ -116,5 +122,22 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
       </div>
 
     </div>
+  );
+}
+
+function ChatsButton() {
+  const unread = useUnread();
+  return (
+    <Link
+      to="/chat"
+      className="theme-toggle home-chat-btn"
+      aria-label={unread ? `Chats, ${unread} unread` : "Chats"}
+      title="Chats"
+    >
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+      {unread > 0 && <span className="unread-badge">{unread > 99 ? "99+" : unread}</span>}
+    </Link>
   );
 }

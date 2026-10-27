@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useStore } from '../store.jsx'
 import { WEEKDAYS } from '../dates.js'
+import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 
 // The visible window of the day. Change these two numbers and the whole grid
 // resizes — nothing else needs editing.
@@ -14,7 +15,7 @@ const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240'
 export default function Schedule() {
   const { state, dispatch } = useStore()
   // On a phone the week doesn't fit, so it shows one day, today to start.
-  const phone = useMatchMedia('(max-width: 620px)')
+  const phone = useMatchMedia(PHONE)
   const [day, setDay] = useState(() => new Date().getDay())
   const days = phone ? [day] : WEEKDAYS.map((_, i) => i)
   const col = d => (phone ? 2 : d + 2)
@@ -139,18 +140,6 @@ export default function Schedule() {
       )}
     </div>
   )
-}
-
-/** True while the media query matches, following it as the window changes. */
-function useMatchMedia(query) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
-  useEffect(() => {
-    const media = window.matchMedia(query)
-    const update = () => setMatches(media.matches)
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
-  }, [query])
-  return matches
 }
 
 // 9 → "9 AM", 13 → "1 PM"
