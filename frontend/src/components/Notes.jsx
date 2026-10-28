@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './Courses.jsx'
 import ShareButton from './ShareButton.jsx'
-import { ACCEPT, ICON, addFileNotes, deleteFile, getFile, kindOf } from '../lib/fileStore.js'
+import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/fileStore.js'
 
 /**
  * Notes, with their own sidebar: every saved note listed on the left, the one
@@ -241,13 +241,13 @@ function FileView({ id, name, size, tab = false }) {
     setUrl(undefined)
     setMissing(false)
     setBroken(false)
-    getFile(id).then(blob => {
-      if (!blob) return setMissing(true)
-      objectUrl = URL.createObjectURL(blob)
-      setUrl(objectUrl)
+    fileUrl(id, name).then(u => {
+      if (!u) return setMissing(true)
+      objectUrl = u
+      setUrl(u)
     }, () => setMissing(true))
     return () => objectUrl && URL.revokeObjectURL(objectUrl)
-  }, [id])
+  }, [id, name])
 
   if (missing) {
     return <p className="placeholder">“{name}” was added on another device — files stay where they were dropped.</p>
@@ -291,9 +291,12 @@ function FileView({ id, name, size, tab = false }) {
   }
   // HEIC and the like count as photos but most browsers can't draw them.
   if (kind === 'image' && !broken) {
+    const img = <img src={url} alt={name} onError={() => setBroken(true)} />
+    // An SVG comes as a data: URL, which browsers won't open in a tab.
+    if (url.startsWith('data:')) return <span className="notes-image">{img}</span>
     return (
       <a className="notes-image" href={url} target="_blank" rel="noreferrer" title="Open full size">
-        <img src={url} alt={name} onError={() => setBroken(true)} />
+        {img}
       </a>
     )
   }

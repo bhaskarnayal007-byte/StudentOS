@@ -29,8 +29,37 @@ async function run(mode, fn) {
   })
 }
 
-export const getFile = id => run('readonly', s => s.get(id))
 export const deleteFile = id => run('readwrite', s => s.delete(id)).catch(() => {})
+
+// Raster images and PDFs can't run script. An SVG or HTML file can, and a
+// blob: URL opened in a tab runs in this origin, next to the signed-in session.
+// The type a file arrives with is whatever the app that made or shared it
+// said, so it doesn't count for anything else.
+const SAFE = /^(image\/(png|jpe?g|gif|webp|avif|bmp|heic|heif)|application\/pdf)$/
+
+/**
+ * A URL that shows a stored file but can't run script, however it's opened,
+ * or undefined if the file isn't on this device. Revoke it when done. Files
+ * are only ever read through here, so nothing can link the raw bytes.
+ */
+export async function fileUrl(id, name) {
+  const blob = await run('readonly', s => s.get(id))
+  if (!blob) return
+  // An SVG only draws with its own type, which is the type that runs its
+  // script. As a data: URL it still draws in an <img>, but a tab won't open
+  // it, and if one did it would have an origin of its own, not this one.
+  if (/\.svg$/i.test(name)) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob.slice(0, blob.size, 'image/svg+xml'))
+    })
+  }
+  // Anything else unknown downloads instead of opening.
+  const type = kindOf(name) === 'pdf' ? 'application/pdf' : SAFE.test(blob.type) ? blob.type : 'application/octet-stream'
+  return URL.createObjectURL(blob.slice(0, blob.size, type))
+}
 
 const KINDS = {
   pdf: ['pdf'],
