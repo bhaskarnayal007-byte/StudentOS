@@ -75,10 +75,26 @@ async function refreshActiveUsers() {
 refreshActiveUsers();
 setInterval(refreshActiveUsers, 10 * 60_000).unref();
 
+// The even split alone hit zero in practice: at 1000 active users it is 600
+// tokens, less than one request, so everyone was refused. One round costs
+// ~5,000 tokens (state ~2,600 + tool definitions ~1,400 + instructions and
+// history ~400, plus the reply), and a typical message is two rounds (act,
+// then confirm), so 30k is about three messages. `total` keeps that floor from
+// overspending the key: once DAILY_TOKENS is gone it is gone for everyone.
+const MIN_USER_TOKENS = Number(process.env.AI_MIN_USER_TOKENS) || 30_000;
+
 const budget = tokenBudget({
   windowMs: 24 * 60 * 60_000,
   max: () => Math.floor(DAILY_TOKENS / activeUsers),
+  floor: MIN_USER_TOKENS,
+  total: DAILY_TOKENS,
 });
+
+// Providers default to the model's whole context for the reply, so one
+// runaway (a reasoning model thinking at length, a generation that loops) could
+// spend a user's day in a single call. Replies here are a sentence or a tool
+// call; 2048 leaves room for gpt-oss's reasoning tokens, which count against it.
+const MAX_REPLY_TOKENS = Number(process.env.AI_MAX_REPLY_TOKENS) || 2048;
 
 /**
  * POST /api/ai/generate
@@ -109,6 +125,10 @@ router.post("/generate", requireAuth, requireAllowedUser, limiter, budget, async
       // so tool use still worked — but "none" and a forced tool had no effect.
       ...(tool_choice && tools ? { tool_choice } : {}),
       ...(temperature != null ? { temperature } : {}),
+      // Never read from the body, so a client can't raise it. `max_tokens`
+      // rather than `max_completion_tokens`: every OpenAI-compatible provider
+      // in the rotation accepts it.
+      max_tokens: MAX_REPLY_TOKENS,
     };
 
     // Try each provider in turn. A 429 means that model's pool is spent for the

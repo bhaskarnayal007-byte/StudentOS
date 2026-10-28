@@ -60,6 +60,24 @@ assert.equal(run(shared, "s").passed, false, "same 40 is over a 25 share once 4 
 users = 2;
 assert.equal(run(shared, "s").passed, true, "share grows back when users leave");
 
+// The floor: an even split across a huge user count must not reach zero.
+const floored = tokenBudget({ windowMs: 60_000, max: () => Math.floor(600_000 / 1_000_000), floor: 30_000 });
+floored.spend("f", 29_999);
+assert.equal(run(floored, "f").passed, true, "a 0-token share still gets the floor");
+floored.spend("f", 1);
+assert.equal(run(floored, "f").status, 429, "and is refused once past it");
+
+// The global cap: the floor can't let everyone together overspend the key.
+const capped = tokenBudget({ windowMs: 60_000, max: 100, total: 150 });
+capped.spend("g1", 80);
+capped.spend("g2", 80);
+const out = run(capped, "g3");
+assert.equal(out.passed, false, "a fresh user is refused once the total is spent");
+assert.equal(out.status, 503, "with a status distinct from the per-user 429");
+assert.equal(out.body.code, "ai_capacity_exhausted");
+assert.match(out.body.error, /for everyone/, "and a message that doesn't blame the user");
+assert.ok(out.headers["Retry-After"], "sends Retry-After");
+
 // ── allowlist ───────────────────────────────────────────────────────────────
 // Read at import time from env, so set it before importing.
 process.env.ALLOWED_EMAILS = "yes@example.com, MIXED@Example.com";
@@ -75,5 +93,30 @@ function runAllow(email) {
 assert.equal(runAllow("yes@example.com").passed, true, "listed email passes");
 assert.equal(runAllow("mixed@example.com").passed, true, "matching is case-insensitive");
 assert.equal(runAllow("no@example.com").status, 403, "unlisted email gets 403");
+
+// ── ai route: max_tokens ────────────────────────────────────────────────────
+// The route reads its env at import and talks to Supabase and the provider
+// through fetch, so fake both and call the final handler directly.
+process.env.SUPABASE_URL = "https://test.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test";
+process.env.AI_API_KEY = "test";
+delete process.env.AI_PROVIDERS;
+const sent = [];
+globalThis.fetch = async (url, init) => {
+  if (String(url).endsWith("/chat/completions")) sent.push(JSON.parse(init.body));
+  return Response.json({ choices: [], usage: { total_tokens: 1 } });
+};
+const { default: aiRouter } = await import("../src/routes/ai.js");
+const handlers = aiRouter.stack[0].route.stack;
+const generate = handlers[handlers.length - 1].handle;
+
+const aiRes = { set() {}, status() { return this; }, json() { return this; } };
+await generate(
+  { user: { id: "m" }, body: { messages: [{ role: "user", content: "hi" }], max_tokens: 1_000_000 } },
+  aiRes,
+  (err) => { throw err; },
+);
+assert.equal(sent.length, 1, "the request reached the provider");
+assert.equal(sent[0].max_tokens, 2048, "the client can't raise max_tokens");
 
 console.log("middleware checks passed");

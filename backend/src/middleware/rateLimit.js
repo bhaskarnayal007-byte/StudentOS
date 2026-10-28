@@ -53,11 +53,17 @@ export default function rateLimit({ windowMs, max }) {
  * `max` may be a function, read on every check, so the allowance can follow
  * something that changes (like the number of active users).
  *
+ * `floor` is the least any user gets, however small `max` says the share is:
+ * an even split of the quota across 1000 users is less than one request, which
+ * refused everyone forever. `total` caps the sum across all users, so the
+ * floor can't promise more than the provider will actually serve.
+ *
  * ponytail: in-memory like rateLimit above, same single-instance ceiling.
  */
-export function tokenBudget({ windowMs, max }) {
+export function tokenBudget({ windowMs, max, floor = 0, total = Infinity }) {
   const limit = typeof max === "function" ? max : () => max;
   const used = new Map(); // userId -> { tokens, resetAt }
+  const ALL = Symbol("all users"); // can't collide with a user id or IP
 
   const current = (key, now) => {
     let entry = used.get(key);
@@ -73,8 +79,21 @@ export function tokenBudget({ windowMs, max }) {
 
   function budget(req, res, next) {
     const now = Date.now();
+    const all = current(ALL, now);
+    // Checked first, and with its own status and code: when the shared pool is
+    // gone it is nobody's fault, and telling a student they used their
+    // allowance sends whoever debugs it looking at the wrong user.
+    if (all.tokens >= total) {
+      const retryAfter = Math.ceil((all.resetAt - now) / 1000);
+      res.set("Retry-After", String(retryAfter));
+      return res.status(503).json({
+        error: `The assistant is out of capacity for today, for everyone. It resets in ${Math.ceil(retryAfter / 3600)}h.`,
+        code: "ai_capacity_exhausted",
+      });
+    }
+
     const entry = current(req.user?.id ?? req.ip, now);
-    if (entry.tokens < limit()) return next();
+    if (entry.tokens < Math.max(floor, limit())) return next();
 
     const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
     res.set("Retry-After", String(retryAfter));
@@ -84,7 +103,10 @@ export function tokenBudget({ windowMs, max }) {
   }
 
   budget.spend = (key, tokens) => {
-    if (Number.isFinite(tokens) && tokens > 0) current(key, Date.now()).tokens += tokens;
+    if (!Number.isFinite(tokens) || tokens <= 0) return;
+    const now = Date.now();
+    current(key, now).tokens += tokens;
+    current(ALL, now).tokens += tokens;
   };
 
   return budget;
