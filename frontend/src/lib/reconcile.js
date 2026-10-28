@@ -1,6 +1,6 @@
-// Pure decision: given what the server has and what this device last agreed
-// on, what should sign-in do? Kept apart from cloudSync.js so it can be tested
-// without pulling in the Supabase client (and its browser-only env vars).
+// The decisions behind sync — what sign-in should do, and whether a push has
+// anything to send. Kept apart from cloudSync.js so they can be tested without
+// pulling in the Supabase client (and its browser-only env vars).
 
 /**
  * Decide what to do on sign-in, given what the server has and what this device
@@ -24,4 +24,37 @@ export function reconcile({ remote, localRev, hasLocalData }) {
   // This device is level with the server, or ahead of it because its own last
   // push never landed. Either way, send ours.
   return { action: 'push' }
+}
+
+/** Fields that are this device's business, not the account's. */
+export const DEVICE_ONLY = ['theme', 'ownerId']
+
+/**
+ * The account's part of `state` as one string, equal for equal content. Keys
+ * are sorted because jsonb hands rows back in its own key order, and a reload
+ * that changed nothing has to compare equal to what the server sent.
+ */
+export function wireKey(state) {
+  const copy = { ...state }
+  for (const key of DEVICE_ONLY) delete copy[key]
+  return JSON.stringify(copy, (_, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]]))
+      : v,
+  )
+}
+
+// What the server is known to hold, per account: set by a push that landed or
+// by data read back from the server — never by a failed push, so that one is
+// still retried even if nothing changes afterwards.
+const onServer = new Map()
+
+export function markOnServer(userId, state) {
+  onServer.set(userId, wireKey(state))
+}
+
+/** True when sending `state` would change nothing on the server — a theme
+ *  toggle, UI-only state, or a remote change we just applied. */
+export function isOnServer(userId, state) {
+  return onServer.get(userId) === wireKey(state)
 }

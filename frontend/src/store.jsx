@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useReducer, useState } from 'react'
 import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
-import { pull, push, subscribe, reconcile, readRev } from './lib/cloudSync.js'
+import { pull, push, subscribe, reconcile, readRev, writeRev } from './lib/cloudSync.js'
 import { descendants } from './lib/topics.js'
 import { syncThemeColor } from './lib/themeColor.js'
 
@@ -418,7 +418,12 @@ function useCloudSync(state, dispatch, userId) {
         latest.current.expenses.length > 0
 
       const { action } = reconcile({ remote, localRev, hasLocalData })
-      if (action === 'adopt') adopt(remote.data)
+      if (action === 'adopt') {
+        // No echo push follows any more to record this revision, so record it
+        // here — else the next load reads it as new and adopts over local edits.
+        writeRev(userId, remote.rev)
+        adopt(remote.data)
+      }
       ready.current = action !== 'wait'
       // Couldn't reach the server at all: everything still works, on this
       // device only, and the next successful flush clears this.

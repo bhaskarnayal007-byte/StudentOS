@@ -33,4 +33,38 @@ assert.deepEqual(
   { action: "wait" },
 );
 
+// ── a push goes out only when the account's data changed ────────────────────
+// Same gate as push() in cloudSync.js, with the network swapped for a counter:
+// skip what the server holds, and record a write only once it has landed.
+const { isOnServer, markOnServer } = await import("../src/lib/reconcile.js");
+let writes = 0;
+function push(state, { fails = false } = {}) {
+  if (isOnServer("u1", state)) return "skipped";
+  writes++;
+  if (fails) return null;
+  markOnServer("u1", state);
+  return "sent";
+}
+
+const base = { theme: "dark", ownerId: "u1", tasks: [{ id: 1, title: "a" }] };
+assert.equal(push(base), "sent");
+assert.equal(push({ ...base }), "skipped", "unchanged state");
+assert.equal(push({ ...base, theme: "system" }), "skipped", "theme is device-only");
+const edited = { ...base, tasks: [{ id: 1, title: "b" }] };
+assert.equal(push(edited), "sent", "real change");
+
+// A failed save is retried even though nothing changed since.
+const failing = { ...edited, notes: [{ id: 2 }] };
+assert.equal(push(failing, { fails: true }), null);
+assert.equal(push(failing), "sent", "retry after failure");
+assert.equal(push(failing), "skipped");
+assert.equal(writes, 4);
+
+// What the server sent back (jsonb reorders keys) and was then applied locally
+// must not be echoed up again; a reordered array is a real change.
+markOnServer("u2", { tasks: [{ title: "b", id: 2 }], notes: [] });
+assert.ok(isOnServer("u2", { ownerId: "u2", theme: "dark", notes: [], tasks: [{ id: 2, title: "b" }] }));
+markOnServer("u2", { tasks: [{ id: 1 }, { id: 2 }] });
+assert.ok(!isOnServer("u2", { tasks: [{ id: 2 }, { id: 1 }] }));
+
 console.log("cloud sync: ok");

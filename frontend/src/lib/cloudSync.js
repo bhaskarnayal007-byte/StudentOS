@@ -8,6 +8,7 @@
 // supabase/migrations/0001_user_state.sql for why, and what it costs.
 
 import { supabase } from './supabase.js'
+import { DEVICE_ONLY, isOnServer, markOnServer } from './reconcile.js'
 
 const TABLE = 'user_state'
 // The revision we last agreed on with the server, per account. Held next to
@@ -28,9 +29,6 @@ function writeRev(userId, rev) {
     localStorage.setItem(REV_KEY(userId), String(rev))
   } catch { /* private mode */ }
 }
-
-/** Fields that are this device's business, not the account's. */
-const DEVICE_ONLY = ['theme', 'ownerId']
 
 function forWire(state) {
   const copy = { ...state }
@@ -54,12 +52,18 @@ export async function pull(userId) {
     .maybeSingle()
 
   if (error) return undefined
-  return data ? { data: data.data, rev: Number(data.rev) } : null
+  if (!data) return null
+  markOnServer(userId, data.data)
+  return { data: data.data, rev: Number(data.rev) }
 }
 
-/** Write the local state up as the newest revision. Resolves to the new rev,
- *  or null if it didn't land — the caller keeps the local copy either way. */
+/** Write the local state up as the newest revision. Resolves to the new rev
+ *  (the current one if there was nothing new to send), or null if it didn't
+ *  land — the caller keeps the local copy either way. */
 export async function push(userId, state) {
+  // Every write bumps the revision and makes every other device fetch the row,
+  // so don't send what the server already has.
+  if (isOnServer(userId, state)) return readRev(userId)
   // Date.now() rather than a counter: two devices that have both been offline
   // come back with revisions that still order sensibly against each other.
   const rev = Date.now()
@@ -68,6 +72,7 @@ export async function push(userId, state) {
     .upsert({ user_id: userId, data: forWire(state), rev, updated_at: new Date().toISOString() })
 
   if (error) return null
+  markOnServer(userId, state)
   writeRev(userId, rev)
   return rev
 }
@@ -89,6 +94,8 @@ export function subscribe(userId, onRemote) {
         // Our own write comes back through the same channel; ignore it.
         if (rev <= readRev(userId)) return
         writeRev(userId, rev)
+        // Applying it changes local state; this keeps that from being echoed back.
+        markOnServer(userId, row.data)
         onRemote(row.data, rev)
       },
     )
