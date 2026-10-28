@@ -1,7 +1,7 @@
 /**
  * The Student OS mark — a ship's wheel — drawn as SVG so it can be animated,
  * scaled to any size and coloured by CSS (it paints in currentColor).
- * Proportions follow public/logo-mark.png: an outer rim, eight spokes to a
+ * Proportions follow public/pwa-512.png: an outer rim, eight spokes to a
  * solid hub, and eight round handles on short shafts.
  *
  * `intro` plays the build-up once: the rim draws itself, spokes grow from the

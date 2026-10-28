@@ -17,7 +17,21 @@ import { useNow } from "../../useNow.js";
 // three.js and react-three-fiber are more than half the app's JavaScript, and
 // this is the only screen that renders them. Splitting them out means every
 // other screen — and the login screen — stops paying for them.
-const OctopusMascot = lazy(() => import("../mascot/OctopusMascot"));
+// It isn't precached either (vite.config.js), so offline before it was ever
+// fetched the import fails; show the flat Octi then rather than crash Home.
+const OctopusMascot = lazy(() =>
+  import("../mascot/OctopusMascot").catch(() => ({ default: StillMascot })),
+);
+
+function StillMascot({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="mascot-button" onClick={onClick} aria-label="Open the assistant">
+      <div className="mascot-stage">
+        <img src="/mascot.png" alt="" className="intro-octi-still" />
+      </div>
+    </button>
+  );
+}
 
 type Shortcut = { id: string; name: string; url: string; iconUrl: string };
 

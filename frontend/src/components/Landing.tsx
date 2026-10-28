@@ -6,7 +6,13 @@ import LogoWheel from "./LogoWheel";
 
 // Same reasoning as HomePage: three.js is the heaviest thing we ship, and a
 // stranger deciding whether to sign up shouldn't wait for it to paint.
-const OctopusMascot = lazy(() => import("./mascot/OctopusMascot"));
+// Not precached (vite.config.js): offline on a first visit the import fails,
+// so keep the still image instead of crashing the page.
+const OctopusMascot = lazy(() =>
+  import("./mascot/OctopusMascot").catch(() => ({
+    default: () => <img src="/mascot.png" alt="" className="intro-octi-still" />,
+  })),
+);
 
 /**
  * What one sentence turns into.

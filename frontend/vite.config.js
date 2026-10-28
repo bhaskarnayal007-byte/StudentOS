@@ -79,7 +79,10 @@ export default defineConfig({
         // it made every install download it; instead it's cached the first
         // time a deck is opened, and works offline from then on.
         // Same for the PDF reader (lib/pdfPages.js plus PDF.js's worker).
-        globIgnores: ['**/pptx-preview*.js', '**/pdfPages*.js'],
+        // And the 3D mascot (three.js, ~270 KB gzipped, more than the app
+        // itself): it's cached the first time Home draws it, and the flat
+        // mascot.png stands in until then.
+        globIgnores: ['**/pptx-preview*.js', '**/pdfPages*.js', '**/OctopusMascot*.js'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /\/assets\/pptx-preview.*\.js$/.test(url.pathname),
@@ -90,6 +93,11 @@ export default defineConfig({
             urlPattern: ({ url }) => /\/assets\/(pdfPages.*\.js|pdf\.worker.*\.mjs)$/.test(url.pathname),
             handler: 'CacheFirst',
             options: { cacheName: 'pdf-viewer', expiration: { maxEntries: 4 } },
+          },
+          {
+            urlPattern: ({ url }) => /\/assets\/OctopusMascot.*\.js$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'mascot-3d', expiration: { maxEntries: 2 } },
           },
         ],
       },

@@ -6,7 +6,7 @@
 //   src/assets/mascot-src.png  — the AI mascot, white on a navy backdrop with a blue glow
 //
 // Outputs (all in public/):
-//   pwa-192.png, pwa-512.png, pwa-maskable-512.png, logo-mark.png, mascot.png
+//   pwa-192.png, pwa-512.png, pwa-maskable-512.png, mascot.png
 import sharp from "sharp";
 import { fileURLToPath } from "node:url";
 
@@ -45,11 +45,8 @@ async function icons() {
     .png()
     .toFile(`${OUT}pwa-maskable-512.png`);
 
-  // The in-app mark is the same badge — it's a designed icon, so unlike the
-  // previous artwork there is nothing to key out of it. CSS rounds the corners.
-  await base().resize(512, 512, { fit: "contain", background: BADGE_BG })
-    .png()
-    .toFile(`${OUT}logo-mark.png`);
+  // The in-app mark (header, login) uses pwa-512.png itself: it's the same
+  // badge, and one file means the install caches it once. CSS rounds the corners.
 }
 
 // ─── Mascot ──────────────────────────────────────────────────────────────────
@@ -161,5 +158,5 @@ async function mascot() {
 const pct = await mascot().then((v) => v);
 await icons();
 console.log(
-  `wrote pwa-192/512, pwa-maskable-512, logo-mark, mascot — mascot background cleared ${pct.toFixed(1)}%`,
+  `wrote pwa-192/512, pwa-maskable-512, mascot — mascot background cleared ${pct.toFixed(1)}%`,
 );

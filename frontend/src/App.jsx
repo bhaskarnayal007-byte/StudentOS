@@ -180,8 +180,8 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
       <header>
         <div className="titlebar">
           <h1>
-            {/* Badge keyed out by scripts/make-logo-mark.mjs. */}
-            <img src="/logo-mark.png" alt="" className="brand-mark" />
+            {/* Same file as the app icon, so the install caches it once. */}
+            <img src="/pwa-512.png" alt="" className="brand-mark" />
             Student OS
           </h1>
           <div className="titlebar-actions">

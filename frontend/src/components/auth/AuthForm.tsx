@@ -112,7 +112,7 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
       ref={cardRef}
       onSubmit={submit}
     >
-      <img src="/logo-mark.png" alt="" className="login-mark" data-seed />
+      <img src="/pwa-512.png" alt="" className="login-mark" data-seed />
 
       <h1 data-seed>{signup ? "Student OS" : "Welcome back"}</h1>
       <p className="login-sub" data-seed>
