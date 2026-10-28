@@ -36,9 +36,11 @@ You'll need a `.env` in each half first; see [Configuration](#configuration).
 
 ## The AI assistant
 
-The interesting part. The model gets **7 tools** — `add_task`, `complete_task`,
-`delete_task`, `add_event`, `add_schedule_block`, `set_alarm`, `start_timer` —
-plus a compact summary of current state.
+The interesting part. The model gets **15 tools** — `add_task`, `complete_task`,
+`delete_task`, `add_event`, `add_schedule_block`, `set_alarm`, `start_timer`,
+`add_course`, `add_note`, `read_note`, `add_expense`, `delete_expense`,
+`add_topics`, `mark_topic_learned`, `delete_topic` — plus a compact summary of
+current state.
 
 Say *"add a task to buy milk tomorrow"* and it emits a tool call. The app runs
 that call by dispatching **the same reducer action the UI button dispatches**,
@@ -147,8 +149,10 @@ pre-account data and assert that a second account inherits nothing.
 
 ## Status
 
-Built and tested locally; not deployed. Data lives in `localStorage`, so it is
-per-device and per-browser — there is no sync.
+Deployed: frontend on Vercel, backend on Render, data in Supabase.
+`localStorage` is the working copy; cloud sync mirrors it across a student's
+devices. What's left before a public launch — mostly dashboard settings, not
+code — is in [LAUNCH.md](LAUNCH.md).
 
 ## License
 
