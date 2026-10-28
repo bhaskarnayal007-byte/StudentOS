@@ -1,4 +1,4 @@
-import { TOOL_DEFS, runTool, systemPrompt } from './tools.js'
+import { TOOL_DEFS, runTool, systemPrompt, stateMessage } from './tools.js'
 import { matchCommand } from './commands.js'
 import { API_URL, accessToken } from '../lib/supabase.js'
 
@@ -68,8 +68,13 @@ export async function ask({ history, userText, getState, dispatch, maxRounds = 8
     return { text: runTool(cmd.name, cmd.args, { state: getState(), dispatch }), actions: [cmd.name] }
   }
 
+  // Static instructions first, live state second. Groq reports no prompt
+  // caching today (measured 2026-10-28, see tools.js), so this ordering buys
+  // nothing right now — it is the order a caching provider would want, kept
+  // ready for one.
   const messages = [
-    { role: 'system', content: systemPrompt(getState()) },
+    { role: 'system', content: systemPrompt() },
+    { role: 'system', content: stateMessage(getState()) },
     ...history,
     { role: 'user', content: userText },
   ]

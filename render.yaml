@@ -26,11 +26,20 @@ services:
         value: https://api.groq.com/openai/v1
       - key: AI_MODEL
         value: openai/gpt-oss-120b
+      # The rotation. Free tiers are metered per model, so each entry is its
+      # own 200k-token/day pool on the same key.
+      - key: AI_PROVIDERS
+        value: groq|https://api.groq.com/openai/v1|openai/gpt-oss-120b|AI_API_KEY,groq|https://api.groq.com/openai/v1|openai/gpt-oss-20b|AI_API_KEY,groq|https://api.groq.com/openai/v1|qwen/qwen3.8-27b|AI_API_KEY
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
       # Your Vercel URL, e.g. https://student-os.vercel.app (no trailing slash).
       - key: FRONTEND_URL
         sync: false
       - key: ALLOWED_EMAILS
         sync: false
-      # The AI key's total daily token quota, split evenly across active users.
+      # Total daily tokens across every model in AI_PROVIDERS, split evenly
+      # across active users. Three Groq models at 200k each.
       - key: AI_DAILY_TOKENS
-        value: "100000"
+        value: "600000"

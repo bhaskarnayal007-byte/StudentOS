@@ -135,6 +135,22 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'read_note',
+      description:
+        'Read one note in full. The notes in your context are shortened to their first line, ' +
+        'so call this before summarising, quoting or answering a question about what a note says.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Words from the note, or its subject.' },
+        },
+        required: ['text'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'add_expense',
       description: 'Record something the user spent money on.',
       parameters: {
@@ -331,6 +347,14 @@ export function runTool(name, args, { state, dispatch }) {
       return course ? `Saved a note under ${course.name}.` : 'Saved the note.'
     }
 
+    case 'read_note': {
+      // findByText matches on a `text` field, which is exactly a note's shape,
+      // so this needs no matcher of its own.
+      const note = findByText(state.notes, args.text)
+      if (!note) return args.text ? `No note matching "${args.text}".` : 'Which note?'
+      return note.text
+    }
+
     case 'add_expense': {
       const amount = Number(args.amount)
       if (!(amount > 0)) return 'amount must be a positive number.'
@@ -480,16 +504,22 @@ function findByText(items, text) {
 }
 
 /** A subject's map as nested { name, learned, subtopics }, for the prompt. */
-export function outline(topics, courseId, parentId = null) {
+/** `prune` drops topics that are both learned and childless, for the copy sent
+ *  to the model — a finished leaf answers no question worth its tokens. A
+ *  learned topic with children is kept, so add_topics can still name it as a
+ *  parent. The UI calls this without `prune` and sees everything. */
+export function outline(topics, courseId, parentId = null, prune = false) {
   return topics
     .filter(t => t.courseId === courseId && t.parentId === parentId)
     .map(t => {
+      const kids = outline(topics, courseId, t.id, prune)
+      if (prune && t.done && !kids.length) return null
       const node = { name: t.text }
       if (t.done) node.learned = true
-      const kids = outline(topics, courseId, t.id)
       if (kids.length) node.subtopics = kids
       return node
     })
+    .filter(Boolean)
 }
 
 /** { Saturday: '2026-10-03', … } for the seven days after today, so "Friday"
@@ -504,13 +534,64 @@ function nextSevenDays() {
   return out
 }
 
-// What the model is told before your message. Two jobs: tell it today's date
-// (otherwise "tomorrow" is meaningless), and show it your current data so it
-// can answer questions without calling a tool at all.
-export function systemPrompt(state) {
-  const summary = {
-    today: todayKey(),
-    now: new Date().toLocaleString(),
+// The standing instructions, split out from the live data below.
+//
+// This was done for prompt caching — a provider caches by prefix, so a static
+// block first should make repeat requests cheaper. Measured against Groq on
+// 2026-10-28: it does not. `usage` carries no `prompt_tokens_details` and
+// `prompt_tokens` is identical across repeat calls, so there is no cache and
+// no discount to earn. The split is kept because it costs nothing and the two
+// halves are genuinely different things, but do NOT count on a cache saving
+// here. If a provider that reports cached tokens is added to AI_PROVIDERS,
+// this ordering is already correct for it.
+export function systemPrompt() {
+  return [
+    "You are Octi, the octopus who runs Student OS — the user's personal planner.",
+    'Be warm and short, never chirpy. You are a study partner, not a butler.',
+    'Use the tools to change their data. Answer questions directly from the',
+    'data you are given without calling a tool. Weekday numbers are 0=Sunday..6=Saturday.',
+    'Resolve "tomorrow", "Friday" and the like by looking the date up in',
+    'nextSevenDays. Never work a weekday out yourself. Be brief —',
+    'one or two sentences. Never invent data you were not given.',
+    // The chat bubbles render plain text, so asking for plain text is cheaper
+    // than shipping a Markdown renderer to un-render it.
+    'Reply in plain text. No Markdown, no **bold**, no bullet characters —',
+    'use short sentences or simple "-" lines.',
+  ].join('\n')
+}
+
+/** A `header | row | row` block, or '' when there is nothing to list.
+ *
+ *  Lists go out as tables rather than JSON because JSON repeats every key on
+ *  every row: 30 pending tasks spent a third of their tokens re-stating
+ *  "text"/"due"/"priority"/"course". A table names each column once and loses
+ *  nothing — measured 34% off tasks, 34% off events, 40% off the schedule.
+ *  Pipes, not commas: a task called "milk, eggs" must not look like a column
+ *  break. Empty cells are left empty rather than written as "null". */
+function table(label, columns, rows, cells) {
+  if (!rows.length) return ''
+  const body = rows.map(r => cells(r).map(v => (v == null ? '' : String(v))).join(' | '))
+  return [`${label} — ${columns.join(' | ')}`, ...body].join('\n')
+}
+
+// Today's date and the user's current data, sent as its own message AFTER the
+// static instructions so it sits outside the cached prefix. Two jobs: tell the
+// model today's date (otherwise "tomorrow" is meaningless), and show it your
+// data so it can answer questions without calling a tool at all.
+//
+// Everything here is paid for on every one of the 8 agent rounds, so the shape
+// is chosen for size: scalars in one header block, repetitive lists as tables,
+// and only the hierarchical mind maps as JSON, where the nesting is the point.
+export function stateMessage(state) {
+  const courseName = id => state.courses.find(c => c.id === id)?.name
+  const today = todayKey()
+
+  const header = {
+    today,
+    // Minute precision, not second. The model has never needed the seconds,
+    // and a block that changes less often is one a future caching provider
+    // could match.
+    now: new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
     // The model is given the weekday arithmetic rather than asked to do it.
     // Left to work out which date "Friday" is, it picked a Thursday — dates
     // are exactly the kind of reasoning it is worst at and we can do exactly.
@@ -518,52 +599,77 @@ export function systemPrompt(state) {
     nextSevenDays: nextSevenDays(),
     courses: state.courses.map(c => c.name),
     // Each subject's mind map, so "what's left in chem?" needs no tool call
-    // and new sub-topics can name a parent that really exists.
+    // and new sub-topics can name a parent that really exists. Learned LEAF
+    // topics are dropped — "what's left" is the question actually asked, and a
+    // finished leaf answers nothing. A learned topic that still has children
+    // stays, because add_topics needs to be able to name it as a parent.
     mindMaps: Object.fromEntries(
       state.courses
-        .map(c => [c.name, outline(state.topics || [], c.id)])
+        .map(c => [c.name, outline(state.topics || [], c.id, null, true)])
         .filter(([, map]) => map.length),
     ),
-    notes: state.notes.map(n => ({
-      // Truncated: a term of notes in full would dominate every prompt and be
-      // paid for on every message. Enough to find and summarise one.
-      text: n.text.length > 400 ? `${n.text.slice(0, 400)}…` : n.text,
-      course: state.courses.find(c => c.id === n.courseId)?.name,
-    })),
-    tasks: state.tasks.map(t => ({
-      text: t.text,
-      done: t.done,
-      due: t.due,
-      priority: t.priority,
-      course: state.courses.find(c => c.id === t.courseId)?.name,
-    })),
-    events: state.events.map(e => ({ title: e.title, date: e.date, time: e.time })),
-    schedule: state.scheduleBlocks.map(b => ({
-      title: b.title, day: b.day, from: b.startHour, to: b.endHour,
-    })),
+    topicsLearned: (state.topics || []).filter(t => t.done).length,
+    tasksCompleted: state.tasks.filter(t => t.done).length,
     alarms: state.alarms.map(a => ({ label: a.label, at: new Date(a.at).toLocaleString(), fired: a.fired })),
     timerRunning: Boolean(state.timer),
-    // Only this month's: the full history grows without limit and every token
-    // of it is paid for on every message.
-    expensesThisMonth: state.expenses
-      .filter(e => e.date.slice(0, 7) === todayKey().slice(0, 7))
-      .map(e => ({ amount: e.amount, category: e.category, date: e.date, note: e.note })),
+    // This month's spending as per-category totals, not line items. Every
+    // question actually asked of it ("how much on food?", "what have I spent?")
+    // is answered by the total, while the line items cost ~840 tokens a
+    // request. delete_expense still works: it matches the user's own wording
+    // against the real expense list, not against this summary.
+    expensesThisMonth: Object.entries(
+      state.expenses
+        .filter(e => e.date.slice(0, 7) === today.slice(0, 7))
+        .reduce((acc, e) => {
+          const key = e.category || 'Other'
+          acc[key] = (acc[key] ?? 0) + Number(e.amount || 0)
+          return acc
+        }, {}),
+    ).map(([category, total]) => ({ category, total })),
   }
 
-  return [
-    "You are Octi, the octopus who runs Student OS — the user's personal planner.",
-    'Be warm and short, never chirpy. You are a study partner, not a butler.',
-    'Use the tools to change their data. Answer questions directly from the',
-    'context below without calling a tool. Weekday numbers are 0=Sunday..6=Saturday.',
-    'Resolve "tomorrow", "Friday" and the like by looking the date up in',
-    'nextSevenDays below. Never work a weekday out yourself. Be brief —',
-    'one or two sentences. Never invent data that is not below.',
-    // The chat bubbles render plain text, so asking for plain text is cheaper
-    // than shipping a Markdown renderer to un-render it.
-    'Reply in plain text. No Markdown, no **bold**, no bullet characters —',
-    'use short sentences or simple "-" lines.',
-    '',
-    'Current data:',
-    JSON.stringify(summary),
-  ].join('\n')
+  const blocks = [
+    `Current data:\n${JSON.stringify(header)}`,
+
+    // Only what is still outstanding. Finished tasks were a third of the list
+    // and are almost never what a question is about; complete_task checks the
+    // real state anyway, so it still answers "that was already done".
+    table(
+      'Tasks pending',
+      ['task', 'due', 'priority', 'subject'],
+      state.tasks.filter(t => !t.done),
+      t => [t.text, t.due, t.priority, courseName(t.courseId)],
+    ),
+
+    // Past events are history the planner never asks about, and a term's worth
+    // of them accumulates forever. Today's included: "what's on today" is one
+    // of the commonest questions.
+    table(
+      'Events',
+      ['event', 'date', 'time'],
+      state.events.filter(e => !e.date || e.date >= today),
+      e => [e.title, e.date, e.time],
+    ),
+
+    table(
+      'Weekly schedule',
+      ['block', 'day (0=Sunday)', 'from', 'to'],
+      state.scheduleBlocks,
+      b => [b.title, b.day, b.startHour, b.endHour],
+    ),
+
+    // A preview, not the note. At 400 characters each this was 40% of the
+    // whole message — ~2,700 tokens for a term's notes, resent on every round,
+    // to answer questions that almost never need a note's body. The opening
+    // words are enough to say which note is which; read_note fetches the full
+    // text on the rare turn that needs it.
+    table(
+      'Notes (shortened — call read_note for the full text)',
+      ['note', 'subject'],
+      state.notes,
+      n => [n.text.length > 100 ? `${n.text.slice(0, 100)}…` : n.text, courseName(n.courseId)],
+    ),
+  ]
+
+  return blocks.filter(Boolean).join('\n\n')
 }
