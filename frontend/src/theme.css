@@ -3005,6 +3005,17 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
    attachment keeps its size and the writing area is what gives way. */
 .notes-pdf, .notes-image, .notes-file { flex: none; }
 .notes-slides { flex: none; min-height: 12em; }
+/* PDF pages, stacked like slides; the column scrolls them. Each page holds
+   its real shape (aspect-ratio, set in lib/pdfPages.js) before it's drawn. */
+.notes-pdf-pages { flex: none; display: grid; gap: var(--s3); min-height: 12em; }
+.pdf-page {
+  width: 100%;
+  background: #fff; /* paper, whatever the theme */
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.pdf-page canvas { display: block; width: 100%; height: auto; }
 /* pptx-preview boxes the whole deck into one slide-sized black scroller with
    inline styles; let the slides stack and the column scroll them instead. */
 .notes-slides .pptx-preview-wrapper {

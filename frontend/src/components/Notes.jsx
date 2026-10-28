@@ -254,11 +254,30 @@ function FileView({ id, name, size, tab = false }) {
   }
   if (!url) return null
 
+  // PDFs and decks are drawn in the page, so they look the same on every
+  // device, with the same links under them.
+  const links = (
+    <span className="notes-pdf-open">
+      {!tab && (
+        <a className="widget-link" href={`/view/${id}`} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+      )}
+      <a className="widget-link" href={url} download={name}>Download ↓</a>
+    </span>
+  )
+  if (kind === 'pdf' && !broken) {
+    return (
+      <>
+        <PdfView url={url} onFail={() => setBroken(true)} />
+        {links}
+      </>
+    )
+  }
+  // A PDF PDF.js couldn't read: let the browser try, as before.
   if (kind === 'pdf') {
     return (
       <>
         <iframe className="notes-pdf" src={url} title={name} />
-        <a className="widget-link notes-pdf-open" href={url} target="_blank" rel="noreferrer">Open in new tab ↗</a>
+        {links}
       </>
     )
   }
@@ -266,12 +285,7 @@ function FileView({ id, name, size, tab = false }) {
     return (
       <>
         <SlidesView url={url} onFail={() => setBroken(true)} />
-        <span className="notes-pdf-open">
-          {!tab && (
-            <a className="widget-link" href={`/view/${id}`} target="_blank" rel="noreferrer">Open in new tab ↗</a>
-          )}
-          <a className="widget-link" href={url} download={name}>Download ↓</a>
-        </span>
+        {links}
       </>
     )
   }
@@ -340,6 +354,44 @@ function SlidesView({ url, onFail }) {
   }, [url, width])
 
   return <div ref={box} className="notes-slides" />
+}
+
+/**
+ * A PDF drawn page by page (lib/pdfPages.js), fitted to the column and redrawn
+ * when the column's width settles on a new size. PDF.js is fetched only here.
+ */
+function PdfView({ url, onFail }) {
+  const box = useRef(null)
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    let timer
+    const observer = new ResizeObserver(([entry]) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => setWidth(Math.round(entry.contentRect.width)), 200)
+    })
+    observer.observe(box.current)
+    return () => { observer.disconnect(); clearTimeout(timer) }
+  }, [])
+
+  useEffect(() => {
+    if (!width) return
+    const node = box.current
+    let cleanup
+    let cancelled = false
+    Promise.all([import('../lib/pdfPages.js'), fetch(url).then(r => r.arrayBuffer())])
+      .then(([{ renderPdf }, buf]) => (cancelled ? null : renderPdf(buf, node, width)))
+      .then(done => { if (cancelled) done?.(); else cleanup = done })
+      .catch(() => !cancelled && onFail())
+    return () => {
+      cancelled = true
+      cleanup?.()
+      node.innerHTML = ''
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, width])
+
+  return <div ref={box} className="notes-pdf-pages" />
 }
 
 const SPLIT_KEY = 'notes-split'

@@ -78,12 +78,18 @@ export default defineConfig({
         // The .pptx viewer is 1.3 MB that most people never use. Precaching
         // it made every install download it; instead it's cached the first
         // time a deck is opened, and works offline from then on.
-        globIgnores: ['**/pptx-preview*.js'],
+        // Same for the PDF reader (lib/pdfPages.js plus PDF.js's worker).
+        globIgnores: ['**/pptx-preview*.js', '**/pdfPages*.js'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /\/assets\/pptx-preview.*\.js$/.test(url.pathname),
             handler: 'CacheFirst',
             options: { cacheName: 'pptx-viewer', expiration: { maxEntries: 2 } },
+          },
+          {
+            urlPattern: ({ url }) => /\/assets\/(pdfPages.*\.js|pdf\.worker.*\.mjs)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'pdf-viewer', expiration: { maxEntries: 4 } },
           },
         ],
       },
