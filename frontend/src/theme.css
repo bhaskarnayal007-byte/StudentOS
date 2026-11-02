@@ -1965,6 +1965,9 @@ button.ghost.always:hover { color: var(--color-accent); }
 
   position: relative;
   z-index: 1;
+  /* The dark block sets no font, so without this the page wore the viewer's
+     theme font (Syne, Inter, monospace…). */
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   color: var(--ink);
   background: var(--ground);
 }
@@ -3181,8 +3184,18 @@ a.theme-toggle { text-decoration: none; }
   font-weight: 500;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 -0.5px 0 rgba(26, 18, 64, 0.35);
 }
+/* Unlike the other themes, Y2K styles elements, not just tokens, so those
+   rules would reach into anything that wears its own theme inside it: the
+   signed-out landing (locked to dark) lost its title to the chrome, which
+   clips to the h1's own glyphs and not its animated letter spans. Each Y2K
+   rule below skips those subtrees with :not(:where(…) *), which adds no
+   specificity, and this puts back what the body rule above handed down. */
+[data-theme="y2k"] [data-theme]:not([data-theme="y2k"]) {
+  font-weight: 400;
+  text-shadow: 0 1px 1px var(--halo), 0 0 3px var(--halo);
+}
 /* White on pink doesn't want a white glint under it. */
-[data-theme="y2k"] :is(button.primary, a.primary, .tab.active) { text-shadow: 0 1px 0 rgba(120, 0, 60, 0.35); }
+[data-theme="y2k"] :is(button.primary, a.primary, .tab.active):not(:where([data-theme]:not([data-theme="y2k"])) *) { text-shadow: 0 1px 0 rgba(120, 0, 60, 0.35); }
 
 /* Chrome lettering, after the brushed-silver logo style: a banded silver
    gradient (bright top, dark horizon line, bright return) with fine brushed
@@ -3201,8 +3214,8 @@ a.theme-toggle { text-decoration: none; }
     drop-shadow(0 0 0.6px #1A1240) drop-shadow(0 0 0.6px #1A1240)
     drop-shadow(0 0 7px rgba(150, 180, 255, 0.7)) drop-shadow(0 3px 3px rgba(26, 18, 64, 0.3));
 }
-[data-theme="y2k"] :is(h1, h2, h3, h4),
-[data-theme="y2k"] .home-name {
+[data-theme="y2k"] :is(h1, h2, h3, h4):not(:where([data-theme]:not([data-theme="y2k"])) *),
+[data-theme="y2k"] .home-name:not(:where([data-theme]:not([data-theme="y2k"])) *) {
   font-family: 'Orbitron', 'Syne', sans-serif;
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -3212,19 +3225,19 @@ a.theme-toggle { text-decoration: none; }
   color: transparent;
   text-shadow: none;
 }
-[data-theme="y2k"] :is(h1, h2, h3, h4) { filter: var(--chrome-edge); }
+[data-theme="y2k"] :is(h1, h2, h3, h4):not(:where([data-theme]:not([data-theme="y2k"])) *) { filter: var(--chrome-edge); }
 
 /* The big titles get the full logo treatment: a forward lean, a sparkle
    and an orbit swoosh. Both are absolutely positioned, so they stay out of
    header h1's flex row. */
-[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1) {
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1):not(:where([data-theme]:not([data-theme="y2k"])) *) {
   position: relative;
   width: fit-content;
   transform: skewX(-8deg);
   filter: var(--chrome-glow);
 }
-[data-theme="y2k"] header h1 img { transform: skewX(8deg); }  /* keep the logo square */
-[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1)::before {
+[data-theme="y2k"] header h1:not(:where([data-theme]:not([data-theme="y2k"])) *) img { transform: skewX(8deg); }  /* keep the logo square */
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1):not(:where([data-theme]:not([data-theme="y2k"])) *)::before {
   content: '✦';
   position: absolute;
   top: -0.45em;
@@ -3237,7 +3250,7 @@ a.theme-toggle { text-decoration: none; }
   color: transparent;
   pointer-events: none;
 }
-[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1)::after {
+[data-theme="y2k"] :is(header h1, .home-top h2, .legal h1):not(:where([data-theme]:not([data-theme="y2k"])) *)::after {
   /* The swoosh, carrying the second star where it crosses the bottom left. */
   content: '✦';
   display: flex;
@@ -3259,7 +3272,7 @@ a.theme-toggle { text-decoration: none; }
 
 /* Octi's sparkle: the same chrome, a bigger four-point star with a cold glow.
    Pinned to the serif's ✦ (Syne's fallback draws a much smaller one). */
-[data-theme="y2k"] .mascot-sparkle {
+[data-theme="y2k"] .mascot-sparkle:not(:where([data-theme]:not([data-theme="y2k"])) *) {
   font-family: 'Source Serif 4', Georgia, serif;
   font-size: clamp(30px, 4.5vw, 44px);
   background: var(--chrome);
