@@ -1,4 +1,4 @@
-// Files shared to Student OS from another app (WhatsApp → Share → Student OS).
+// Files shared to Stratus from another app (WhatsApp → Share → Stratus).
 //
 // Android posts them here because of share_target in the manifest. A service
 // worker can't reach the app's storage or the signed-in user, so it parks the

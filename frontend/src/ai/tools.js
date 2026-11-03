@@ -250,7 +250,7 @@ function topicSchema(depth) {
   return { type: 'object', properties: props, required: ['name'] }
 }
 
-// Kept in step with the same list in Schedule.jsx.
+// The one palette for subjects and timetable blocks.
 export const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
 
 // Runs one tool call. Returns a short string that goes BACK to the model, so it
@@ -546,7 +546,7 @@ function nextSevenDays() {
 // this ordering is already correct for it.
 export function systemPrompt() {
   return [
-    "You are Octi, the octopus who runs Student OS — the user's personal planner.",
+    "You are Octi, the octopus who runs Stratus — the user's personal planner.",
     'Be warm and short, never chirpy. You are a study partner, not a butler.',
     'Use the tools to change their data. Answer questions directly from the',
     'data you are given without calling a tool. Weekday numbers are 0=Sunday..6=Saturday.',

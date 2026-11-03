@@ -1,5 +1,5 @@
 {
-  "name": "student-os-frontend",
+  "name": "stratus-frontend",
   "private": true,
   "version": "0.1.0",
   "description": "A productivity PWA — tasks, calendar, schedule, timers and spending — with an AI assistant that operates the app through tool calls.",
@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/test-scoped-storage.mjs && node scripts/test-cloud-sync.mjs && node scripts/test-tools.mjs && node scripts/test-commands.mjs && node scripts/test-share.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs && node scripts/test-ring.mjs && node scripts/test-chat.mjs"
+    "test": "node scripts/test-scopedStorage.mjs && node scripts/test-reconcile.mjs && node scripts/test-tools.mjs && node scripts/test-stateMessage.mjs && node scripts/test-commands.mjs && node scripts/test-shareCopy.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs && node scripts/test-useNow.mjs && node scripts/test-chatFormat.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

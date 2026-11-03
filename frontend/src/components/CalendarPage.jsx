@@ -1,6 +1,7 @@
+// The /calendar page: month and week views of events and due tasks, with read-only Google Calendar.
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../store.jsx'
-import { MONTH_NAMES, WEEKDAYS, monthGrid, todayKey, toKey, weekDays } from '../dates.js'
+import { MONTH_NAMES, WEEKDAYS, fromKey, monthGrid, todayKey, toKey, weekDays } from '../dates.js'
 import useGoogleCalendar from '../lib/useGoogleCalendar.js'
 import ShareButton from './ShareButton.jsx'
 
@@ -10,17 +11,13 @@ const FIRST_HOUR = 7
 const LAST_HOUR = 23
 const HOUR_PX = 48
 
-const fromKey = key => {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
 const toHours = t => {
   if (!t) return null
   const [h, m] = t.split(':').map(Number)
   return h + m / 60
 }
 
-export default function Calendar() {
+export default function CalendarPage() {
   const { state, dispatch } = useStore()
   const [view, setView] = useState('month')
   const [cursor, setCursor] = useState(() => new Date())

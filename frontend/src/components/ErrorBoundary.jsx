@@ -15,7 +15,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Student OS crashed:', error, info.componentStack)
+    console.error('Stratus crashed:', error, info.componentStack)
   }
 
   render() {
@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component {
     return (
       <main className="legal" role="alert">
         <h1>Something went wrong</h1>
-        <p>Student OS hit an error and stopped. Your notes, tasks and timers are saved.</p>
+        <p>Stratus hit an error and stopped. Your notes, tasks and timers are saved.</p>
         <p className="muted">{String(this.state.error?.message ?? this.state.error)}</p>
         <div className="row">
           <button className="primary" onClick={() => window.location.reload()}>Reload</button>

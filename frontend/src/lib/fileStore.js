@@ -8,6 +8,8 @@
 // ponytail: files stay on the device they were dropped on; move them to a
 // Supabase Storage bucket if they need to follow the account.
 
+// Named before the rename to Stratus. Renaming it would strand every file
+// already stored, so it stays.
 const DB = 'student-os-pdfs'
 const STORE = 'pdfs'
 

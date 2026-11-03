@@ -1,7 +1,7 @@
 import { useStore } from "../../store.jsx";
 import { openable } from "./SectionWidgets";
-import { useNow } from "../../useNow.js";
-import { formatRemaining } from "../Timers.jsx";
+import { useNow } from "../../lib/useNow.js";
+import { formatRemaining } from "../TimersPage.jsx";
 
 const QUICK_MINUTES = 25;
 
@@ -22,7 +22,7 @@ export default function TimerWidget({ onOpen }: { onOpen: () => void }) {
 
   const timer = state.timer;
   // Read the clock here rather than trusting the tick value, which can be up
-  // to a second stale — see the note in Timers.jsx.
+  // to a second stale — see the note in TimersPage.jsx.
   const remaining = timer ? timer.endsAt - Date.now() : 0;
   const done = Boolean(timer) && remaining <= 0;
 

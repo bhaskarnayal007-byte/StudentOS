@@ -12,7 +12,7 @@ import Avatar from "../Avatar.jsx";
 import { useMyProfile } from "../../lib/social.js";
 import { useUnread } from "../../lib/chat.js";
 import { useStore } from "../../store.jsx";
-import { useNow } from "../../useNow.js";
+import { useNow } from "../../lib/useNow.js";
 
 // three.js and react-three-fiber are more than half the app's JavaScript, and
 // this is the only screen that renders them. Splitting them out means every

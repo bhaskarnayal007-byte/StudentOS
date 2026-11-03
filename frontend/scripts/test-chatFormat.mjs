@@ -1,3 +1,4 @@
+// Tests lib/chatFormat.js: chat display logic.
 import assert from "node:assert/strict";
 import { chatTitle, cleanBody, layoutMessages, preview, senderName, MAX_BODY } from "../src/lib/chatFormat.js";
 

@@ -1,3 +1,4 @@
+// The /courses/:id page: a subject's mind map of topics.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
@@ -14,7 +15,7 @@ const PAD_PHONE = 10
  * beneath those. The tree lays itself out — you only ever add, rename, tick
  * off, fold and delete.
  */
-export default function CourseMap() {
+export default function CourseMapPage() {
   const { id } = useParams()
   const { state, dispatch } = useStore()
   const [editing, setEditing] = useState(null)

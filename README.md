@@ -1,13 +1,14 @@
-# Student OS
+# Stratus
 
-A personal productivity PWA — tasks, calendar, weekly schedule, timers and
-spending — with an AI assistant that can actually **operate the app**, not just
-talk about it.
+A productivity PWA for college students — tasks, courses, notes, calendar,
+weekly schedule, timers, spending, friends and chat — with an AI assistant,
+Octi, that can actually **operate the app**, not just talk about it.
 
-Installable, works offline, and your data stays on your own device.
+Installable and works offline. Your data is kept on your device and synced to
+your account.
 
 <!-- Add a screenshot once you have one: save it as docs/screenshot.png
-![Student OS](docs/screenshot.png)
+![Stratus](docs/screenshot.png)
 -->
 
 ## Run it
@@ -26,13 +27,16 @@ You'll need a `.env` in each half first; see [Configuration](#configuration).
 
 | | |
 |---|---|
-| **Tasks** | Due dates, priorities, completion |
-| **Calendar** | Month grid; tasks with a due date appear on their day |
+| **Tasks** | Due dates, priorities, completion, optional subject |
+| **Courses** | Subjects, each with a mind map of topics to mark learned |
+| **Notes** | Filed under subjects, with file attachments and PDFs page by page |
+| **Calendar** | Month and week views; tasks show on their due day; read-only Google Calendar |
 | **Schedule** | Recurring weekly timetable, kept separate from one-off events |
-| **Timers & alarms** | Stores target timestamps, so a background tab stays accurate |
+| **Timers & alarms** | Stores target timestamps, so a background tab stays accurate; tracks focus time |
 | **Spending** | Monthly totals, category breakdown, 6-month trend |
+| **Friends & chat** | Friends by tag, share a copy of a note or event, one-to-one and group chats |
 | **Quick launch** | Drag-to-reorder shortcuts with auto-fetched favicons |
-| **AI assistant** | Natural language in, real changes to your data out |
+| **Octi** | Natural language in, real changes to your data out |
 
 ## The AI assistant
 
@@ -53,9 +57,10 @@ declaring one tool and pointing it at an action that already exists.
 ## Layout
 
 ```
-student-os/
-├── frontend/   React 19 + Vite PWA          → frontend/README.md
-└── backend/    Express API (AI proxy, auth) → backend/README.md
+StudentOS/
+├── frontend/             React 19 + Vite PWA          → frontend/README.md
+├── backend/              Express API (AI proxy, auth) → backend/README.md
+└── supabase/migrations/  the database schema, run in order
 ```
 
 One repo, two npm workspaces. They share **no code** — only HTTP. Each has its
@@ -88,7 +93,9 @@ named action. A new feature costs three predictable edits: a field in state, a
 case in the reducer, a component.
 
 Data persists to `localStorage`, namespaced per account (`<key>:<user-id>`), so
-two people signing in on the same browser never see each other's data.
+two people signing in on the same browser never see each other's data. The
+whole state is also mirrored to one row per user in Supabase (`user_state`), so
+it follows the account across devices.
 
 ## Configuration
 
@@ -107,7 +114,7 @@ two people signing in on the same browser never see each other's data.
 | `SUPABASE_URL` | Same project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | API Keys → **service_role**. Secret. Bypasses RLS. |
 | `AI_API_KEY` | Any OpenAI-compatible provider (e.g. console.groq.com) |
-| `AI_BASE_URL` / `AI_MODEL` | Endpoint and model name |
+| `AI_PROVIDERS` | The model rotation (see `backend/.env.example`) |
 | `FRONTEND_URL` | Allowed CORS origin |
 | `ALLOWED_EMAILS` | Optional allowlist for the AI route |
 
@@ -116,17 +123,18 @@ public by design and belongs in the frontend; the **service role** key belongs
 only in the backend. They are not interchangeable — `npm run check` catches the
 mix-up.
 
-Backend setup, including the SQL for the table and its Row Level Security
-policy, is in [backend/README.md](backend/README.md).
+The database schema, with its Row Level Security policies, is in
+`supabase/migrations/`; run the files in order in the Supabase SQL Editor.
+Backend setup is in [backend/README.md](backend/README.md).
 
 ## Stack
 
-React 19 · Vite 7 · vite-plugin-pwa · Express 5 · Supabase (Postgres + Auth) ·
-Recharts · dnd-kit · Three.js / React Three Fiber
+React 19 · Vite 7 · vite-plugin-pwa · react-router · Express 5 · Supabase
+(Postgres + Auth + Storage) · Recharts · dnd-kit · Three.js / React Three Fiber ·
+PDF.js
 
-No Redux, no Tailwind, no date library, no UI kit, no router — deliberately. The
-state container is ~60 lines of React, dates are `Intl` and string slicing, and
-five tabs are one `useState`.
+No Redux, no Tailwind, no date library, no UI kit — deliberately. The state is
+one `useReducer`, and dates are `Intl` plus string slicing.
 
 ### The mascot
 

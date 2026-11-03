@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import Tasks from './components/Tasks.jsx'
-import Calendar from './components/Calendar.jsx'
-import Schedule from './components/Schedule.jsx'
-import Timers, { AlarmWatcher } from './components/Timers.jsx'
-import Assistant from './components/Assistant.jsx'
-import Courses from './components/Courses.jsx'
-import CourseMap from './components/CourseMap.jsx'
-import Notes, { FileTab } from './components/Notes.jsx'
+import TasksPage from './components/TasksPage.jsx'
+import CalendarPage from './components/CalendarPage.jsx'
+import SchedulePage from './components/SchedulePage.jsx'
+import TimersPage, { AlarmWatcher } from './components/TimersPage.jsx'
+import OctiPage from './components/OctiPage.jsx'
+import CoursesPage from './components/CoursesPage.jsx'
+import CourseMapPage from './components/CourseMapPage.jsx'
+import NotesPage, { FileTab } from './components/NotesPage.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
 import AppBackground from './components/AppBackground.jsx'
@@ -21,11 +21,12 @@ import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
-import Landing from './components/Landing'
-import { Privacy, Terms } from './components/Legal'
-import Settings from './components/Settings.jsx'
-import Friends from './components/Friends.jsx'
-import Chat from './components/Chat.jsx'
+import LandingPage from './components/LandingPage'
+import PrivacyPage from './components/legal/PrivacyPage'
+import TermsPage from './components/legal/TermsPage'
+import SettingsPage from './components/SettingsPage.jsx'
+import FriendsPage from './components/FriendsPage.jsx'
+import ChatsPage from './components/ChatsPage.jsx'
 import { useUnread } from './lib/chat.js'
 import { useSession } from './auth/useSession.js'
 
@@ -34,15 +35,15 @@ import { useSession } from './auth/useSession.js'
 // new file. Home is first, so it's the landing view.
 export const SECTIONS = [
   { path: '/', name: 'Home', Panel: HomePage },
-  { path: '/tasks', name: 'Tasks', Panel: Tasks },
-  { path: '/courses', name: 'Courses', Panel: Courses },
-  { path: '/notes', name: 'Notes', Panel: Notes },
-  { path: '/calendar', name: 'Calendar', Panel: Calendar },
-  { path: '/schedule', name: 'Schedule', Panel: Schedule },
-  { path: '/timers', name: 'Timers', Panel: Timers },
-  { path: '/octi', name: 'Octi', Panel: Assistant },
-  { path: '/friends', name: 'Friends', Panel: Friends },
-  { path: '/chat', name: 'Chats', Panel: Chat },
+  { path: '/tasks', name: 'Tasks', Panel: TasksPage },
+  { path: '/courses', name: 'Courses', Panel: CoursesPage },
+  { path: '/notes', name: 'Notes', Panel: NotesPage },
+  { path: '/calendar', name: 'Calendar', Panel: CalendarPage },
+  { path: '/schedule', name: 'Schedule', Panel: SchedulePage },
+  { path: '/timers', name: 'Timers', Panel: TimersPage },
+  { path: '/octi', name: 'Octi', Panel: OctiPage },
+  { path: '/friends', name: 'Friends', Panel: FriendsPage },
+  { path: '/chat', name: 'Chats', Panel: ChatsPage },
 ]
 
 // Callers still say onGoTo('Tasks') by name; this is how a name becomes a URL.
@@ -84,9 +85,9 @@ export default function App() {
           {/* Its own URL so "Start for free" opens the create-account side
               rather than dropping a first-timer on "Welcome back". */}
           <Route path="/signup" element={<LoginPage onAuthed={setSeeds} initialMode="signup" />} />
-          <Route path="/" element={<Landing />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           {/* A deep link into the app while signed out lands on the pitch,
               not a dead end. */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -124,9 +125,9 @@ function AppShell() {
             back here. Finance renders over whichever one was already there. */}
         <Route path="/" element={<HomePage {...panelProps} />} />
         <Route path={FINANCE_PATH} element={<HomePage {...panelProps} />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         {/* A note's file on its own, opened from Notes in a new tab. */}
         <Route path="/view/:id" element={<FileTab />} />
         {/* A subject's mind map, inside the usual frame so Courses stays lit. */}
@@ -134,7 +135,7 @@ function AppShell() {
           path="/courses/:id"
           element={
             <Chrome financeOpen={financeOpen} onToggleFinance={toggleFinance}>
-              <CourseMap />
+              <CourseMapPage />
             </Chrome>
           }
         />
@@ -182,7 +183,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
           <h1>
             {/* Same file as the app icon, so the install caches it once. */}
             <img src="/pwa-512.png" alt="" className="brand-mark" />
-            Student OS
+            Stratus
           </h1>
           <div className="titlebar-actions">
             <SyncBadge />
@@ -191,16 +192,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
         </div>
 
         <nav>
-          {SECTIONS.map(({ path, name }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={path === '/'}
-              className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
-            >
-              <SectionLabel name={name} />
-            </NavLink>
-          ))}
+          <SectionTabs />
         </nav>
       </header>
 
@@ -217,9 +209,19 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
   )
 }
 
-/** A tab's name, plus the unread count on Chats. */
-function SectionLabel({ name }) {
-  return name === 'Chats' ? <>{name}<ChatsBadge /></> : name
+/** One tab per section, for the header nav and the phone dock alike. */
+function SectionTabs() {
+  return SECTIONS.map(({ path, name }) => (
+    <NavLink
+      key={path}
+      to={path}
+      end={path === '/'}
+      className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+    >
+      {/* Chats carries the unread count. */}
+      {name}{name === 'Chats' && <ChatsBadge />}
+    </NavLink>
+  ))
 }
 
 function ChatsBadge() {
@@ -243,16 +245,7 @@ function MobileDock() {
 
   return (
     <nav className="dock" ref={ref} aria-label="Sections">
-      {SECTIONS.map(({ path, name }) => (
-        <NavLink
-          key={path}
-          to={path}
-          end={path === '/'}
-          className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
-        >
-          <SectionLabel name={name} />
-        </NavLink>
-      ))}
+      <SectionTabs />
     </nav>
   )
 }

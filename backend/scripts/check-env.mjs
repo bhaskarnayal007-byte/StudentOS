@@ -75,19 +75,20 @@ if (authErr) {
 }
 
 // ── 4. The table ────────────────────────────────────────────────────────────
-const table = process.env.DATA_TABLE ?? "items";
-const { error: tableErr } = await supabase.from(table).select("id").limit(1);
+// user_state is the one table this server reads: the AI budget counts users
+// active in the last 7 days from its updated_at.
+const { error: tableErr } = await supabase.from("user_state").select("user_id").limit(1);
 
 if (tableErr) {
   // 42P01 is Postgres' "undefined table"; PGRST205 is PostgREST's version of
   // the same thing, and is what you actually get through the REST API.
   if (tableErr.code === "42P01" || tableErr.code === "PGRST205") {
-    bad(`Table "${table}" does not exist`, "Run the SQL in README.md (Database -> SQL Editor), or set DATA_TABLE to your table.");
+    bad(`Table "user_state" does not exist`, "Run the files in supabase/migrations/ in order (Database -> SQL Editor).");
   } else {
-    bad(`Querying "${table}" failed: ${tableErr.message}`, "Check the table name and its columns.");
+    bad(`Querying "user_state" failed: ${tableErr.message}`, "Check that supabase/migrations/0001_user_state.sql ran.");
   }
 } else {
-  ok(`table "${table}" is readable`);
+  ok(`table "user_state" is readable`);
 }
 
 console.log(failed ? "\nSome checks failed.\n" : "\nAll good. Start the server with: npm run dev\n");

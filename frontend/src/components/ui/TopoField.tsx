@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+// The animated topographic WebGL background AppBackground draws behind every screen.
+import { useEffect, useRef } from "react";
 
 /**
  * Shader extracted from MengTo/threeui (MIT) — src/shaders/neuform-isolated/NeuformBatchEffects.tsx,
@@ -64,38 +65,22 @@ void main() {
 }
 `;
 
-type TopoFieldMode = "dark" | "light";
-
-export type TopoFieldProps = {
-  /** "auto" follows the page's light/dark scheme via prefers-color-scheme. */
-  mode?: TopoFieldMode | "auto";
+type TopoFieldProps = {
   /** Animation speed multiplier. */
   speed?: number;
   /** Stretches/compresses the noise field driving the contour bands. */
   length?: number;
   /** Multiplies the number of contour bands (visual density of lines). */
   density?: number;
-  opacity?: number;
-  hue?: number;
-  saturation?: number;
-  brightness?: number;
-  /** Background colour (hex). Defaults to black in dark mode, paper in light. */
-  paper?: string;
-  /** Grid + contour line colour (hex). Defaults to white in dark, ink in light. */
-  ink?: string;
+  /** Background colour (hex). */
+  paper: string;
+  /** Grid + contour line colour (hex). */
+  ink: string;
   /** 0-1 strength of the 48px grid. */
-  gridStrength?: number;
+  gridStrength: number;
   /** 0-1 strength of the topographic contour lines. */
-  lineStrength?: number;
-  className?: string;
-  style?: CSSProperties;
+  lineStrength: number;
 };
-
-/** Per-mode defaults, chosen so omitting paper/ink reproduces the original look. */
-const MODE_DEFAULTS = {
-  dark: { paper: "#000000", ink: "#ffffff", gridStrength: 0.12, lineStrength: 0.45 },
-  light: { paper: "#eef1f6", ink: "#1f2330", gridStrength: 0.55, lineStrength: 0.95 },
-} as const;
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
@@ -108,40 +93,6 @@ function hexToRgb(hex: string): [number, number, number] {
   const int = Number.parseInt(full.slice(0, 6), 16);
   if (Number.isNaN(int)) return [0, 0, 0];
   return [((int >> 16) & 255) / 255, ((int >> 8) & 255) / 255, (int & 255) / 255];
-}
-
-function readAutomaticMode(): TopoFieldMode {
-  if (typeof document === "undefined" || typeof window === "undefined")
-    return "dark";
-  const root = document.documentElement;
-  const declared = root.dataset.scheme;
-  if (declared === "light" || declared === "dark") return declared;
-  // Themes declare their color-scheme in CSS, so any data-theme id resolves.
-  return getComputedStyle(root).colorScheme.trim() === "dark" ? "dark" : "light";
-}
-
-function useAutomaticMode(enabled: boolean) {
-  const [autoMode, setAutoMode] = useState<TopoFieldMode>(readAutomaticMode);
-
-  useEffect(() => {
-    if (!enabled) return undefined;
-    const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setAutoMode(readAutomaticMode());
-    const observer = new MutationObserver(update);
-    observer.observe(root, {
-      attributes: true,
-      attributeFilter: ["data-scheme", "data-theme"],
-    });
-    media.addEventListener("change", update);
-    update();
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", update);
-    };
-  }, [enabled]);
-
-  return autoMode;
 }
 
 type Knobs = {
@@ -159,30 +110,15 @@ type Knobs = {
  * ("topographic") lines drawn from 2D simplex noise, drifting slowly over time.
  */
 export default function TopoField({
-  mode = "dark",
   speed = 1,
   length = 1,
   density = 1,
-  opacity = 1,
-  hue = 0,
-  saturation = 1,
-  brightness = 1,
   paper,
   ink,
   gridStrength,
   lineStrength,
-  className,
-  style,
 }: TopoFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const automaticMode = useAutomaticMode(mode === "auto");
-  const resolvedMode: TopoFieldMode =
-    mode === "auto" ? automaticMode : mode === "light" ? "light" : "dark";
-
-  // Explicit colours win; otherwise fall back to the mode's original look.
-  const defaults = MODE_DEFAULTS[resolvedMode];
-  const paperColor = paper ?? defaults.paper;
-  const inkColor = ink ?? defaults.ink;
 
   // The render loop reads knobs from a ref each frame, so prop changes apply
   // live without tearing down the GL context.
@@ -191,10 +127,10 @@ export default function TopoField({
     speed: clamp(speed, 0, 3),
     noiseScale: 1.4 * clamp(length, 0.35, 2.5),
     bands: 10 * clamp(density, 0.25, 2.5),
-    grid: clamp(gridStrength ?? defaults.gridStrength, 0, 1),
-    line: clamp(lineStrength ?? defaults.lineStrength, 0, 1),
-    paper: hexToRgb(paperColor),
-    ink: hexToRgb(inkColor),
+    grid: clamp(gridStrength, 0, 1),
+    line: clamp(lineStrength, 0, 1),
+    paper: hexToRgb(paper),
+    ink: hexToRgb(ink),
   };
 
   useEffect(() => {
@@ -304,28 +240,16 @@ export default function TopoField({
     };
   }, []);
 
-  const safeHue = clamp(hue, -180, 180);
-  const safeSaturation = clamp(saturation, 0, 2);
-  const safeBrightness = clamp(brightness, 0.35, 1.65);
-  const filter =
-    safeHue === 0 && safeSaturation === 1 && safeBrightness === 1
-      ? undefined
-      : `hue-rotate(${safeHue}deg) saturate(${safeSaturation}) brightness(${safeBrightness})`;
-
   return (
     <canvas
       ref={canvasRef}
-      className={className}
       style={{
         display: "block",
         width: "100%",
         height: "100%",
         pointerEvents: "none",
         // Shows before the first frame and if WebGL is unavailable.
-        background: paperColor,
-        opacity: clamp(opacity, 0.05, 1),
-        filter,
-        ...style,
+        background: paper,
       }}
     />
   );

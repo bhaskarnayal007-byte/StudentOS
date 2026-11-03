@@ -1,13 +1,13 @@
+// The /courses page: subjects and what is outstanding in each, plus the subject picker and chip other pages reuse.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
-
 // The same six used by Schedule and the AI tools, so a subject's colour means
 // the same thing wherever it appears.
-export const COURSE_COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
+import { COLORS } from '../ai/tools.js'
 
 /** Subjects, and what is outstanding in each. */
-export default function Courses() {
+export default function CoursesPage() {
   const { state, dispatch } = useStore()
   const [name, setName] = useState('')
 
@@ -17,7 +17,7 @@ export default function Courses() {
     if (!clean) return
     dispatch({
       type: 'add-course',
-      course: { name: clean, color: COURSE_COLORS[state.courses.length % COURSE_COLORS.length] },
+      course: { name: clean, color: COLORS[state.courses.length % COLORS.length] },
     })
     setName('')
   }

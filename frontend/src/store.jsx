@@ -10,6 +10,8 @@ import { syncThemeColor } from './lib/themeColor.js'
 // Read this file top to bottom and you understand the whole app.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// The student-os-* names predate the rename to Stratus. Nobody sees them, and
+// renaming them would mean migrating every device's data, so they stay.
 const STORAGE_KEY = 'student-os-state'
 // The app used to be called Day Deck. Anyone who used it already has their
 // data under the old key, so we read it once and carry it over rather than
@@ -32,7 +34,7 @@ function DEFAULT_SHORTCUTS() {
     { name: 'Gmail', url: 'https://mail.google.com' },
     { name: 'Notion', url: 'https://notion.so' },
     { name: 'Duolingo', url: 'https://duolingo.com' },
-  ].map((s, i) => ({ ...s, id: newId(), iconUrl: faviconFor(s.url), order: i }))
+  ].map((s, i) => ({ ...s, id: crypto.randomUUID(), iconUrl: faviconFor(s.url), order: i }))
 }
 
 // Google's favicon service. It takes a domain and returns an icon — no CORS
@@ -84,7 +86,7 @@ const emptyState = {
 function reducer(state, action) {
   switch (action.type) {
     case 'add-task':
-      return { ...state, tasks: [...state.tasks, { id: newId(), done: false, ...action.task }] }
+      return { ...state, tasks: [...state.tasks, { id: crypto.randomUUID(), done: false, ...action.task }] }
 
     case 'toggle-task':
       return {
@@ -99,7 +101,7 @@ function reducer(state, action) {
     case 'add-course':
       return {
         ...state,
-        courses: [...state.courses, { id: newId(), ...action.course }],
+        courses: [...state.courses, { id: crypto.randomUUID(), ...action.course }],
       }
 
     case 'update-course':
@@ -128,7 +130,7 @@ function reducer(state, action) {
       }
 
     case 'add-event':
-      return { ...state, events: [...state.events, { id: newId(), ...action.event }] }
+      return { ...state, events: [...state.events, { id: crypto.randomUUID(), ...action.event }] }
 
     case 'delete-event':
       return { ...state, events: state.events.filter(e => e.id !== action.id) }
@@ -136,18 +138,18 @@ function reducer(state, action) {
     case 'add-block':
       return {
         ...state,
-        scheduleBlocks: [...state.scheduleBlocks, { id: newId(), ...action.block }],
+        scheduleBlocks: [...state.scheduleBlocks, { id: crypto.randomUUID(), ...action.block }],
       }
 
     case 'delete-block':
       return { ...state, scheduleBlocks: state.scheduleBlocks.filter(b => b.id !== action.id) }
 
-    // `at` is a timestamp (milliseconds). See the note in Timers.jsx.
+    // `at` is a timestamp (milliseconds). See the note in TimersPage.jsx.
     case 'add-alarm':
-      return { ...state, alarms: [...state.alarms, { id: newId(), fired: false, ...action.alarm }] }
+      return { ...state, alarms: [...state.alarms, { id: crypto.randomUUID(), fired: false, ...action.alarm }] }
 
     case 'add-expense':
-      return { ...state, expenses: [...state.expenses, { id: newId(), ...action.expense }] }
+      return { ...state, expenses: [...state.expenses, { id: crypto.randomUUID(), ...action.expense }] }
 
     case 'delete-expense':
       return { ...state, expenses: state.expenses.filter(e => e.id !== action.id) }
@@ -181,7 +183,7 @@ function reducer(state, action) {
             ...state,
             focusSessions: [
               ...state.focusSessions,
-              { id: newId(), endedAt: action.endedAt, minutes: action.minutes },
+              { id: crypto.randomUUID(), endedAt: action.endedAt, minutes: action.minutes },
             ],
           }
 
@@ -193,7 +195,7 @@ function reducer(state, action) {
       return {
         ...state,
         notes: [
-          { id: newId(), updatedAt: Date.now(), ...action.note },
+          { id: crypto.randomUUID(), updatedAt: Date.now(), ...action.note },
           ...state.notes, // newest first: the one just written is the one being read
         ],
       }
@@ -213,7 +215,7 @@ function reducer(state, action) {
     case 'add-topic':
       return {
         ...state,
-        topics: [...state.topics, { id: newId(), done: false, collapsed: false, ...action.topic }],
+        topics: [...state.topics, { id: crypto.randomUUID(), done: false, collapsed: false, ...action.topic }],
       }
 
     case 'update-topic':
@@ -233,7 +235,7 @@ function reducer(state, action) {
     case 'add-shortcut':
       return {
         ...state,
-        shortcuts: renumber([...state.shortcuts, { id: newId(), ...action.shortcut }]),
+        shortcuts: renumber([...state.shortcuts, { id: crypto.randomUUID(), ...action.shortcut }]),
       }
 
     case 'update-shortcut':
@@ -276,10 +278,6 @@ function reducer(state, action) {
       // A typo in an action type should be loud, not silent.
       throw new Error(`Unknown action: ${action.type}`)
   }
-}
-
-export function newId() {
-  return crypto.randomUUID()
 }
 
 // ─── Loading and saving ──────────────────────────────────────────────────────

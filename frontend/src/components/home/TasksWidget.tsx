@@ -1,5 +1,5 @@
 import { useStore } from "../../store.jsx";
-import { openable } from "./SectionWidgets";
+import { openable, shortDate } from "./SectionWidgets";
 
 type Task = {
   id: string;
@@ -51,12 +51,4 @@ export default function TasksWidget({ onOpen }: { onOpen: () => void }) {
       )}
     </section>
   );
-}
-
-function shortDate(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-  });
 }

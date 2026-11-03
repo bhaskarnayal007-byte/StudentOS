@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { toKey } from '../dates.js'
+import { fromKey, toKey } from '../dates.js'
 
 /**
  * Read-only Google Calendar, entirely in the browser.
@@ -51,9 +51,8 @@ function toItems(ev) {
   const base = { title: ev.summary || '(No title)', source: 'google', link: ev.htmlLink }
   if (ev.start?.date) {
     const out = []
-    const [y, m, d] = ev.start.date.split('-').map(Number)
     const end = ev.end?.date || ev.start.date
-    for (let day = new Date(y, m - 1, d); toKey(day) < end || out.length === 0; day.setDate(day.getDate() + 1)) {
+    for (let day = fromKey(ev.start.date);toKey(day) < end || out.length === 0; day.setDate(day.getDate() + 1)) {
       out.push({ ...base, id: `g-${ev.id}-${toKey(day)}`, date: toKey(day), time: '', allDay: true })
     }
     return out
@@ -90,11 +89,11 @@ export default function useGoogleCalendar(from, to) {
   useEffect(() => {
     if (status !== 'connected') { setEvents([]); return }
     const ctrl = new AbortController()
-    const [fy, fm, fd] = from.split('-').map(Number)
-    const [ty, tm, td] = to.split('-').map(Number)
+    const until = fromKey(to)
+    until.setDate(until.getDate() + 1)
     const params = new URLSearchParams({
-      timeMin: new Date(fy, fm - 1, fd).toISOString(),
-      timeMax: new Date(ty, tm - 1, td + 1).toISOString(),
+      timeMin: fromKey(from).toISOString(),
+      timeMax: until.toISOString(),
       singleEvents: 'true',
       orderBy: 'startTime',
       maxResults: '250',

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Assistant from "./Assistant.jsx";
+import OctiPage from "./OctiPage.jsx";
 
 /**
  * Octi, reachable from anywhere.
@@ -51,7 +51,7 @@ export default function OctiDock() {
               </button>
             </div>
           </div>
-          <Assistant />
+          <OctiPage />
         </div>
       )}
 

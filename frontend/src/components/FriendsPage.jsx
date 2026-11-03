@@ -1,3 +1,4 @@
+// The /friends page: friends by public tag, requests and shared items, plus the TagForm Settings reuses.
 import { useCallback, useEffect, useState } from 'react'
 import { useStore } from '../store.jsx'
 import * as social from '../lib/social.js'
@@ -7,7 +8,7 @@ import Avatar, { AvatarPicker } from './Avatar.jsx'
 const KIND = { note: 'Note', event: 'Event', map: 'Mind map' }
 
 /** Your tag, your friends, and what they've sent you. */
-export default function Friends() {
+export default function FriendsPage() {
   const { state, dispatch } = useStore()
   const me = social.useMyProfile() // undefined = loading, null = no tag yet
   const [friends, setFriends] = useState([])

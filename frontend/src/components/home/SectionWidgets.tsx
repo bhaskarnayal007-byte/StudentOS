@@ -1,6 +1,6 @@
 import { useStore } from "../../store.jsx";
-import { todayKey } from "../../dates.js";
-import { useNow } from "../../useNow.js";
+import { fromKey, todayKey } from "../../dates.js";
+import { useNow } from "../../lib/useNow.js";
 import { hour } from "./TodayStrip";
 
 type Event = { id: string; date: string; time: string; title: string };
@@ -121,7 +121,6 @@ export function CoursesWidget({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function shortDate(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+export function shortDate(iso: string) {
+  return fromKey(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }

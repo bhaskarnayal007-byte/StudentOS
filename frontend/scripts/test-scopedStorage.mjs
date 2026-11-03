@@ -1,3 +1,4 @@
+// Tests lib/scopedStorage.js: per-account localStorage keys.
 import assert from "node:assert/strict";
 
 // Minimal localStorage stand-in — the module only uses these three methods.

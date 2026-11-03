@@ -1,8 +1,10 @@
+// The /tasks page: tasks with due dates, priorities and an optional subject.
 import { useState } from 'react'
 import { useStore } from '../store.jsx'
-import { CoursePicker, CourseChip } from './Courses.jsx'
+import { CoursePicker, CourseChip } from './CoursesPage.jsx'
+import { fromKey } from '../dates.js'
 
-export default function Tasks() {
+export default function TasksPage() {
   const { state, dispatch } = useStore()
 
   // Form fields are "controlled": the input shows `text`, and typing updates
@@ -76,8 +78,7 @@ export default function Tasks() {
 
 // "2026-09-05" → "Sat, 5 Sep". Intl is built into the browser; no date library.
 function formatDue(iso) {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+  return fromKey(iso).toLocaleDateString(undefined, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',

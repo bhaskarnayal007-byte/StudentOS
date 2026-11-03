@@ -1,6 +1,10 @@
+// The /schedule page: the recurring weekly timetable.
 import { useState } from 'react'
 import { useStore } from '../store.jsx'
 import { WEEKDAYS } from '../dates.js'
+// Category colours for blocks. These are user data, not theme tokens — but
+// they're picked to sit alongside the forest/sage palette rather than fight it.
+import { COLORS } from '../ai/tools.js'
 import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 
 // The visible window of the day. Change these two numbers and the whole grid
@@ -8,11 +12,7 @@ import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 const START_HOUR = 6
 const END_HOUR = 23
 
-// Category colours for blocks. These are user data, not theme tokens — but
-// they're picked to sit alongside the forest/sage palette rather than fight it.
-const COLORS = ['#2E5334', '#5C6E4A', '#7A6A4F', '#3F5A63', '#6B4F3F', '#4A5240']
-
-export default function Schedule() {
+export default function SchedulePage() {
   const { state, dispatch } = useStore()
   // On a phone the week doesn't fit, so it shows one day, today to start.
   const phone = useMatchMedia(PHONE)

@@ -18,7 +18,7 @@ function read(): ThemeMode {
  * sees the DOM from *before* StoreProvider wrote the new theme, and ends up
  * one switch behind. The observer fires after the attribute actually changes.
  */
-function useRootStyle<T>(readValue: () => T): T {
+export function useRootStyle<T>(readValue: () => T): T {
   const [value, setValue] = useState<T>(readValue);
 
   useEffect(() => {

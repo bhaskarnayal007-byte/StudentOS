@@ -1,3 +1,4 @@
+// Octi's agent loop: sends the conversation to the backend and runs the tool calls the model asks for.
 import { TOOL_DEFS, runTool, systemPrompt, stateMessage } from './tools.js'
 import { matchCommand } from './commands.js'
 import { API_URL, accessToken } from '../lib/supabase.js'

@@ -1,3 +1,4 @@
+// Tests lib/useNow.js: ring().
 import assert from "node:assert/strict";
 
 // Android Chrome: permission granted, but the Notification constructor throws.
@@ -9,7 +10,7 @@ globalThis.Notification = class {
 };
 const setNavigator = (value) => Object.defineProperty(globalThis, "navigator", { value, configurable: true });
 
-const { ring } = await import("../src/useNow.js");
+const { ring } = await import("../src/lib/useNow.js");
 
 // No service worker: falls back to the constructor, which throws. Must not escape.
 setNavigator({});

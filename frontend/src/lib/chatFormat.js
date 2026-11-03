@@ -1,4 +1,4 @@
-// Chat display logic with no Supabase in it, so scripts/test-chat.mjs can run
+// Chat display logic with no Supabase in it, so scripts/test-chatFormat.mjs can run
 // it in plain node.
 
 export const MAX_BODY = 2000

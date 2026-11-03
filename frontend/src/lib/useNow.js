@@ -1,3 +1,4 @@
+// The ticking-clock hook, plus the beep and notification a finished timer or alarm rings with.
 import { useEffect, useState } from 'react'
 
 // A custom hook = a normal function that uses React hooks inside. Anything
@@ -39,7 +40,7 @@ export function beep() {
 }
 
 // Never throws. It used to call `new Notification()`, which Android Chrome
-// refuses with "Illegal constructor": inside AlarmWatcher's effect (Timers.jsx)
+// refuses with "Illegal constructor": inside AlarmWatcher's effect (TimersPage.jsx)
 // that error took down the whole app (beep, then a blank screen), and since the finished timer is
 // saved, every reload rang and crashed again.
 export function ring(label) {
@@ -49,10 +50,10 @@ export function ring(label) {
   // The service worker route works everywhere, phones included.
   if (!navigator.serviceWorker) return desktopNotification(options)
   navigator.serviceWorker.getRegistration()
-    .then(reg => (reg ? reg.showNotification('Student OS', options) : desktopNotification(options)))
+    .then(reg => (reg ? reg.showNotification('Stratus', options) : desktopNotification(options)))
     .catch(() => desktopNotification(options))
 }
 
 function desktopNotification(options) {
-  try { new Notification('Student OS', options) } catch { /* phones: no constructor */ }
+  try { new Notification('Stratus', options) } catch { /* phones: no constructor */ }
 }

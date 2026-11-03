@@ -1,7 +1,8 @@
+// The /notes page: notes filed under subjects, with attachments; FileTab shows one file at /view/:id.
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
-import { CoursePicker, CourseChip } from './Courses.jsx'
+import { CoursePicker, CourseChip } from './CoursesPage.jsx'
 import ShareButton from './ShareButton.jsx'
 import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/fileStore.js'
 
@@ -14,7 +15,7 @@ import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/
  * Drop files (PDFs, photos, slides, docs, sheets) anywhere on the panel and
  * each becomes a note of its own.
  */
-export default function Notes() {
+export default function NotesPage() {
   const { state, dispatch } = useStore()
   const [params, setParams] = useSearchParams()
   const [openId, setOpenId] = useState(params.get('id'))
@@ -446,7 +447,7 @@ export function FileTab() {
   const note = state.notes.find(n => n.id === id)
 
   useEffect(() => {
-    if (note) document.title = `${title(note.text)} · Student OS`
+    if (note) document.title = `${title(note.text)} · Stratus`
   }, [note])
 
   return (

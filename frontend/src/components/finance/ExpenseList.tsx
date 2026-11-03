@@ -1,4 +1,5 @@
 import { formatMoney, type Expense } from "./useExpenses";
+import { fromKey } from "../../dates.js";
 
 const SHOWN = 8;
 
@@ -52,8 +53,7 @@ export default function ExpenseList({
 }
 
 function formatDay(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+  return fromKey(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
   });

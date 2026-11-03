@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import TopoField from '@/components/ui/topo-field'
+import TopoField from '@/components/ui/TopoField'
+import { useRootStyle } from './mascot/useThemeMode'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The app-wide topographic backdrop.
@@ -8,11 +8,8 @@ import TopoField from '@/components/ui/topo-field'
 // so this stays correct automatically if the palette in theme.css changes.
 //
 // It reads the DOM (data-theme + the computed tokens) rather than the store,
-// and re-reads on a MutationObserver. That is not indirection for its own
-// sake: React runs CHILD effects before PARENT effects, so a child that reads
-// tokens in response to a store change always sees the values from *before*
-// StoreProvider's effect wrote the new data-theme — the background would stay
-// one theme behind. Observing the attribute removes the ordering assumption.
+// through useRootStyle — see there for why reading the store would leave the
+// background one theme behind.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // How strong the grid and contour lines are, per theme. Kept low: this sits
@@ -45,30 +42,12 @@ function readBackdrop() {
 }
 
 export default function AppBackground() {
-  const [backdrop, setBackdrop] = useState(readBackdrop)
-
-  useEffect(() => {
-    const root = document.documentElement
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const update = () => setBackdrop(readBackdrop())
-
-    const observer = new MutationObserver(update)
-    observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
-    media.addEventListener('change', update)
-    update()
-
-    return () => {
-      observer.disconnect()
-      media.removeEventListener('change', update)
-    }
-  }, [])
-
+  const backdrop = useRootStyle(readBackdrop)
   const strength = STRENGTH[backdrop.mode]
 
   return (
     <div className="app-bg" aria-hidden="true">
       <TopoField
-        mode={backdrop.mode}
         paper={backdrop.paper}
         ink={backdrop.ink}
         gridStrength={strength.grid}

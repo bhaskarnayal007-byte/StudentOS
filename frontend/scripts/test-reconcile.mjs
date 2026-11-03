@@ -1,3 +1,4 @@
+// Tests lib/reconcile.js: what sync does on sign-in.
 import assert from "node:assert/strict";
 
 const { reconcile } = await import("../src/lib/reconcile.js");

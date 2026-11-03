@@ -6,7 +6,7 @@
  * Decide what to do on sign-in, given what the server has and what this device
  * last agreed on.
  *
- * Pure so it can be tested without a network: see scripts/test-cloud-sync.mjs.
+ * Pure so it can be tested without a network: see scripts/test-reconcile.mjs.
  */
 export function reconcile({ remote, localRev, hasLocalData }) {
   // The fetch failed. Touch nothing; a later push will carry local edits up.

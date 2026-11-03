@@ -1,3 +1,4 @@
+// Tests lib/shareCopy.js: how a shared item is sent and imported.
 import assert from "node:assert/strict";
 
 const { toPayload, importShare, describe } = await import("../src/lib/shareCopy.js");

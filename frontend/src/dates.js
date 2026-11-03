@@ -15,6 +15,13 @@ export function toKey(date) {
 
 export const todayKey = () => toKey(new Date())
 
+// "2026-09-05" → local midnight that day. (new Date("2026-09-05") is UTC
+// midnight, which is the 4th west of Greenwich.)
+export function fromKey(key) {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 // Everything a month grid needs to draw itself.
 export function monthGrid(year, month) {
   // Day 0 of the *next* month = the last day of this one. Handles leap years free.

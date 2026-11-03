@@ -1,6 +1,6 @@
 import { useStore } from "../../store.jsx";
 import { todayKey } from "../../dates.js";
-import { useNow } from "../../useNow.js";
+import { useNow } from "../../lib/useNow.js";
 
 type Task = { id: string; text: string; done: boolean; due: string; courseId?: string };
 type Event = { id: string; date: string; time: string; title: string };

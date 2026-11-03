@@ -1,6 +1,6 @@
-// Self-check for the state message and read_note. Run it with:
+// Checks the state message Octi gets, and read_note. Part of npm test; alone:
 //
-//   node frontend/src/ai/tools.selfcheck.js
+//   node frontend/scripts/test-stateMessage.mjs
 //
 // It exists because the state message is trimmed hard for token cost, and
 // every cut is a thing that can silently stop working: a filter that drops the
@@ -9,8 +9,8 @@
 // those still look fine in the UI — the assistant just quietly gets worse.
 // No framework on purpose; assert is enough.
 import assert from 'node:assert/strict'
-import { stateMessage, systemPrompt, runTool, outline } from './tools.js'
-import { todayKey } from '../dates.js'
+import { stateMessage, systemPrompt, runTool, outline } from '../src/ai/tools.js'
+import { todayKey } from '../src/dates.js'
 
 const LONG = 'Enthalpy lecture: H = U + PV. '.repeat(20)
 const month = todayKey().slice(0, 7)
@@ -122,4 +122,4 @@ let dispatched = null
 runTool('complete_task', { text: 'ch 4' }, { state, dispatch: a => { dispatched = a } })
 assert.deepEqual(dispatched, { type: 'toggle-task', id: 'k0' }, 'text matching must survive the trim')
 
-console.log(`tools self-check passed (state message: ~${Math.ceil(msg.length / 4)} tokens for this fixture)`)
+console.log(`state message: ok (~${Math.ceil(msg.length / 4)} tokens for this fixture)`)

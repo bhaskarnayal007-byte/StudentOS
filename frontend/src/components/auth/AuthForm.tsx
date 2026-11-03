@@ -114,7 +114,7 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
     >
       <img src="/pwa-512.png" alt="" className="login-mark" data-seed />
 
-      <h1 data-seed>{signup ? "Student OS" : "Welcome back"}</h1>
+      <h1 data-seed>{signup ? "Stratus" : "Welcome back"}</h1>
       <p className="login-sub" data-seed>
         {signup ? "Set up your space. Takes a moment." : "Sign in to continue."}
       </p>

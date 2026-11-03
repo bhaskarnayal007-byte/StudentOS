@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  // "@/components/ui/topo-field" → src/components/ui/topo-field.
+  // "@/components/ui/TopoField" → src/components/ui/TopoField.
   // tsconfig.json declares the same mapping for the editor; this is the one
   // that actually resolves at build time.
   resolve: {
@@ -26,8 +26,8 @@ export default defineConfig({
       // The manifest: what the OS reads when you install the app. This is what
       // gives you an icon, a name, and a window with no browser address bar.
       manifest: {
-        name: 'Student OS',
-        short_name: 'Student OS',
+        name: 'Stratus',
+        short_name: 'Stratus',
         description: 'Calendar, tasks, schedule, timers and an AI assistant. © 2026 Bhaskar Nayal.',
         theme_color: '#2B2E27',
         // Matches the icon's own badge, so the splash behind it isn't a
@@ -46,7 +46,7 @@ export default defineConfig({
           // is why it's a separate, inset rendering, not the same file.
           { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-        // Puts Student OS in Android's share sheet, so a PDF or deck in
+        // Puts Stratus in Android's share sheet, so a PDF or deck in
         // WhatsApp can be shared straight into Notes. Handled by
         // public/share-target-sw.js. iOS doesn't support this for web apps.
         share_target: {

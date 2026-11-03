@@ -1,6 +1,7 @@
+// The /timers page: timers and alarms, plus AlarmWatcher, which rings them on any route.
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
-import { useNow, ring } from '../useNow.js'
+import { useNow, ring } from '../lib/useNow.js'
 import FocusWeek from './FocusWeek.jsx'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,7 +14,7 @@ import FocusWeek from './FocusWeek.jsx'
 // between, even across a page reload.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function Timers() {
+export default function TimersPage() {
   const { state, dispatch } = useStore()
   const now = useNow() // re-renders this component once a second
 

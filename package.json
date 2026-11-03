@@ -1,5 +1,5 @@
 {
-  "name": "student-os",
+  "name": "stratus",
   "private": true,
   "version": "1.0.0",
   "description": "A productivity PWA \u2014 tasks, calendar, schedule, timers and spending \u2014 with an AI assistant that operates the app through tool calls.",

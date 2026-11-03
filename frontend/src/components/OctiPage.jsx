@@ -1,6 +1,7 @@
+// The /octi page: a chat with Octi, who changes the app through the same actions the buttons use. OctiDock shows it too.
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
-import { ask } from '../ai/groq.js'
+import { ask } from '../ai/agentLoop.js'
 
 const SUGGESTIONS = [
   'Add a task to buy milk tomorrow',
@@ -9,7 +10,7 @@ const SUGGESTIONS = [
   "What's on my schedule this week?",
 ]
 
-export default function Assistant() {
+export default function OctiPage() {
   const { state, dispatch } = useStore()
 
   // The conversation is deliberately NOT in the store — it's a session thing,

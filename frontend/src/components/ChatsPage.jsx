@@ -1,3 +1,4 @@
+// The /chat page: one-to-one and group chats between friends.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import * as chat from '../lib/chat.js'
@@ -10,7 +11,7 @@ import Avatar from './Avatar.jsx'
  * reusing its classes): the list on the left, the open chat beside it; on a
  * phone, one at a time with a back button.
  */
-export default function Chat() {
+export default function ChatsPage() {
   const profile = useMyProfile() // undefined = loading, null = no tag yet
   const [params, setParams] = useSearchParams()
   const openId = params.get('id')

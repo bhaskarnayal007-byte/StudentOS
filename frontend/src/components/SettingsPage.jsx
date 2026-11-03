@@ -1,9 +1,10 @@
+// The /settings page: display name, text size, theme, account and legal links.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { signOut, deleteAccount, setName } from '../auth/useSession.js'
-import { Copyright } from './Legal'
-import { TagForm } from './Friends.jsx'
+import { Copyright } from './legal/LegalPage'
+import { TagForm } from './FriendsPage.jsx'
 import { setTag, useMyProfile } from '../lib/social.js'
 import { AvatarPicker } from './Avatar.jsx'
 
@@ -28,12 +29,12 @@ const THEMES = [
 ]
 
 /** Theme, account and legal — everything that isn't a section of its own. */
-export default function Settings() {
+export default function SettingsPage() {
   const { state, dispatch } = useStore()
 
   return (
     <main className="legal settings">
-      <Link to="/" className="legal-back">← Student OS</Link>
+      <Link to="/" className="legal-back">← Stratus</Link>
       <h1>Settings</h1>
 
       <h2>Your name</h2>
