@@ -10,6 +10,21 @@ const SUGGESTIONS = [
   "What's on my schedule this week?",
 ]
 
+// The browser's own speech-to-text: free, no key, no backend. Chrome sends the
+// audio to Google to transcribe it; Firefox has none, so there the mic button
+// simply isn't shown.
+// ponytail: browser speech only; add server-side Whisper through the backend
+// when Firefox users or Hinglish accuracy start to matter.
+const Recognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)
+
+// What each failure means to the person holding the phone.
+const MIC_ERRORS = {
+  'not-allowed': 'The microphone is blocked. Allow it for this site to talk to Octi.',
+  'service-not-allowed': 'The microphone is blocked. Allow it for this site to talk to Octi.',
+  'audio-capture': 'No microphone found.',
+  network: 'Voice needs an internet connection. Type instead for now.',
+}
+
 export default function OctiPage() {
   const { state, dispatch } = useStore()
 
@@ -31,10 +46,43 @@ export default function OctiPage() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat, busy])
 
+  const [listening, setListening] = useState(false)
+  const recognition = useRef(null)
+  // Closing the panel or leaving the page must not leave the mic open.
+  useEffect(() => () => recognition.current?.abort(), [])
+
+  // Speech fills the box rather than sending itself, so a misheard word can be
+  // fixed before Octi acts on it.
+  function toggleMic() {
+    if (listening) {
+      recognition.current?.stop()
+      return
+    }
+    const rec = new Recognition()
+    // Indian English: the default en-US hears local names and accents worse.
+    rec.lang = 'en-IN'
+    rec.interimResults = true
+    // Speaking adds to whatever was already typed.
+    const typed = input.trim() ? `${input.trim()} ` : ''
+    rec.onresult = e => setInput(typed + [...e.results].map(r => r[0].transcript).join(''))
+    rec.onerror = e => {
+      // Silence and our own abort() aren't failures worth a message.
+      if (e.error === 'no-speech' || e.error === 'aborted') return
+      setError(MIC_ERRORS[e.error] ?? `Couldn't hear that (${e.error}). Try again or type it.`)
+    }
+    rec.onend = () => setListening(false)
+    recognition.current = rec
+    setError('')
+    rec.start()
+    setListening(true)
+  }
+
   async function send(text) {
     const message = (text ?? input).trim()
     if (!message || busy) return
 
+    // abort, not stop: a late result must not refill the box just cleared.
+    recognition.current?.abort()
     setInput('')
     setError('')
     setBusy(true)
@@ -95,11 +143,27 @@ export default function OctiPage() {
       <form className="row" onSubmit={e => { e.preventDefault(); send() }}>
         <input
           className="grow"
-          placeholder="Ask or tell me to do something…"
+          placeholder={listening ? 'Listening…' : 'Ask or tell me to do something…'}
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={busy}
         />
+        {Recognition && (
+          <button
+            type="button"
+            className={listening ? 'mic listening' : 'mic'}
+            onClick={toggleMic}
+            disabled={busy}
+            aria-label={listening ? 'Stop listening' : 'Speak to Octi'}
+            aria-pressed={listening}
+            title={listening ? 'Stop listening' : 'Speak'}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10a7 7 0 0 0 14 0M12 17v5" />
+            </svg>
+          </button>
+        )}
         <button className="primary" disabled={busy || !input.trim()}>Send</button>
       </form>
     </div>

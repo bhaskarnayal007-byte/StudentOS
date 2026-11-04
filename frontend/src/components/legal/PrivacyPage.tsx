@@ -61,6 +61,11 @@ export default function PrivacyPage() {
         <li><strong>Supabase</strong>: sign-in and storing your synced data.</li>
         <li><strong>Google</strong>: only if you choose to sign in with Google or connect Google Calendar.</li>
         <li>
+          <strong>Your browser's speech service</strong>: only when you tap the microphone to talk to
+          Octi. Your browser turns your voice into text, and in Chrome that means the audio is sent to
+          Google to transcribe. We receive only the text, never the recording.
+        </li>
+        <li>
           <strong>Our AI provider</strong> (currently Groq): when you talk to Octi, your messages
           and the data needed to answer them are sent through our server to the provider to
           generate a reply. We don't keep a separate copy of those conversations on our server.

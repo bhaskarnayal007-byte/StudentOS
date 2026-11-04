@@ -981,6 +981,17 @@ button.ghost:hover { color: var(--color-accent); }
 .chat { display: flex; flex-direction: column; gap: var(--s3); }
 .chat-empty { padding: var(--s4) 0; }
 
+/* Voice input. While it listens the button stays lit and breathes, so it is
+   obvious the mic is open. */
+.mic { display: inline-grid; place-items: center; padding-inline: var(--s3); }
+.mic.listening {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-wash);
+  animation: pulse 1.5s var(--ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) { .mic.listening { animation: none; } }
+
 .suggestions { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; }
 
 .suggestion {
