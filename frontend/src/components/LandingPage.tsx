@@ -1,9 +1,10 @@
 // The signed-out landing page at /: what Stratus is, opening with the wheel-and-Octi intro.
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useReveal } from "../lib/useReveal.js";
 import { syncThemeColor } from "../lib/themeColor.js";
 import LogoWheel from "./LogoWheel";
+import StratusWordmark from "./StratusWordmark";
 
 // Same reasoning as HomePage: three.js is the heaviest thing we ship, and a
 // stranger deciding whether to sign up shouldn't wait for it to paint.
@@ -16,57 +17,73 @@ const OctopusMascot = lazy(() =>
 );
 
 /**
- * What one sentence turns into.
- *
- * The tool names are the real ones from src/ai/tools.js, which is the point:
- * this is a diagram of what actually happens, not a mock of a screen. It also
- * ages correctly, because if the tools are renamed this reads wrong and gets
- * fixed, where a screenshot would just quietly go stale.
+ * What one sentence turns into. Each result maps to a real tool in
+ * src/ai/tools.js (add_expense, start_timer, add_task, add_note, add_topics,
+ * add_schedule_block, set_alarm), written the way the app reports it back.
  */
 const SENTENCES: { said: string; did: string[] }[] = [
   {
-    said: "I spent 180 on lunch and start a 25 minute study timer",
-    did: ["add_expense", "start_timer"],
+    said: "Spent 180 on lunch. Start a 25 minute study timer.",
+    did: ["Expense logged · 180 · Food", "Focus timer · 25:00"],
   },
   {
-    said: "Chem lab report due Friday, and the exam is on the 15th",
-    did: ["add_task", "add_note"],
+    said: "Chem lab report due Friday, and the exam is on the 15th.",
+    did: ["Task · Lab report · Fri", "Note · Chem exam · 15th"],
   },
   {
-    said: "Map out organic chem: alkanes, alkenes and alcohols",
-    did: ["add_topics"],
+    said: "Map out organic chem: alkanes, alkenes and alcohols.",
+    did: ["Mind map · 3 topics added"],
   },
   {
-    said: "Gym every Monday 7 to 9, and wake me at 6:30 tomorrow",
-    did: ["add_schedule_block", "set_alarm"],
+    said: "Gym every Monday 7 to 9, and wake me at 6:30 tomorrow.",
+    did: ["Timetable · Mon 7–9", "Alarm · 6:30"],
   },
 ];
 
-/** How it helps, in the four jobs a term actually throws at a student. */
+/** The four jobs a term actually throws at a student. */
 const HELPS: { icon: string; title: string; body: string; bits: string[] }[] = [
   {
     icon: "◷",
-    title: "Never miss a deadline",
-    body: "Every due date, class and exam in one timeline, sorted so the next thing is always on top.",
-    bits: ["Tasks & priorities", "Calendar", "Weekly timetable"],
+    title: "Nothing sneaks up on you",
+    body: "Every deadline, class and exam on one timeline, with whatever is next always sitting on top.",
+    bits: ["Tasks", "Calendar", "Timetable"],
   },
   {
     icon: "✣",
     title: "See the whole subject",
-    body: "Map each course as a tree of topics and sub-topics, and tick them off as you learn them.",
-    bits: ["Mind maps", "Progress per subject"],
+    body: "Each course becomes a map of topics. Tick them off as you learn and watch the gaps close before the exam.",
+    bits: ["Mind maps", "Progress"],
   },
   {
     icon: "❏",
-    title: "Keep every note together",
+    title: "Notes next to their sources",
     body: "Notes filed by subject, with the lecture slides, PDFs and photos open right beside them.",
-    bits: ["PDF & slides", "Photos & docs"],
+    bits: ["PDFs & slides", "Photos"],
   },
   {
     icon: "◉",
     title: "Focus, then switch off",
-    body: "A study timer that logs your week, a spending tracker, and it all keeps working offline.",
-    bits: ["Focus timer", "Spending", "Offline"],
+    body: "A focus timer that logs your week, and a spending tracker that keeps you honest.",
+    bits: ["Focus timer", "Spending"],
+  },
+];
+
+/** Friends and sharing: what lib/social.js, shareCopy.js and the chats page do. */
+const TOGETHER: { icon: string; title: string; body: string }[] = [
+  {
+    icon: "@",
+    title: "Find friends by tag",
+    body: "Pick your own @tag and add classmates by theirs. Nothing reaches you until you accept.",
+  },
+  {
+    icon: "↗",
+    title: "Share in one tap",
+    body: "Send a note, an exam date or a whole mind map. It lands as their own copy, ready to edit.",
+  },
+  {
+    icon: "✦",
+    title: "Chat, one-to-one or in groups",
+    body: "Plan the group project, swap notes and split the work without leaving the app.",
   },
 ];
 
@@ -80,21 +97,6 @@ const SLICES = [-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7].map((d) => ({
   k: Math.sqrt(1 - (d / 8) ** 2),
   cap: Math.abs(d) > 2,
 }));
-
-/** "Stratus", one span per letter so the intro can raise them in turn. */
-function Wordmark() {
-  return (
-    <h1 className="intro-word" aria-label="Stratus">
-      <span aria-hidden="true">
-        {[..."Stratus"].map((ch, i) => (
-          <span key={i} style={{ "--i": i } as React.CSSProperties}>
-            {ch}
-          </span>
-        ))}
-      </span>
-    </h1>
-  );
-}
 
 /** The pill CTA. The arrow lives in its own well flush to the right inner
  *  padding, and leans out on hover, which makes the press feel mechanical. */
@@ -116,63 +118,45 @@ function Cta({ to, onClick, children }: { to?: string; onClick?: () => void; chi
 /**
  * What a signed-out visitor sees.
  *
- * Locked to dark whatever the viewer's theme is, so the page the world sees is
- * one deliberate thing rather than two half-tuned ones. The app behind the
- * sign-in still follows their system preference.
- *
- * Deliberately has no screenshots. A dark app shot on a dark page is muddy at
- * any size, and shrinking a whole interface into a card shows a visitor
- * nothing they can read. The product is carried by type instead: the sentences
- * people actually say, and what the app does with them.
+ * Black and white only, locked to dark whatever the viewer's theme is. Panels
+ * are frosted glass over the turning wheel, so the one moving thing on the
+ * page shows through everything that sits on it.
  */
 export default function LandingPage() {
-  const install = useInstallPrompt();
-  useReveal([install]);
+  useReveal();
 
-  // Phone bars go near-black here, and back to the theme once signed in.
+  // Phone bars go black here, and back to the theme once signed in.
   useEffect(() => {
     syncThemeColor();
-    return () => requestAnimationFrame(syncThemeColor);
+    return () => { requestAnimationFrame(syncThemeColor); };
   }, []);
 
   return (
     <div className="landing" data-theme="dark">
-      {/* Fixed, inert, and above the page: film grain over a flat dark ground
-          is what stops it looking like printer toner. */}
+      {/* Fixed, inert, and above the page: grain keeps flat black from
+          looking like a dead screen. */}
       <div className="grain" aria-hidden="true" />
 
-      {/* The mark, huge and barely there, turning behind the whole page. */}
+      {/* The mark, huge and faint, turning behind the whole page. */}
       <LogoWheel size="100%" className="landing-watermark" />
 
       <header className="landing-bar">
-        <div className="wrap landing-bar-inner">
+        <div className="landing-bar-inner glass">
           <a href="#top" className="landing-brand" aria-label="Stratus, back to top">
             {/* Turns with the scroll, like a wheel being steered. */}
-            <LogoWheel size={34} className="brand-wheel" />
-            Stratus
+            <LogoWheel size={26} className="brand-wheel" />
+            <StratusWordmark className="brand-word" />
           </a>
           <nav className="landing-nav">
-            {/* Always present, whether or not the browser offers its own
-                install prompt: the page is how people get the app, so there
-                has to be something to press that says so. Where the browser
-                can install it, pressing this installs it; elsewhere it goes
-                to the steps. */}
-            <a
-              href="#get-it"
-              className="landing-get"
-              onClick={install ? (e) => { e.preventDefault(); install(); } : undefined}
-            >
-              Get the app
-            </a>
+            <Link to="/signup" className="landing-get">Get started</Link>
             <Link to="/signin" className="landing-signin">Sign in</Link>
           </nav>
         </div>
       </header>
 
       {/* The opening: the wheel builds itself alone and spins to a stop, then
-          lifts to hover over Octi's head as he rises in, then the name and the
-          promise. Everything after this
-          is the explanation. */}
+          lifts to hover over Octi's head as he rises in, then the name draws
+          itself and the promise follows. */}
       <section className="intro" id="top">
         <div className="intro-glow" aria-hidden="true" />
 
@@ -197,68 +181,60 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <Wordmark />
+        <h1 className="intro-word">
+          <StratusWordmark title="Stratus" />
+        </h1>
         <p className="intro-lead">
-          Steer your whole term from one place. <span>Octi does the paperwork.</span>
+          Say what's coming up. <span>Octi turns it into a plan.</span>
+        </p>
+        <p className="intro-sub">
+          Deadlines, classes, notes and money, all in one calm place that keeps itself tidy.
         </p>
         <div className="intro-actions">
-          <Cta>Start for free</Cta>
-          <a href="#helps" className="intro-more">See how it helps ↓</a>
-        </div>
-        <span className="intro-fine">Free. No card. Works offline.</span>
-      </section>
-
-      <section className="helps" id="helps">
-        <div className="wrap">
-          <span className="eyebrow" data-reveal>Built for college</span>
-          <h2 data-reveal>How Stratus helps</h2>
-          <p className="helps-lead" data-reveal>
-            Everything a term throws at you, in one place that keeps itself tidy.
-          </p>
-
-          <ul className="helps-grid">
-            {HELPS.map(({ icon, title, body, bits }, i) => (
-              <li key={title} className="help-card" data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
-                <span className="help-icon" aria-hidden="true">{icon}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-                <ul className="help-bits">
-                  {bits.map((b) => <li key={b}>{b}</li>)}
-                </ul>
-              </li>
-            ))}
-          </ul>
+          <Cta>Get started</Cta>
+          <a href="#problem" className="intro-more glass">See how it works ↓</a>
         </div>
       </section>
 
-      {/* The product, as a conversation: what you say, and what Octi does
-          with it, using the real tool names. */}
-      <section className="says band">
+      {/* The pain first: a visitor has to recognise their own week before a
+          feature list means anything. */}
+      <section className="wrap problem" id="problem">
+        <span className="eyebrow" data-reveal>The problem</span>
+        <h2 data-reveal>
+          Five apps, three group chats, <em>and the deadline you forgot.</em>
+        </h2>
+        <p className="section-lead" data-reveal>
+          Your term is spread across a calendar, a notes app, a to-do list, a
+          spending spreadsheet and your own memory. Stratus pulls all of it into
+          one place, and Octi keeps it in order so you don't have to.
+        </p>
+      </section>
+
+      {/* The product, as a conversation: what you say, and what Octi does. */}
+      <section className="says">
         <div className="wrap says-inner">
           <div className="says-copy">
-            <img src="/mascot.png" alt="" className="says-octi" data-reveal />
-            <h2 data-reveal>Or just tell Octi.</h2>
-            <p className="says-lead" data-reveal>
-              Say it the way you would to a friend. Octi reads the date, the
-              subject and the amount out of the sentence, then does every part
-              of it.
+            <span className="eyebrow" data-reveal>Meet Octi</span>
+            <h2 data-reveal>Just say it. <em>Octi handles the rest.</em></h2>
+            <p className="section-lead" data-reveal>
+              No forms and no menus. Type it the way you'd text a friend, and
+              Octi pulls the date, the subject and the amount out of the
+              sentence, then files every part of it.
             </p>
             <p className="says-foot" data-reveal>
-              He shows you everything he touched, every time, and asks before
-              deleting anything.
+              He shows you everything he changed, every time, and always asks
+              before deleting anything.
             </p>
           </div>
 
-          <ol className="chat-demo">
-            {SENTENCES.map(({ said, did }, i) => (
-              <li key={said} data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
+          <ol className="chat-demo glass" data-reveal>
+            {SENTENCES.map(({ said, did }) => (
+              <li key={said}>
                 <p className="demo-you">{said}</p>
                 <div className="demo-octi">
                   <img src="/mascot.png" alt="" />
                   <ul>
-                    {did.map((tool) => (
-                      <li key={tool}><code>{tool}</code></li>
-                    ))}
+                    {did.map((d) => <li key={d}>{d}</li>)}
                   </ul>
                 </div>
               </li>
@@ -267,66 +243,66 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="wrap install" id="get-it">
-        <h2 data-reveal>Put it on your phone</h2>
-        <p className="install-lead" data-reveal>
-          It installs from the browser. No app store, nothing to update by hand.
-          {!install && (
-            <>
-              {" "}
-              Chrome and Edge offer a one-click install once you have opened the
-              app; on everything else it is the two steps below.
-            </>
-          )}
+      <section className="wrap helps" id="helps">
+        <span className="eyebrow" data-reveal>Everything in one place</span>
+        <h2 data-reveal>Built for the way a term <em>actually goes.</em></h2>
+
+        <ul className="helps-grid">
+          {HELPS.map(({ icon, title, body, bits }, i) => (
+            <li key={title} className="help-card glass" data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
+              <span className="help-icon" aria-hidden="true">{icon}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <ul className="help-bits">
+                {bits.map((b) => <li key={b}>{b}</li>)}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="wrap together" id="together">
+        <span className="eyebrow" data-reveal>Better together</span>
+        <h2 data-reveal>Study with your friends, <em>not just next to them.</em></h2>
+        <p className="section-lead" data-reveal>
+          Your group chat already has the exam date, the shared notes and the
+          plan. Now it sits right next to your calendar and your mind maps.
         </p>
 
-        <div className="install-grid">
-          <div className="tray" data-reveal>
-            <div className="plate install-plate">
-              <h3>On a laptop</h3>
-              <p>
-                Use the install control in the address bar. It then opens in its
-                own window like anything else on your machine.
-              </p>
-              {install ? (
-                <Cta onClick={install}>Install now</Cta>
-              ) : (
-                <Cta to="/signup">Create an account</Cta>
-              )}
-            </div>
-          </div>
+        <ul className="together-grid">
+          {TOGETHER.map(({ icon, title, body }, i) => (
+            <li key={title} className="help-card glass" data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
+              <span className="help-icon" aria-hidden="true">{icon}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </li>
+          ))}
+        </ul>
 
-          <div className="install-steps" data-reveal>
-            <div>
-              <h3>iPhone</h3>
-              <p>Share, then Add to Home Screen.</p>
-            </div>
-            <div>
-              <h3>Android</h3>
-              <p>Menu, then Install app.</p>
-            </div>
-          </div>
-        </div>
+        <p className="together-foot" data-reveal>
+          Only friends you accept can message you or send you anything. Your
+          notes and spending stay visible to you and nobody else.
+        </p>
       </section>
 
       <section className="wrap closer">
-        <div className="closer-wheel" data-reveal>
-          <LogoWheel size="100%" title="Stratus logo" />
-        </div>
-        <h2 data-reveal>Your term, handled.</h2>
-        <p data-reveal>
-          It is free, and it stays yours. Your notes and your spending are
-          visible to you and nobody else.
-        </p>
-        <div data-reveal>
-          <Cta>Start for free</Cta>
+        <div className="closer-card glass" data-reveal>
+          <div className="closer-wheel">
+            <LogoWheel size="100%" title="Stratus logo" />
+          </div>
+          <h2>Take the wheel <em>of your term.</em></h2>
+          <p>
+            Set it up in a minute. Tell Octi what's coming, and walk into every
+            deadline already ready for it.
+          </p>
+          <Cta>Get started</Cta>
         </div>
       </section>
 
       <footer className="landing-foot">
         <div className="wrap landing-foot-inner">
           <span className="landing-foot-brand">
-            <LogoWheel size={22} />
+            <LogoWheel size={20} />
             © 2026 Stratus · Created by Bhaskar Nayal
           </span>
           <span className="landing-foot-links">
@@ -339,32 +315,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-}
-
-/**
- * The browser's own install prompt, if this visit is eligible for one.
- *
- * Chrome fires `beforeinstallprompt` when the app qualifies and the user hasn't
- * installed it. There is no way to ask for that event later, so it has to be
- * caught on mount and kept. Returns null where installing isn't offered, so the
- * button simply isn't drawn rather than being drawn and doing nothing.
- */
-function useInstallPrompt() {
-  const [deferred, setDeferred] = useState<Event | null>(null);
-
-  useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e);
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
-  }, []);
-
-  if (!deferred) return null;
-  return () => {
-    (deferred as Event & { prompt: () => void }).prompt();
-    // It can only be used once; drop it so the button disappears after use.
-    setDeferred(null);
-  };
 }
