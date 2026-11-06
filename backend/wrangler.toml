@@ -10,7 +10,7 @@ name = "stratus-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
-# Served at https://stratus-api.<your-subdomain>.workers.dev. That address
+# Served at https://stratus-api.bhaskarnayal007.workers.dev. That address
 # stays valid after a custom domain is added, and the Android app uses it.
 workers_dev = true
 
