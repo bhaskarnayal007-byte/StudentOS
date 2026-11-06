@@ -33,10 +33,12 @@
   --color-focus-ring:  color-mix(in srgb, var(--color-accent) 28%, transparent);
   --color-sunken:      color-mix(in srgb, var(--color-base) 60%, var(--color-surface));
 
-  /* Type scale. --fs is the Text size setting (Settings), written to <html>
-     by the store; every font-size in this file is multiplied by it.
-     "Default" is 1.125, not 1: the base sizes read small on real screens. */
-  --fs: 1.125;
+  /* Type scale. Every font-size in this file is multiplied by --fs: the Text
+     size setting (--text-size, written to <html> by the store) times a base
+     for the screen. The base is 1.125 on a laptop, where the sizes read small
+     at arm's length, and 1 on a phone (SMALL SCREENS), held a foot away. */
+  --fs-base: 1.125;
+  --fs: calc(var(--text-size, 1) * var(--fs-base));
   --t-xs: calc(12px * var(--fs)); --t-sm: calc(14px * var(--fs)); --t-md: calc(16px * var(--fs));
   --t-lg: calc(19px * var(--fs)); --t-xl: calc(23px * var(--fs)); --t-2xl: calc(33px * var(--fs));
 
@@ -1737,19 +1739,34 @@ button.ghost.always:hover { color: var(--color-accent); }
    SMALL SCREENS
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 620px) {
+  /* A phone is held a foot from the face: no laptop size bump (see :root).
+     No blue flash on every tap either; buttons show their own pressed state. */
+  :root { --fs-base: 1; --tabbar-h: 64px; -webkit-tap-highlight-color: transparent; }
   .app {
-    padding: var(--s4) var(--s3) calc(90px + env(safe-area-inset-bottom));
+    /* Clear of the tab bar and the Octi button floating above it. */
+    padding: var(--s3) var(--s3) calc(var(--tabbar-h) + 88px + env(safe-area-inset-bottom));
     /* Keep clear of the camera cutout wherever the page reaches it. */
-    padding-top: calc(var(--s4) + env(safe-area-inset-top));
+    padding-top: calc(var(--s3) + env(safe-area-inset-top));
   }
-  header h1 { font-size: calc(30px * var(--fs)); margin-bottom: var(--s3); }
-  .brand-mark { width: 34px; height: 34px; }
+  /* The header names the page, like any phone app. The brand is on the icon
+     the user just tapped; repeating it on every screen wasted the top row. */
+  header { margin-bottom: var(--s3); }
+  .titlebar { align-items: center; min-height: 48px; }
+  header h1 { font-size: calc(28px * var(--fs)); margin: 0; }
+  .brand-mark, .brand-name { display: none; }
   main { padding: var(--s4); margin-top: 0; }
   .sched-scroll { margin: 0 calc(var(--s4) * -1); padding: 0 var(--s4); }
   .countdown .big { font-size: calc(48px * var(--fs)); }
 
   .row > input, .row > select { min-width: 0; }
   .grow { flex-basis: 100%; }
+  /* Add forms: the main field gets its own line (.grow above) and the small
+     ones share the next, stretched edge to edge rather than huddled left
+     with a stub of an Add button. */
+  form.row > :not(.grow, .muted) { flex: 1 1 auto; }
+  .day-add { flex-wrap: wrap; }
+  .day-add input:first-child { flex-basis: 100%; }
+  .day-add input[type="time"], .day-add button { flex: 1; width: auto; }
 
   /* Chips drop to a second line rather than squeezing the title. */
   .item { flex-wrap: wrap; }
@@ -1759,44 +1776,160 @@ button.ghost.always:hover { color: var(--color-accent); }
      its widest content (the 560px schedule grid), which made the whole page
      wider than the phone and Android zoomed out to fit it. */
   .body { flex-direction: column; align-items: stretch; }
-  .side { position: static; width: 100%; order: 2; margin-top: var(--s3); }
+  /* The sidebar's two cards: app shortcuts are better opened from the phone
+     itself, and Spending is in the More sheet. */
+  .side { display: none; }
 
-  /* Under 16px, iOS zooms the page in when a field is tapped. */
+  /* Under 16px, iOS zooms the page in when a field is tapped. 44px is the
+     smallest target a thumb hits reliably. */
   input, select, textarea { font-size: max(16px, var(--t-sm)); }
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), select,
+  button.primary, a.primary { min-height: 44px; }
   /* Thumb-sized edit/remove on the app shortcuts. */
   .launch-tools .ghost { min-width: 40px; min-height: 40px; }
 
-  /* The dock replaces the header nav on phones. */
+  /* The tab bar replaces the header nav on phones. */
   header nav { display: none; }
-  .dock {
-    position: fixed;
-    z-index: 20;
-    left: var(--s3);
-    right: var(--s3);
-    bottom: calc(var(--s3) + env(safe-area-inset-bottom));
-    border-radius: var(--r-pill);
-    box-shadow: var(--shadow-lg);
-    scroll-snap-type: x proximity;
-    overscroll-behavior-x: contain;
-  }
-  /* Swiped, not squeezed: each tab keeps its full name and a thumb-sized target. */
-  .dock .tab {
-    flex: none;
-    min-height: 44px;
-    padding: var(--s2) var(--s4);
-    border-radius: var(--r-pill);
-    font-size: var(--t-sm);
-    scroll-snap-align: center;
-  }
-}
-.dock { display: none; }
-@media (max-width: 620px) {
-  .dock { display: flex; }
-  /* Not on phones: Octi has his own floating button, Friends and Chats have
-     buttons on Home, and the app shortcuts are better opened from the phone. */
-  .dock .tab[href="/octi"], .dock .tab[href="/friends"], .dock .tab[href="/chat"] { display: none; }
   .launcher, .home-buttons { display: none; }
 }
+
+/* ─── Phone tab bar and More sheet (components/MobileNav.jsx) ───
+   Four sections a student opens daily, and More for the rest, the way
+   phone apps do it: fixed to the bottom edge, icon over label. */
+.page-name, .tabbar, .sheet-backdrop { display: none; }
+@media (max-width: 620px) {
+  .page-name { display: inline; }
+  .tabbar {
+    position: fixed;
+    z-index: 50;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    /* Undo the generic nav box: this bar is part of the screen edge. */
+    border: none;
+    border-top: 1px solid var(--color-border);
+    border-radius: 0;
+    outline: none;
+    overflow: visible;
+    background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+  }
+  .tabbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-text-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    text-shadow: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tabbar-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 30px;
+    border-radius: var(--r-pill);
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .tabbar-item.active { color: var(--color-text); }
+  .tabbar-item.active .tabbar-icon {
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+  .tabbar-item:active .tabbar-icon { transform: scale(0.94); }
+  .tabbar-dot {
+    position: absolute;
+    top: 2px;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--color-surface);
+  }
+
+  .sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgb(0 0 0 / 0.45);
+    animation: fade-in 200ms ease;
+  }
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--s2) var(--s4) calc(var(--s5) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    border-radius: 24px 24px 0 0;
+    background: var(--color-surface);
+    box-shadow: 0 -12px 40px rgb(0 0 0 / 0.3);
+    animation: sheet-up 280ms var(--ease);
+  }
+  .sheet-grip {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto var(--s4);
+    border-radius: 2px;
+    background: var(--color-text-3);
+  }
+  .sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--s2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sheet-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s2);
+    padding: var(--s3) var(--s1);
+    border-radius: 16px;
+    color: var(--color-text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sheet-tile:active { background: var(--color-sunken); }
+  .sheet-tile.active { color: var(--color-accent); }
+  .sheet-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-sunken);
+  }
+  .sheet-tile.active .sheet-icon { border-color: var(--color-accent); }
+  .sheet-octi { width: 30px; height: 30px; }
+  .sheet .tabbar-dot { top: 6px; right: 6px; }
+}
+@keyframes sheet-up { from { transform: translateY(100%); } }
 
 /* ─── Octi, docked ──────────────────────────────────────────────────────────
    A floating button on every screen, and the panel it opens. Both are fixed,
@@ -1887,12 +2020,14 @@ button.ghost.always:hover { color: var(--color-accent); }
   white-space: nowrap;
 }
 
-/* The dock used to sit on top of the fixed bottom nav, covering the last tab.
-   Above the bar on small screens, where the bar exists. */
+/* Above the tab bar on phones, where the bar exists. */
 @media (max-width: 620px) {
-  .octi-dock { bottom: calc(var(--s3) + 58px + env(safe-area-inset-bottom)); }
-  .octi-panel { bottom: calc(var(--s3) + 58px + 56px + var(--s2) + env(safe-area-inset-bottom)); }
-
+  .octi-dock { right: var(--s3); bottom: calc(var(--tabbar-h) + var(--s3) + env(safe-area-inset-bottom)); }
+  .octi-panel {
+    top: calc(var(--s3) + env(safe-area-inset-top));
+    bottom: calc(var(--tabbar-h) + var(--s3) + 56px + var(--s2) + env(safe-area-inset-bottom));
+    height: auto;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2552,6 +2687,18 @@ button.ghost.always:hover { color: var(--color-accent); }
   .brand-word { display: none; }
 }
 
+/* ─── The Android app's welcome screen (LandingPage, isNative) ───
+   The intro alone, exactly one screen. The app draws edge to edge, so the
+   status bar and the gesture bar sit on top of the page: keep clear of both. */
+.landing-app .intro {
+  min-height: 100svh;
+  padding-top: calc(env(safe-area-inset-top) + var(--s5));
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--s6));
+}
+.landing-app .intro-actions { flex-direction: column; align-items: stretch; width: min(100%, 340px); }
+.landing-app .intro-actions > * { justify-content: center; text-align: center; }
+.landing-app .cta { padding-left: var(--s6); }
+
 /* ─── Courses ───────────────────────────────────────────────────────────────
    A subject is identified by its colour everywhere it appears, so the dot is
    the component — not a coloured border or background that would fight the
@@ -3036,23 +3183,6 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
   .notes-back { order: -3; white-space: nowrap; }
   .note-meta > .share { order: -2; margin-left: auto; }
   .note-meta > [aria-label="Delete note"] { order: -1; min-width: 40px; min-height: 40px; }
-}
-
-/* The bottom bar outgrew the screen once Courses and Notes arrived: seven tabs
-   sharing 375px shrank until "Calendar" and "Schedule" ran into each other.
-   They keep their own width and the bar scrolls instead, with a fade on the
-   right edge so there is some sign there is more. */
-@media (max-width: 620px) {
-  .dock {
-    /* Room for the fade, and for Octi's dock above it. */
-    padding-right: var(--s5);
-    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-    mask-image: linear-gradient(to right, #000 85%, transparent);
-  }
-  .tab {
-    flex: 0 0 auto;
-    padding: var(--s2) var(--s3);
-  }
 }
 
 /* ─── Privacy policy and terms ───────────────────────────────────────────── */

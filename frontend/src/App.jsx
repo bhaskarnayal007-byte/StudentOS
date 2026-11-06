@@ -1,32 +1,41 @@
 import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import TasksPage from './components/TasksPage.jsx'
-import CalendarPage from './components/CalendarPage.jsx'
-import SchedulePage from './components/SchedulePage.jsx'
-import TimersPage, { AlarmWatcher } from './components/TimersPage.jsx'
-import OctiPage from './components/OctiPage.jsx'
-import CoursesPage from './components/CoursesPage.jsx'
-import CourseMapPage from './components/CourseMapPage.jsx'
-import NotesPage, { FileTab } from './components/NotesPage.jsx'
+import { Suspense, lazy, useState } from 'react'
+import { AlarmWatcher } from './components/TimersPage.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
 import AppBackground from './components/AppBackground.jsx'
 import SpendingToggle from './components/finance/SpendingToggle'
-
-// The dashboard's charts (recharts and its dependencies) were about a third of
-// the JavaScript every screen downloaded. It's an overlay opened on demand, so
-// it can arrive on demand too.
-const SpendingDashboard = lazy(() => import('./components/finance/SpendingDashboard'))
+import MobileNav, { pageName } from './components/MobileNav.jsx'
 import HomePage from './components/home/HomePage'
-import LoginPage from './components/auth/LoginPage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
 import LandingPage from './components/LandingPage'
-import PrivacyPage from './components/legal/PrivacyPage'
-import TermsPage from './components/legal/TermsPage'
-import SettingsPage from './components/SettingsPage.jsx'
-import FriendsPage from './components/FriendsPage.jsx'
-import ChatsPage from './components/ChatsPage.jsx'
+import TimersPage from './components/TimersPage.jsx'
+// OctiDock already pulls OctiPage into the first download, so lazy() would
+// split nothing.
+import OctiPage from './components/OctiPage.jsx'
+
+// Only the first screen (Home, or the landing page when signed out) and what
+// is mounted on every screen load up front. Every other page arrives the first
+// time it is opened, which kept a cold start on a cheap Android phone from
+// parsing the whole app. The service worker still precaches them all, so they
+// open offline too.
+// The dashboard's charts (recharts and its dependencies) were about a third of
+// the JavaScript every screen downloaded.
+const SpendingDashboard = lazy(() => import('./components/finance/SpendingDashboard'))
+const TasksPage = lazy(() => import('./components/TasksPage.jsx'))
+const CalendarPage = lazy(() => import('./components/CalendarPage.jsx'))
+const SchedulePage = lazy(() => import('./components/SchedulePage.jsx'))
+const CoursesPage = lazy(() => import('./components/CoursesPage.jsx'))
+const CourseMapPage = lazy(() => import('./components/CourseMapPage.jsx'))
+const NotesPage = lazy(() => import('./components/NotesPage.jsx'))
+const FileTab = lazy(() => import('./components/NotesPage.jsx').then(m => ({ default: m.FileTab })))
+const LoginPage = lazy(() => import('./components/auth/LoginPage'))
+const PrivacyPage = lazy(() => import('./components/legal/PrivacyPage'))
+const TermsPage = lazy(() => import('./components/legal/TermsPage'))
+const SettingsPage = lazy(() => import('./components/SettingsPage.jsx'))
+const FriendsPage = lazy(() => import('./components/FriendsPage.jsx'))
+const ChatsPage = lazy(() => import('./components/ChatsPage.jsx'))
 import { useUnread } from './lib/chat.js'
 import { useSession } from './auth/useSession.js'
 
@@ -80,6 +89,7 @@ export default function App() {
       ) : (
         /* Signed out, "/" is the pitch rather than a password field — someone
            who has never heard of this needs to know what it is first. */
+        <Suspense fallback={null}>
         <Routes>
           <Route path="/signin" element={<LoginPage onAuthed={setSeeds} />} />
           {/* Its own URL so "Start for free" opens the create-account side
@@ -92,6 +102,7 @@ export default function App() {
               not a dead end. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       )}
 
       {seeds && (
@@ -119,6 +130,9 @@ function AppShell() {
 
   return (
     <>
+      {/* Pages outside the frame (settings, legal, a file) wait here; pages
+          inside it wait in <main>, so the header stays put. */}
+      <Suspense fallback={null}>
       <Routes>
         {/* Home is deliberately chrome-free: no nav, no title, no sidebar.
             Every other section keeps the full shell, and its nav is the way
@@ -157,6 +171,7 @@ function AppShell() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
 
       {financeOpen && (
         <Suspense fallback={null}>
@@ -166,15 +181,16 @@ function AppShell() {
 
       {/* Octi sits outside <Routes> so he survives every navigation. */}
       <OctiDock />
-      <MobileDock />
+      <MobileNav />
     </>
   )
 }
 
 /** Header, nav and sidebar — the frame every section but Home sits inside. */
 function Chrome({ financeOpen, onToggleFinance, children }) {
+  const { pathname } = useLocation()
   // Notes wants every pixel for writing, so the Finance card stays off it.
-  const onNotes = useLocation().pathname === '/notes'
+  const onNotes = pathname === '/notes'
 
   return (
     <>
@@ -183,7 +199,9 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
           <h1>
             {/* Same file as the app icon, so the install caches it once. */}
             <img src="/pwa-512.png" alt="" className="brand-mark" />
-            Stratus
+            {/* Phones title the page instead of the app (see theme.css). */}
+            <span className="brand-name">Stratus</span>
+            <span className="page-name">{pageName(pathname)}</span>
           </h1>
           <div className="titlebar-actions">
             <SyncBadge />
@@ -203,7 +221,7 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
           {!onNotes && <SpendingToggle open={financeOpen} onToggle={onToggleFinance} />}
         </div>
 
-        <main>{children}</main>
+        <main><Suspense fallback={null}>{children}</Suspense></main>
       </div>
     </>
   )
@@ -227,27 +245,6 @@ function SectionTabs() {
 function ChatsBadge() {
   const unread = useUnread()
   return unread > 0 ? <span className="unread-badge" aria-label={`${unread} unread`}>{unread > 99 ? '99+' : unread}</span> : null
-}
-
-/**
- * Phones only (CSS hides it above 620px): every section in one pill floating
- * at the bottom, on every screen including Home, swiped sideways. The header
- * nav is hidden on phones so there is only ever one bar.
- */
-function MobileDock() {
-  const { pathname } = useLocation()
-  const ref = useRef(null)
-
-  // Keep the current section in view after navigating to it.
-  useEffect(() => {
-    ref.current?.querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest' })
-  }, [pathname])
-
-  return (
-    <nav className="dock" ref={ref} aria-label="Sections">
-      <SectionTabs />
-    </nav>
-  )
 }
 
 /**

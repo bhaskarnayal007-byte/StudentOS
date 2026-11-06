@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, API_URL } from '../lib/supabase.js'
+import { supabase, API_URL, isNative, NATIVE_AUTH_REDIRECT } from '../lib/supabase.js'
 
 /**
  * The signed-in session, or null. `loading` is true until we've checked.
@@ -40,16 +40,24 @@ export function useSession() {
  * session already established, so there is nothing to await here — the return
  * trip is handled by onAuthStateChange above like any other sign-in.
  */
-export function signInWithGoogle() {
-  return supabase.auth.signInWithOAuth({
+export async function signInWithGoogle() {
+  const result = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: isNative ? NATIVE_AUTH_REDIRECT : window.location.origin,
+      // In the app the page can't navigate to Google itself; we open the URL
+      // in a Chrome tab below and the deep link brings the code back.
+      skipBrowserRedirect: isNative,
       // Without this Google stops issuing a refresh token on the second and
       // later sign-ins, which is what the Calendar sync needs server-side.
       queryParams: { access_type: 'offline', prompt: 'consent' },
     },
   })
+  if (isNative && result.data?.url) {
+    const { Browser } = await import('@capacitor/browser')
+    await Browser.open({ url: result.data.url })
+  }
+  return result
 }
 
 /**

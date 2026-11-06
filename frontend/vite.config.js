@@ -3,10 +3,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // "@/components/ui/TopoField" → src/components/ui/TopoField.
   // tsconfig.json declares the same mapping for the editor; this is the one
   // that actually resolves at build time.
+  // Which build this is: the Android app compares it with the published live
+  // update (src/lib/liveUpdate.js). scripts/make-native-bundle.mjs sets it so
+  // the zip and its manifest agree; any other build stamps the current time.
+  define: {
+    'import.meta.env.VITE_BUILD_ID': JSON.stringify(
+      process.env.STRATUS_BUILD_ID ?? new Date().toISOString().replace(/\D/g, '').slice(0, 14),
+    ),
+  },
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -16,6 +25,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // The Android app (`--mode native`, see capacitor.config.json) ships its
+      // files inside the APK, so a service worker would only add a second,
+      // stale copy of them. No manifest, no worker, no register script.
+      disable: mode === 'native',
+
       // Rebuild the cache and swap it in as soon as a new version is deployed,
       // instead of asking the user to click "reload".
       registerType: 'autoUpdate',
@@ -103,4 +117,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))

@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { reportCrash } from '../lib/crashReport.js'
 
 /**
  * The last line of defence. Without it, any error thrown while rendering (or
@@ -16,6 +17,7 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Stratus crashed:', error, info.componentStack)
+    reportCrash(error, info.componentStack)
   }
 
   render() {

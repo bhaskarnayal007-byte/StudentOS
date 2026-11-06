@@ -1,0 +1,14 @@
+{
+  "appId": "com.bhaskarnayal.stratus",
+  "appName": "Stratus",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#090408"
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": ""
+    }
+  }
+}

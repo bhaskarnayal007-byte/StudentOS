@@ -70,6 +70,11 @@ export default function PrivacyPage() {
           and the data needed to answer them are sent through our server to the provider to
           generate a reply. We don't keep a separate copy of those conversations on our server.
         </li>
+        <li>
+          <strong>Sentry</strong>: when the app crashes, it sends an error report (the error, the
+          screen it happened on, and your browser and device type) so we can fix it. Reports don't
+          include your notes, tasks, chats or other data, or your IP address.
+        </li>
         <li><strong>Our hosting providers</strong>: to serve the website and run our server.</li>
       </ul>
 

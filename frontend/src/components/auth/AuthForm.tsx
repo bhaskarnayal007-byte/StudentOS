@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { SeedRect } from "../PortalTransition";
-import { supabase } from "../../lib/supabase.js";
+import { supabase, isNative, NATIVE_AUTH_REDIRECT } from "../../lib/supabase.js";
 import { signInWithGoogle } from "../../auth/useSession.js";
 
 const MIN_LENGTH = 6;
@@ -70,9 +70,16 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
       const { data, error: err } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        // Rides along on the user record, so the greeting survives a new
-        // device without needing a profiles table.
-        options: { data: { name: name.trim().replace(/\s+/g, " ") } },
+        options: {
+          // Rides along on the user record, so the greeting survives a new
+          // device without needing a profiles table.
+          data: { name: name.trim().replace(/\s+/g, " ") },
+          // The confirmation link in the email. From the app it has to come
+          // back to the app (the deep link in lib/supabase.js); left to
+          // Supabase's default it opened the website in Chrome and signed
+          // you in there instead.
+          ...(isNative && { emailRedirectTo: NATIVE_AUTH_REDIRECT }),
+        },
       });
 
       if (err) return fail(err.message);
@@ -180,6 +187,9 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
           setError("");
           const { error: err } = await signInWithGoogle();
           if (err) fail(err.message);
+          // In the app Google opens in a Chrome tab and this page stays put;
+          // re-enable the button in case they close the tab without signing in.
+          else if (isNative) setBusy(false);
         }}
       >
         <img src="/google.svg" alt="" width={18} height={18} />

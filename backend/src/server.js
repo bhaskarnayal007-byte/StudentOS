@@ -18,6 +18,8 @@ const origins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
+// The Android app (Capacitor) serves its pages from https://localhost.
+origins.push("https://localhost");
 
 app.use(cors({ origin: origins }));
 app.use(express.json({ limit: "1mb" }));

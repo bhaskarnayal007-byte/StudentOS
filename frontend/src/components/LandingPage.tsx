@@ -5,6 +5,7 @@ import { useReveal } from "../lib/useReveal.js";
 import { syncThemeColor } from "../lib/themeColor.js";
 import LogoWheel from "./LogoWheel";
 import StratusWordmark from "./StratusWordmark";
+import { isNative } from "../lib/supabase.js";
 
 // Same reasoning as HomePage: three.js is the heaviest thing we ship, and a
 // stranger deciding whether to sign up shouldn't wait for it to paint.
@@ -132,7 +133,10 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing" data-theme="dark">
+    // In the Android app this is the welcome screen: the intro alone, one
+    // screen tall, no top bar and no sales pitch. Someone who installed the
+    // app has already been sold; they want to sign in.
+    <div className={`landing${isNative ? " landing-app" : ""}`} data-theme="dark">
       {/* Fixed, inert, and above the page: grain keeps flat black from
           looking like a dead screen. */}
       <div className="grain" aria-hidden="true" />
@@ -140,7 +144,7 @@ export default function LandingPage() {
       {/* The mark, huge and faint, turning behind the whole page. */}
       <LogoWheel size="100%" className="landing-watermark" />
 
-      <header className="landing-bar">
+      {!isNative && <header className="landing-bar">
         <div className="landing-bar-inner glass">
           <a href="#top" className="landing-brand" aria-label="Stratus, back to top">
             {/* Turns with the scroll, like a wheel being steered. */}
@@ -152,7 +156,7 @@ export default function LandingPage() {
             <Link to="/signin" className="landing-signin">Sign in</Link>
           </nav>
         </div>
-      </header>
+      </header>}
 
       {/* The opening: the wheel builds itself alone and spins to a stop, then
           lifts to hover over Octi's head as he rises in, then the name draws
@@ -192,10 +196,15 @@ export default function LandingPage() {
         </p>
         <div className="intro-actions">
           <Cta>Get started</Cta>
-          <a href="#problem" className="intro-more glass">See how it works ↓</a>
+          {isNative ? (
+            <Link to="/signin" className="intro-more glass">I have an account</Link>
+          ) : (
+            <a href="#problem" className="intro-more glass">See how it works ↓</a>
+          )}
         </div>
       </section>
 
+      {!isNative && (<>
       {/* The pain first: a visitor has to recognise their own week before a
           feature list means anything. */}
       <section className="wrap problem" id="problem">
@@ -313,6 +322,7 @@ export default function LandingPage() {
           </span>
         </div>
       </footer>
+      </>)}
     </div>
   );
 }

@@ -533,10 +533,11 @@ export function StoreProvider({ children }) {
     return () => media.removeEventListener('change', syncThemeColor)
   }, [state.theme])
 
-  // theme.css multiplies every font size by --fs. 1.125 is the base bump
-  // (see theme.css), so the Settings multipliers stay 0.9 / 1 / 1.15 / 1.3.
+  // theme.css multiplies every font size by --fs, which is this setting times
+  // the base for the screen size (--fs-base), so the Settings multipliers
+  // stay 0.9 / 1 / 1.15 / 1.3 on a phone and a laptop alike.
   useEffect(() => {
-    document.documentElement.style.setProperty('--fs', String(state.textSize * 1.125))
+    document.documentElement.style.setProperty('--text-size', String(state.textSize))
   }, [state.textSize])
 
   return (

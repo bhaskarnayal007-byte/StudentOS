@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './CoursesPage.jsx'
 import ShareButton from './ShareButton.jsx'
+import { isNative } from '../lib/supabase.js'
 import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/fileStore.js'
 
 /**
@@ -259,7 +260,8 @@ function FileView({ id, name, size, tab = false }) {
   // device, with the same links under them.
   const links = (
     <span className="notes-pdf-open">
-      {!tab && (
+      {/* An app has no tabs: in it this link would leave for Chrome. */}
+      {!tab && !isNative && (
         <a className="widget-link" href={`/view/${id}`} target="_blank" rel="noreferrer">Open in new tab ↗</a>
       )}
       <a className="widget-link" href={url} download={name}>Download ↓</a>
