@@ -4,9 +4,16 @@ The Express API behind Stratus. It holds the two things the browser shouldn't:
 the AI provider keys and the Supabase service-role key. It verifies the user's
 Supabase session token, then makes the AI call server-side.
 
-> **Being replaced.** Phase 1 of the launch plan ports this server to a
-> Cloudflare Worker (see `LAUNCH_PROGRESS.md` §5). Until then this is what runs,
-> on Render (`render.yaml` at the repo root).
+> **Two servers, briefly.** The Cloudflare Worker (`src/index.js`,
+> `wrangler.toml`) is the port of this Express server and replaces it. Express
+> keeps running on Render (`render.yaml`) only until every installed Android
+> app points at the Worker; then `server.js`, `routes/ai.js`, `routes/auth.js`,
+> `middleware/` and `lib/supabase.js` are deleted.
+>
+> Worker: `npm run worker:deploy` deploys, `npm run worker:dev` runs it locally
+> (secrets in `.dev.vars`), `npm test` includes `scripts/test-worker.mjs`.
+> Its rate limits are counted in Supabase (`bump_ai_counter`, migration
+> `0007_ai_request_counters.sql`), not in memory.
 
 It is one of the two npm workspaces in this repo. From the root, `npm start`
 runs it on `:3001` alongside the app.

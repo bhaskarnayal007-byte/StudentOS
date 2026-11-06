@@ -12,14 +12,19 @@
     "dev": "nodemon src/server.js",
     "check": "node scripts/check-env.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node scripts/test-middleware.mjs"
+    "test": "node scripts/test-middleware.mjs && node scripts/test-worker.mjs",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy"
   },
   "engines": {
     "node": ">=20"
   },
   "//nodemonConfig": "nodemon only watches js/mjs/cjs/json by default, so editing .env changed nothing until a manual restart — which looked exactly like a bad API key.",
   "nodemonConfig": {
-    "watch": ["src", ".env"],
+    "watch": [
+      "src",
+      ".env"
+    ],
     "ext": "js,mjs,cjs,json,env"
   },
   "dependencies": {
@@ -30,6 +35,7 @@
     "helmet": "^8.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "wrangler": "^4.158.0"
   }
 }

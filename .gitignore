@@ -8,3 +8,6 @@ dev-dist/
 
 # Local agent config - machine-specific absolute paths.
 .claude/settings.local.json
+# Worker secrets for `wrangler dev` (backend/.dev.vars), and its build cache.
+.dev.vars
+.wrangler/

@@ -1,0 +1,31 @@
+# The Cloudflare Worker that replaces the Express server on Render.
+# Deploy: `npm run worker:deploy` (in backend/). Local: `npm run worker:dev`.
+#
+# Secrets are NOT here. Set each one once with `npx wrangler secret put NAME`:
+#   SUPABASE_SERVICE_ROLE_KEY, AI_API_KEY, ALLOWED_EMAILS,
+#   and NVIDIA_API_KEY / OPENROUTER_API_KEY if you use those pools.
+# Locally they go in backend/.dev.vars (gitignored), same NAME=value format.
+
+name = "stratus-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Served at https://stratus-api.<your-subdomain>.workers.dev. That address
+# stays valid after a custom domain is added, and the Android app uses it.
+workers_dev = true
+
+[vars]
+# Public, not a secret: the same URL the app has.
+SUPABASE_URL = "https://millegxadswedtrebdlk.supabase.co"
+
+# Who may call this from a browser, comma-separated (the Android app's
+# https://localhost is always allowed). Update when the Pages name is known,
+# and again when the domain is bought.
+FRONTEND_URL = "https://stratus.pages.dev,https://student-os.vercel.app"
+
+# The rotation: `name|baseUrl|model|KEY_VAR`, tried in order. Free tiers are
+# metered per model, so each entry is its own 200k-token/day pool.
+AI_PROVIDERS = "groq|https://api.groq.com/openai/v1|openai/gpt-oss-120b|AI_API_KEY,groq|https://api.groq.com/openai/v1|openai/gpt-oss-20b|AI_API_KEY,groq|https://api.groq.com/openai/v1|qwen/qwen3.8-27b|AI_API_KEY"
+
+# Total daily tokens across every model above (three Groq models at 200k).
+AI_DAILY_TOKENS = "600000"
