@@ -24,6 +24,17 @@ allprojects {
     }
 }
 
+// The repo lives in OneDrive on B's machine, and OneDrive locks and
+// dehydrates files under build/ while Gradle is writing them, which fails the
+// build. There, every module builds into %LOCALAPPDATA%\stratus-android-build
+// instead; anywhere else nothing changes.
+def localBuildRoot = System.getenv('LOCALAPPDATA')
+if (localBuildRoot && rootDir.path.contains('OneDrive')) {
+    allprojects { p ->
+        p.layout.buildDirectory = new File(localBuildRoot, "stratus-android-build/${p == p.rootProject ? 'root' : p.name}")
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
