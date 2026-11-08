@@ -2,40 +2,25 @@
   "name": "stratus-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Express API for the Stratus PWA — verifies Supabase session tokens and proxies AI calls so the provider key never reaches the browser.",
+  "description": "Cloudflare Worker for Stratus: verifies Supabase session tokens and proxies AI calls so the provider keys never reach the app.",
   "author": "Bhaskar Nayal",
   "license": "MIT",
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "check": "node scripts/check-env.mjs",
-    "smoke": "node scripts/smoke.mjs",
-    "test": "node scripts/test-middleware.mjs && node scripts/test-worker.mjs",
-    "worker:dev": "wrangler dev",
-    "worker:deploy": "wrangler deploy"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "node --env-file=.env scripts/check-env.mjs",
+    "smoke": "node --env-file=.env scripts/smoke.mjs",
+    "test": "node scripts/test-worker.mjs"
   },
   "engines": {
-    "node": ">=20"
-  },
-  "//nodemonConfig": "nodemon only watches js/mjs/cjs/json by default, so editing .env changed nothing until a manual restart — which looked exactly like a bad API key.",
-  "nodemonConfig": {
-    "watch": [
-      "src",
-      ".env"
-    ],
-    "ext": "js,mjs,cjs,json,env"
+    "node": ">=20.6"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.58.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "helmet": "^8.1.0"
+    "@supabase/supabase-js": "^2.58.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
     "wrangler": "^4.158.0"
   }
 }

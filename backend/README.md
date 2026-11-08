@@ -1,19 +1,10 @@
 # stratus-backend
 
-The Express API behind Stratus. It holds the two things the browser shouldn't:
-the AI provider keys and the Supabase service-role key. It verifies the user's
-Supabase session token, then makes the AI call server-side.
-
-> **Two servers, briefly.** The Cloudflare Worker (`src/index.js`,
-> `wrangler.toml`) is the port of this Express server and replaces it. Express
-> keeps running on Render (`render.yaml`) only until every installed Android
-> app points at the Worker; then `server.js`, `routes/ai.js`, `routes/auth.js`,
-> `middleware/` and `lib/supabase.js` are deleted.
->
-> Worker: `npm run worker:deploy` deploys, `npm run worker:dev` runs it locally
-> (secrets in `.dev.vars`), `npm test` includes `scripts/test-worker.mjs`.
-> Its rate limits are counted in Supabase (`bump_ai_counter`, migration
-> `0007_ai_request_counters.sql`), not in memory.
+The Cloudflare Worker behind Stratus, live at
+`https://stratus-api.bhaskarnayal007.workers.dev`. It holds the two things the
+app shouldn't: the AI provider keys and the Supabase service-role key. It
+verifies the user's Supabase session token, then makes the AI call
+server-side.
 
 It is one of the two npm workspaces in this repo. From the root, `npm start`
 runs it on `:3001` alongside the app.
@@ -22,17 +13,17 @@ runs it on `:3001` alongside the app.
 
 | Path | What it does |
 |---|---|
-| `src/server.js` | Express app: helmet, CORS, JSON body, `/health`, the routes |
-| `src/routes/auth.js` | `GET /api/auth/me` |
-| `src/routes/ai.js` | `POST /api/ai/generate`: provider rotation, rate limit, daily token budget |
-| `src/middleware/requireAuth.js` | Checks the `Authorization: Bearer <token>` against Supabase |
-| `src/middleware/requireAllowedUser.js` | Optional `ALLOWED_EMAILS` allowlist |
-| `src/middleware/rateLimit.js` | Per-user request limit and token budget, in memory |
-| `src/middleware/errorHandler.js` | One JSON error shape |
-| `src/lib/supabase.js` | Service-role Supabase client |
+| `wrangler.toml` | Worker config: name, non-secret vars, local dev port |
+| `src/index.js` | Fetch entry point: CORS preflight, route table, error handling |
+| `src/routes/authMe.js` | `GET` and `DELETE /api/auth/me` |
+| `src/routes/aiGenerate.js` | `POST /api/ai/generate`: provider rotation, limits, daily token budget |
+| `src/auth/verifySupabaseToken.js` | Checks the `Authorization: Bearer <token>` against Supabase; `ALLOWED_EMAILS` |
+| `src/http/rateLimitPerUser.js` | Per-user request limit and token budget, counted in Supabase |
+| `src/http/jsonResponse.js` | One JSON error shape, CORS, security headers |
+| `scripts/test-worker.mjs` | `npm test`: the Worker end to end, Supabase and providers faked |
 | `scripts/check-env.mjs` | `npm run check`: verifies the Supabase setup |
-| `scripts/smoke.mjs` | `npm run smoke`: end-to-end with a throwaway user |
-| `scripts/test-middleware.mjs` | `npm test` |
+| `scripts/smoke.mjs` | `npm run smoke`: end-to-end against a running Worker with a throwaway user |
+| `scripts/supabaseAdmin.mjs` | Service-role client for the two scripts above |
 | `scripts/load/` | Load tests for `user_state` writes (see `LAUNCH.md`) |
 
 ## Routes
@@ -41,42 +32,52 @@ runs it on `:3001` alongside the app.
 |---|---|
 | `GET /health` | Unauthenticated liveness check |
 | `GET /api/auth/me` | The user behind the bearer token |
+| `DELETE /api/auth/me` | Deletes the caller's own account |
 | `POST /api/ai/generate` | `{ messages, tools?, tool_choice?, temperature? }` → the provider's response |
 
 Everything under `/api` requires a valid Supabase access token. The client
 cannot choose the model or `max_tokens`. Limits are 20 requests a minute per
-user, plus the daily token budget below.
+user, plus the daily token budget. Both are counted in the
+`ai_request_counters` table (`bump_ai_counter`, migration
+`0007_ai_request_counters.sql`), because a Worker keeps nothing in memory
+between requests.
 
 ## Setup
+
+Deployed values live in Cloudflare: the non-secret ones in `wrangler.toml`
+`[vars]`, the secrets set once with `npx wrangler secret put NAME`
+(`SUPABASE_SERVICE_ROLE_KEY`, `AI_API_KEY`, and optionally `ALLOWED_EMAILS`,
+`NVIDIA_API_KEY`, `OPENROUTER_API_KEY`).
+
+For local work, `backend/.env` holds the same names; `npm run dev` reads it and
+it overrides `[vars]`.
 
 ```bash
 cp .env.example .env   # then fill it in
 npm run check          # says exactly what is wrong, if anything
 ```
 
-`.env.example` documents every variable. The ones you must set:
-
 | Variable | Where to get it |
 |---|---|
 | `SUPABASE_URL` | Supabase → Project Settings → Data API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API Keys → `service_role`. **Secret**: it bypasses Row Level Security. Server only. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API Keys → `service_role` (Legacy tab) or a `sb_secret_...` key. **Secret**: it bypasses Row Level Security. |
 | `AI_API_KEY` | console.groq.com |
-| `FRONTEND_URL` | Origin(s) allowed to call this API, comma-separated |
+| `FRONTEND_URL` | Origin(s) allowed to call this API, comma-separated. The Android app's `https://localhost` is always allowed. |
 
 Optional: `AI_PROVIDERS` (the model rotation), `NVIDIA_API_KEY`,
 `OPENROUTER_API_KEY`, `ALLOWED_EMAILS`, `AI_DAILY_TOKENS`,
-`AI_MIN_USER_TOKENS`, `AI_MAX_REPLY_TOKENS`, `PORT`.
+`AI_MIN_USER_TOKENS`, `AI_MAX_REPLY_TOKENS`.
 
 The database schema is `supabase/migrations/` at the repo root. Run the files in
-order in the SQL Editor. This server reads only `user_state`, to count active
-users for the AI budget.
+order in the SQL Editor. The Worker reads `user_state` (to count active users
+for the AI budget) and `ai_request_counters`.
 
 ### Which Supabase key is which
 
 | Key | Dashboard label | Goes where |
 |---|---|---|
 | anon / publishable | `anon` or `sb_publishable_...` | The **frontend**. Public by design. |
-| service role / secret | `service_role` or `sb_secret_...` | **This server only.** Bypasses RLS. |
+| service role / secret | `service_role` or `sb_secret_...` | **This Worker only.** Bypasses RLS. |
 
 Putting the anon key here doesn't error. Queries just return zero rows, because
 RLS filters them out. `npm run check` catches it.
@@ -84,16 +85,9 @@ RLS filters them out. `npm run check` catches it.
 ## Commands
 
 ```bash
-npm run dev     # nodemon, restarts on src/ and .env changes
-npm start       # plain node, what Render runs
-npm test        # middleware checks
-npm run check   # Supabase setup
-npm run smoke   # with the server running: real user, real token, real AI round trip
+npm run dev      # wrangler dev on :3001, reads .env
+npm run deploy   # wrangler deploy to Cloudflare
+npm test         # the Worker end to end, nothing real touched
+npm run check    # Supabase setup
+npm run smoke    # with `npm run dev` running: real user, real token, real AI round trip
 ```
-
-## Known limits
-
-- Rate limits and AI budgets live in memory, so they are correct only while there
-  is a single instance.
-- Render's free plan sleeps after ~15 idle minutes. `.github/workflows/keep-awake.yml`
-  pings `/health` every 10 minutes to keep it up.

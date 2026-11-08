@@ -1,5 +1,5 @@
 // POST /api/ai/generate: Octi's model call, made here so the provider keys
-// never reach the app. Port of the Express routes/ai.js.
+// never reach the app.
 import verifySupabaseToken, { requireAllowedUser } from "../auth/verifySupabaseToken.js";
 import { HttpError, json } from "../http/jsonResponse.js";
 import { checkRequestLimit, checkTokenBudget, spendTokens } from "../http/rateLimitPerUser.js";

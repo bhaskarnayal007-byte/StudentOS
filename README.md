@@ -59,7 +59,7 @@ declaring one tool and pointing it at an action that already exists.
 ```
 StudentOS/
 ├── frontend/             React 19 + Vite PWA          → frontend/README.md
-├── backend/              Express API (AI proxy, auth) → backend/README.md
+├── backend/              Cloudflare Worker (AI proxy, auth) → backend/README.md
 └── supabase/migrations/  the database schema, run in order
 ```
 
@@ -129,7 +129,7 @@ Backend setup is in [backend/README.md](backend/README.md).
 
 ## Stack
 
-React 19 · Vite 7 · vite-plugin-pwa · react-router · Express 5 · Supabase
+React 19 · Vite 7 · vite-plugin-pwa · react-router · Cloudflare Workers · Supabase
 (Postgres + Auth + Storage) · Recharts · dnd-kit · Three.js / React Three Fiber ·
 PDF.js
 
@@ -157,7 +157,7 @@ pre-account data and assert that a second account inherits nothing.
 
 ## Status
 
-Deployed: frontend on Vercel, backend on Render, data in Supabase.
+Deployed on Cloudflare: frontend on Pages (stratus-ae5.pages.dev), backend as a Worker, data in Supabase. The Android app is in `frontend/android`.
 `localStorage` is the working copy; cloud sync mirrors it across a student's
 devices. What's left before a public launch — mostly dashboard settings, not
 code — is in [LAUNCH.md](LAUNCH.md).

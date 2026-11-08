@@ -1,10 +1,11 @@
-# The Cloudflare Worker that replaces the Express server on Render.
-# Deploy: `npm run worker:deploy` (in backend/). Local: `npm run worker:dev`.
+# Stratus's backend, a Cloudflare Worker.
+# Deploy: `npm run deploy` (in backend/). Local: `npm run dev`.
 #
 # Secrets are NOT here. Set each one once with `npx wrangler secret put NAME`:
 #   SUPABASE_SERVICE_ROLE_KEY, AI_API_KEY, ALLOWED_EMAILS,
 #   and NVIDIA_API_KEY / OPENROUTER_API_KEY if you use those pools.
-# Locally they go in backend/.dev.vars (gitignored), same NAME=value format.
+# Locally they come from backend/.env (gitignored), which also overrides the
+# [vars] below, e.g. FRONTEND_URL=http://localhost:5174 for the dev server.
 
 name = "stratus-api"
 main = "src/index.js"
@@ -13,6 +14,11 @@ compatibility_date = "2026-10-01"
 # Served at https://stratus-api.bhaskarnayal007.workers.dev. That address
 # stays valid after a custom domain is added, and the Android app uses it.
 workers_dev = true
+
+# `npm run dev` serves on :3001, where the app's .env (VITE_API_URL) expects
+# the backend to be.
+[dev]
+port = 3001
 
 [vars]
 # Public, not a secret: the same URL the app has.

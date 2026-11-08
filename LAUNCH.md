@@ -16,18 +16,18 @@ dashboards and a budget decision, not code.
    a live demo.
 3. **Deploy and check the CSP.** Merge `launch-readiness` to `main`, open the
    live site, sign in, and open DevTools → Console. Any "Refused to connect"
-   line names a host missing from `frontend/vercel.json`. (Checked locally
-   against the built app; Vercel itself not yet.)
+   line names a host missing from `frontend/public/_headers`.
 
 ## Before a real cohort
 
-4. **Render paid plan** (~$7/mo): `plan: free` → `plan: starter` in
-   `render.yaml`. Until then the keep-awake workflow covers the sleeping.
+4. **Cloudflare Workers Paid** ($5/mo) once Octi's traffic outgrows the free
+   plan (100k requests a day, 10 ms of CPU per request). The Worker never
+   sleeps, so there is no cold start to cover.
 5. **Supabase Pro** (~$25/mo). The write test below is why.
 6. **Decide who pays for the AI.** Free quota is 600k tokens/day ≈ 60
    assistant messages across *everyone*. Each student is guaranteed 30k/day
    (~3 messages) until the shared pool runs out, then everyone gets "out of
-   capacity for today". Knobs on Render: `AI_DAILY_TOKENS`,
+   capacity for today". Knobs in `backend/wrangler.toml` `[vars]`: `AI_DAILY_TOKENS`,
    `AI_MIN_USER_TOKENS`, `AI_MAX_REPLY_TOKENS`. Paid usage at 1000 students × 3
    messages/day is roughly $5–15/day.
 
@@ -51,7 +51,5 @@ on the free tier. That's comfortable for a 100–200 student pilot; re-run
 
 ## Known and accepted
 
-- Rate limits and AI budgets live in memory: correct on one Render instance,
-  must move to a shared store before running two.
 - Two devices editing in the same second: the later save wins. Per-entity
   tables are the upgrade path (see `supabase/migrations/0001_user_state.sql`).

@@ -1,5 +1,5 @@
 // JSON responses for the Worker: one error shape, CORS for the app's own
-// origins, and the security headers helmet used to add on Express.
+// origins, and the security headers every response carries.
 
 /** Thrown anywhere in a route; index.js turns it into a JSON response. */
 export class HttpError extends Error {

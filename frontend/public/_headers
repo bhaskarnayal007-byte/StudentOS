@@ -9,7 +9,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Permissions-Policy: camera=(), microphone=(self), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.google.com https://*.gstatic.com https://*.supabase.co; connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://*.onrender.com https://www.googleapis.com https://accounts.google.com https://*.sentry.io; worker-src 'self' blob:; frame-src 'self' blob: https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.google.com https://*.gstatic.com https://*.supabase.co; connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://www.googleapis.com https://accounts.google.com https://*.sentry.io; worker-src 'self' blob:; frame-src 'self' blob: https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 
 # Android live updates (scripts/make-native-bundle.mjs): fetched by the app,
 # whose origin is https://localhost, and must never be served stale.

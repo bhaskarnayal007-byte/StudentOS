@@ -1,4 +1,3 @@
-import "dotenv/config";
 
 // Diagnoses a Supabase setup. Every check prints why it failed and what to do,
 // so a broken .env gives you a sentence instead of a stack trace.
@@ -63,7 +62,7 @@ if (failed) {
 }
 
 // ── 3. Does it actually work? ───────────────────────────────────────────────
-const { supabase } = await import("../src/lib/supabase.js");
+const { supabase } = await import("./supabaseAdmin.mjs");
 
 // listUsers is service-role-only, so it proves the key has real privilege
 // rather than merely being well-formed.

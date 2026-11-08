@@ -6,7 +6,7 @@ import { HttpError, corsHeaders, errorResponse, json, withHeaders } from "./http
 import { deleteMe, getMe } from "./routes/authMe.js";
 import { generate } from "./routes/aiGenerate.js";
 
-// Same cap Express had on request bodies. Octi sends the app state with every
+// A 1 MB cap on request bodies. Octi sends the app state with every
 // call, which is the only thing that gets large.
 const MAX_BODY_BYTES = 1024 * 1024;
 

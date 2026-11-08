@@ -64,8 +64,9 @@ node scripts/make-assets.mjs   # rebuild icons from src/assets/*.png into public
 
 ## Notes
 
-- `vercel.json` holds the SPA rewrite, the security headers and the CSP. They move
-  to Cloudflare Pages in Phase 1.
+- `public/_headers` holds the security headers and the CSP for Cloudflare Pages,
+  which serves `index.html` for the app's routes on its own. `vercel.json` is the
+  same for Vercel and goes when the Vercel project is deleted.
 - Local data lives in `localStorage` under per-account keys, still named
   `student-os-*` from before the rename (see the comment in `store.jsx`). Note
   attachments live in IndexedDB.

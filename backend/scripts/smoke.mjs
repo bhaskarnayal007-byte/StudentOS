@@ -1,5 +1,4 @@
-import "dotenv/config";
-import { supabase } from "../src/lib/supabase.js";
+import { supabase } from "./supabaseAdmin.mjs";
 
 // End-to-end check against a running server: creates a throwaway user, gets a
 // real token, exercises the protected routes, then deletes the user again
@@ -20,7 +19,7 @@ try {
   const health = await fetch(`${API}/health`).then((r) => r.json());
   check("GET /health", health.ok === true);
 } catch {
-  console.log("  FAIL  server is not running -> start it with `npm run dev` in another terminal\n");
+  console.log("  FAIL  server is not running -> start it with `npm run dev` (wrangler dev) in another terminal\n");
   process.exit(1);
 }
 
