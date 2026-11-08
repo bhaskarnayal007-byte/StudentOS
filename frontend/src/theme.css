@@ -1524,15 +1524,115 @@ button.ghost.always:hover { color: var(--color-accent); }
 .widget-figure strong { font-size: calc(27px * var(--fs)); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .widget-figure:hover strong { color: var(--color-accent); }
 
+/* Desktop has the 3D Octi as its own button; these two are phone-only. */
+.ask-octi, .home-date { display: none; }
+
 @media (max-width: 620px) {
   .home-top h2, .login-card h1 { font-size: calc(28px * var(--fs)); }
-  .home { gap: var(--s4); }
+  .home { gap: var(--s3); }
 
-  /* One column, and the mascot moves to the top — it's the primary action, so
-     it shouldn't sit buried between two stacks of widgets. */
-  .home-orbit { grid-template-columns: 1fr; }
-  .orbit-centre { order: -1; }
-  .mascot-stage { width: min(210px, 60vw); }
+  /* ── Top: greeting and date left, Chats and Settings side by side right.
+     Friends is in the More sheet, so its pill goes. ── */
+  .home-greeting { display: flex; flex-direction: column; gap: 2px; }
+  .home-date {
+    display: block;
+    color: var(--color-text-2);
+    font-size: var(--t-sm);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  .home-top .friends-btn { display: none; }
+  .home-top .home-top-stack { flex-direction: row; }
+  .home-top .home-chat-btn,
+  .home-top .settings-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  /* Today's counts in one line that scrolls sideways, not a wrapping block. */
+  .home .today-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 calc(var(--s3) * -1);
+    padding: 0 var(--s3);
+    scrollbar-width: none;
+  }
+  .today-strip::-webkit-scrollbar { display: none; }
+  .today-cell { flex: none; border-radius: var(--r-pill); white-space: nowrap; }
+
+  /* ── The widgets become one grid, ordered by how often they're opened.
+     Timer and Spending are small enough to share a row. ── */
+  .home-orbit { grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  .orbit-col { display: contents; }
+  .home-orbit > .orbit-centre,
+  .home-orbit [data-widget] { grid-column: 1 / -1; }
+  [data-widget="tasks"] { order: 1; }
+  [data-widget="schedule"] { order: 2; }
+  [data-widget="calendar"] { order: 3; }
+  .home-orbit [data-widget="timer"],
+  .home-orbit [data-widget="finance"] { order: 4; grid-column: auto; }
+  [data-widget="notes"] { order: 5; }
+  [data-widget="courses"] { order: 6; }
+
+  /* ── Octi: small, beside the bar you type into ── */
+  .orbit-centre {
+    order: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--s2);
+    padding: var(--s1) var(--s3) var(--s1) var(--s1);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--r-pill);
+    box-shadow: var(--shadow);
+  }
+  .orbit-centre .mascot-button { padding: 0; flex: none; }
+  .orbit-centre .mascot-stage { width: 64px; height: 64px; }
+  .orbit-centre .mascot-caption, .orbit-centre .mascot-sparkle { display: none; }
+  .ask-octi {
+    display: block;
+    flex: 1;
+    min-height: 44px;
+    padding: 0 var(--s2);
+    border: none;
+    background: none;
+    color: var(--color-text-3);
+    font: inherit;
+    font-size: var(--t-md);
+    text-align: left;
+    cursor: pointer;
+  }
+  /* Home already has Octi; the floating one would be the same button twice. */
+  .app:has(.home) .octi-dock { display: none; }
+
+  /* ── Rows sit flat in their card, divided by a hairline, instead of a box
+     inside a box. Each card says it opens with a chevron. ── */
+  .widget { gap: var(--s2); padding: var(--s3) var(--s4); }
+  .widget .list { gap: 0; }
+  .widget .item {
+    padding: var(--s2) 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    outline: none;
+  }
+  .widget .item:last-child { border-bottom: none; }
+  .widget-rows .item.live { box-shadow: inset 3px 0 0 var(--color-accent); padding-left: var(--s3); }
+  .widget-open .widget-head h3::after {
+    content: '›';
+    margin-left: auto;
+    color: var(--color-text-3);
+    font-size: 1.4em;
+    line-height: 0.8;
+    letter-spacing: 0;
+  }
+  .widget-head h3 { flex: 1; }
+  .widget .placeholder { margin: var(--s1) 0; text-align: left; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1796,9 +1896,21 @@ button.ghost.always:hover { color: var(--color-accent); }
 /* ─── Phone tab bar and More sheet (components/MobileNav.jsx) ───
    Four sections a student opens daily, and More for the rest, the way
    phone apps do it: fixed to the bottom edge, icon over label. */
-.page-name, .tabbar, .sheet-backdrop { display: none; }
+.page-name, .page-back, .tabbar, .sheet-backdrop { display: none; }
 @media (max-width: 620px) {
   .page-name { display: inline; }
+  .page-back {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-left: calc(var(--s2) * -1);
+    color: var(--color-text-2);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1;
+    text-decoration: none;
+  }
   .tabbar {
     position: fixed;
     z-index: 50;

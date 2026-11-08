@@ -21,6 +21,7 @@ export default function FinanceWidget({
   return (
     <section
       className={open ? "widget widget-finance widget-open active" : "widget widget-finance widget-open"}
+      data-widget="finance"
       {...openable(onToggle, open ? "Close Finance" : "Open Finance")}
     >
       <header className="widget-head">

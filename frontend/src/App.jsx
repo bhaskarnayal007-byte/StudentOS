@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
+import { useBackNavigation } from './lib/backButton.js'
 import { AlarmWatcher } from './components/TimersPage.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
@@ -128,6 +129,20 @@ function AppShell() {
 
   const panelProps = { financeOpen, onToggleFinance: toggleFinance, onGoTo: goTo }
 
+  // A new screen starts at its top, like a new page in any app; React Router
+  // leaves the scroll where the last screen had it.
+  // A block body on purpose: newer browsers return a Promise from scrollTo,
+  // and an effect may only return its cleanup function.
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+
+  // Android's back button, once no overlay has taken it: back through
+  // history, then Home, then (returning false) the app goes to the background.
+  useBackNavigation(({ canGoBack }) => {
+    if (canGoBack) return navigate(-1), true
+    if (pathname !== '/') return navigate('/', { replace: true }), true
+    return false
+  })
+
   return (
     <>
       {/* Pages outside the frame (settings, legal, a file) wait here; pages
@@ -191,6 +206,8 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
   const { pathname } = useLocation()
   // Notes wants every pixel for writing, so the Finance card stays off it.
   const onNotes = pathname === '/notes'
+  const segments = pathname.split('/').filter(Boolean)
+  const parent = segments.length > 1 ? `/${segments[0]}` : null
 
   return (
     <>
@@ -201,6 +218,11 @@ function Chrome({ financeOpen, onToggleFinance, children }) {
             <img src="/pwa-512.png" alt="" className="brand-mark" />
             {/* Phones title the page instead of the app (see theme.css). */}
             <span className="brand-name">Stratus</span>
+            {/* A page inside a section (a subject's mind map) gets a way up
+                to the section, since the phone has no header nav. */}
+            {parent && (
+              <Link to={parent} className="page-back" aria-label={`Back to ${pageName(pathname)}`}>‹</Link>
+            )}
             <span className="page-name">{pageName(pathname)}</span>
           </h1>
           <div className="titlebar-actions">

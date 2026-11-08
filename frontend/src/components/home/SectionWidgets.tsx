@@ -28,10 +28,13 @@ export function openable(onOpen: () => void, label: string) {
   };
 }
 
-/** The frame these widgets share: a label and a body, the whole thing a link. */
-function Widget({ title, onOpen, children }: { title: string; onOpen: () => void; children: React.ReactNode }) {
+/**
+ * The frame these widgets share: a label and a body, the whole thing a link.
+ * `kind` (data-widget) is what the phone layout orders them by (theme.css).
+ */
+function Widget({ title, kind, onOpen, children }: { title: string; kind: string; onOpen: () => void; children: React.ReactNode }) {
   return (
-    <section className="widget widget-open" {...openable(onOpen, `Open ${title}`)}>
+    <section className="widget widget-open" data-widget={kind} {...openable(onOpen, `Open ${title}`)}>
       <header className="widget-head">
         <h3>{title}</h3>
       </header>
@@ -50,7 +53,7 @@ export function CalendarWidget({ onOpen }: { onOpen: () => void }) {
     .slice(0, SHOWN);
 
   return (
-    <Widget title="Calendar" onOpen={onOpen}>
+    <Widget title="Calendar" kind="calendar" onOpen={onOpen}>
       {upcoming.length === 0 ? (
         <p className="placeholder">Nothing coming up.</p>
       ) : (
@@ -78,7 +81,7 @@ export function ScheduleWidget({ onOpen }: { onOpen: () => void }) {
     .slice(0, SHOWN);
 
   return (
-    <Widget title="Today's schedule" onOpen={onOpen}>
+    <Widget title="Today's schedule" kind="schedule" onOpen={onOpen}>
       {todays.length === 0 ? (
         <p className="placeholder">Nothing else scheduled today.</p>
       ) : (
@@ -100,7 +103,7 @@ export function CoursesWidget({ onOpen }: { onOpen: () => void }) {
   const { state } = useStore() as { state: { courses: Course[]; tasks: Task[] } };
 
   return (
-    <Widget title="Courses" onOpen={onOpen}>
+    <Widget title="Courses" kind="courses" onOpen={onOpen}>
       {state.courses.length === 0 ? (
         <p className="placeholder">No subjects yet.</p>
       ) : (

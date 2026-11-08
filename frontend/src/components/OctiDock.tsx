@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import OctiPage from "./OctiPage.jsx";
+import { useBackToClose } from "../lib/backButton.js";
 
 /**
  * Octi, reachable from anywhere.
@@ -32,6 +33,9 @@ export default function OctiDock() {
   // Moving to another screen closes the panel: leaving it hanging over a page
   // the user deliberately navigated to is never what they meant.
   useEffect(() => setOpen(false), [pathname]);
+
+  // Android's back button closes the panel before it leaves the page.
+  useBackToClose(() => setOpen(false), open);
 
   if (redundant) return null;
 

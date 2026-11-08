@@ -25,7 +25,7 @@ export default function TasksWidget({ onOpen }: { onOpen: () => void }) {
     .slice(0, SHOWN);
 
   return (
-    <section className="widget widget-open" {...openable(onOpen, "Open Tasks")}>
+    <section className="widget widget-open" data-widget="tasks" {...openable(onOpen, "Open Tasks")}>
       <header className="widget-head">
         <h3>Tasks</h3>
       </header>

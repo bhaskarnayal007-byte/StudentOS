@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../lib/chat.js'
+import { isNative } from '../lib/supabase.js'
 
 /** 24px line icons, drawn in currentColor so the active tab can tint them. */
 const ICONS = {
@@ -74,7 +75,22 @@ export default function MobileNav() {
     <>
       <nav className="tabbar" aria-label="Sections">
         {TABS.map(({ to, label, icon }) => (
-          <NavLink key={to} to={to} end={to === '/'} replace={sheetOpen} className={({ isActive }) => `tabbar-item${isActive && !sheetOpen ? ' active' : ''}`}>
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            // In the app, tabs replace rather than stack, so back from a tab
+            // goes Home (lib/backButton.js) instead of through every tab seen.
+            replace={sheetOpen || isNative}
+            className={({ isActive }) => `tabbar-item${isActive && !sheetOpen ? ' active' : ''}`}
+            onClick={e => {
+              // Tapping the tab you're on goes back to its top, as on any phone.
+              if (pathname === to && !sheetOpen) {
+                e.preventDefault()
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            }}
+          >
             <span className="tabbar-icon"><Icon name={icon} /></span>
             {label}
           </NavLink>

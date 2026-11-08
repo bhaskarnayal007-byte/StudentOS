@@ -27,7 +27,7 @@ export default function TimerWidget({ onOpen }: { onOpen: () => void }) {
   const done = Boolean(timer) && remaining <= 0;
 
   return (
-    <section className="widget widget-timer widget-open" {...openable(onOpen, "Open Timers")}>
+    <section className="widget widget-timer widget-open" data-widget="timer" {...openable(onOpen, "Open Timers")}>
       <header className="widget-head">
         <h3>Timer</h3>
       </header>

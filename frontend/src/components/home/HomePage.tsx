@@ -68,8 +68,14 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
               <Avatar profile={profile} size={44} />
             </Link>
           )}
-          <span>
-            Hello, <span className="home-name">{state.profileName || "there"}</span>
+          <span className="home-greeting">
+            <span>
+              Hello, <span className="home-name">{state.profileName || "there"}</span>
+            </span>
+            {/* Phones only (theme.css): the date sits where the eye lands first. */}
+            <span className="home-date">
+              {new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+            </span>
           </span>
         </h2>
         {/* Home has no header, so Friends and Settings need their own way in. */}
@@ -110,6 +116,11 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
           <Suspense fallback={<div className="mascot-stage" />}>
             <OctopusMascot mood={mood} onClick={() => onGoTo("Assistant")} />
           </Suspense>
+          {/* Phones only (theme.css): Octi shrinks to the side of this bar,
+              which reads as the place to type, not a picture to admire. */}
+          <button type="button" className="ask-octi" onClick={() => onGoTo("Assistant")}>
+            Ask Octi anything…
+          </button>
         </div>
 
         <div className="orbit-col">

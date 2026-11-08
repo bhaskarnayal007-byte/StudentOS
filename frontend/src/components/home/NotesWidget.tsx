@@ -29,6 +29,7 @@ export default function NotesWidget() {
   return (
     <section
       className={dragging ? "widget widget-notes widget-open dragging" : "widget widget-notes widget-open"}
+      data-widget="notes"
       {...openable(() => openNote(), "Open Notes")}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={(e) => {
