@@ -142,7 +142,7 @@ export default function FriendsPage() {
   )
 }
 
-function AddFriend({ onAdd }) {
+export function AddFriend({ onAdd }) {
   const [tag, setTag] = useState('')
   return (
     <form className="row" onSubmit={e => { e.preventDefault(); if (tag.trim()) onAdd(tag).then(ok => ok && setTag('')) }}>

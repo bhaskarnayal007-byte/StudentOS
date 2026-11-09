@@ -15,7 +15,7 @@
     "build:android": "vite build --mode native && cap sync android",
     "bundle:native": "node scripts/make-native-bundle.mjs",
     "preview": "vite preview",
-    "test": "node scripts/test-scopedStorage.mjs && node scripts/test-reconcile.mjs && node scripts/test-tools.mjs && node scripts/test-stateMessage.mjs && node scripts/test-commands.mjs && node scripts/test-shareCopy.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs && node scripts/test-useNow.mjs && node scripts/test-chatFormat.mjs && node scripts/test-liveUpdate.mjs"
+    "test": "node scripts/test-scopedStorage.mjs && node scripts/test-reconcile.mjs && node scripts/test-tools.mjs && node scripts/test-stateMessage.mjs && node scripts/test-commands.mjs && node scripts/test-shareCopy.mjs && node scripts/test-focus.mjs && node scripts/test-store.mjs && node scripts/test-topics.mjs && node scripts/test-useNow.mjs && node scripts/test-chatFormat.mjs && node scripts/test-liveUpdate.mjs && node scripts/test-homeLayout.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

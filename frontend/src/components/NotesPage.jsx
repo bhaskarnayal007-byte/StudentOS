@@ -252,7 +252,7 @@ function FileView({ id, name, size, tab = false }) {
   }, [id, name])
 
   if (missing) {
-    return <p className="placeholder">“{name}” was added on another device — files stay where they were dropped.</p>
+    return <p className="placeholder">Couldn't load “{name}”. If it was just added on another device, it may still be uploading — check your connection and open it again.</p>
   }
   if (!url) return null
 

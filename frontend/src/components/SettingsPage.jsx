@@ -1,4 +1,4 @@
-// The /settings page: display name, text size, theme, account and legal links.
+// The /settings page: display name, text size, theme, Home layout, account and legal links.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
@@ -7,6 +7,8 @@ import { Copyright } from './legal/LegalPage'
 import { TagForm } from './FriendsPage.jsx'
 import { setTag, useMyProfile } from '../lib/social.js'
 import { AvatarPicker } from './Avatar.jsx'
+import { LABELS, move, resolve } from '../lib/homeLayout.js'
+import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 
 // Multipliers for --fs in theme.css.
 const TEXT_SIZES = [
@@ -79,6 +81,9 @@ export default function SettingsPage() {
         ))}
       </div>
 
+      <h2>Home layout</h2>
+      <HomeLayoutSetting />
+
       <h2>Account</h2>
       <div className="settings-row">
         <button className="theme-toggle" onClick={signOut}>Sign out</button>
@@ -148,6 +153,72 @@ function TagSetting({ name }) {
 }
 
 /** Irreversible, so it asks for the word, not just an OK click. */
+/**
+ * Reorder and show or hide Home's islands. Laptops and phones each keep their
+ * own layout; this edits the one for the device you're on unless you switch.
+ */
+function HomeLayoutSetting() {
+  const { state, dispatch } = useStore()
+  const [device, setDevice] = useState(useMatchMedia(PHONE) ? 'phone' : 'wide')
+  const layout = resolve(state.homeLayout?.[device], device)
+  const save = next => dispatch({ type: 'set-home-layout', device, layout: next })
+  const octiAt = layout.order.indexOf('octi')
+  const wide = device === 'wide'
+
+  return (
+    <>
+      <div className="settings-row" role="radiogroup" aria-label="Which layout">
+        {[['wide', 'Laptop'], ['phone', 'Phone']].map(([value, label]) => (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={device === value}
+            className={device === value ? 'theme-toggle active' : 'theme-toggle'}
+            onClick={() => setDevice(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="muted">
+        {wide
+          ? 'Islands above Octi sit on the left of Home, below him on the right.'
+          : 'Top to bottom, the way Home scrolls.'}
+      </p>
+
+      <ol className="layout-list">
+        {layout.order.map((id, i) => {
+          const hidden = layout.hidden.includes(id)
+          const side = wide && id !== 'octi' ? (i < octiAt ? 'Left' : 'Right') : null
+          return (
+            <li key={id} className={'layout-row' + (id === 'octi' ? ' octi' : '') + (hidden ? ' off' : '')}>
+              <span className="grow">{LABELS[id]}</span>
+              {side && <span className="chip">{side}</span>}
+              {id === 'octi' ? (
+                <span className="muted layout-always">{wide ? 'Middle' : 'Always shown'}</span>
+              ) : (
+                <label className="layout-show">
+                  <input
+                    type="checkbox"
+                    checked={!hidden}
+                    onChange={() => save({ ...layout, hidden: hidden ? layout.hidden.filter(h => h !== id) : [...layout.hidden, id] })}
+                  />
+                  Show
+                </label>
+              )}
+              <button className="map-icon" aria-label={`Move ${LABELS[id]} up`} disabled={i === 0} onClick={() => save({ ...layout, order: move(layout.order, id, -1) })}>↑</button>
+              <button className="map-icon" aria-label={`Move ${LABELS[id]} down`} disabled={i === layout.order.length - 1} onClick={() => save({ ...layout, order: move(layout.order, id, 1) })}>↓</button>
+            </li>
+          )
+        })}
+      </ol>
+      <div className="settings-row">
+        <button className="theme-toggle" onClick={() => save(undefined)}>Reset to default</button>
+      </div>
+    </>
+  )
+}
+
 async function confirmDeleteAccount() {
   const typed = window.prompt(
     'This permanently deletes your account and everything in it: tasks, notes, PDFs, schedule, spending. It cannot be undone.\n\nType DELETE to confirm.',

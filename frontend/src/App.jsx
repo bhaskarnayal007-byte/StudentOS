@@ -4,12 +4,14 @@ import { useBackNavigation } from './lib/backButton.js'
 import { AlarmWatcher } from './components/TimersPage.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
 import { useStore } from './store.jsx'
+import { uploadPending } from './lib/fileStore.js'
 import AppBackground from './components/AppBackground.jsx'
 import SpendingToggle from './components/finance/SpendingToggle'
 import MobileNav, { pageName } from './components/MobileNav.jsx'
 import HomePage from './components/home/HomePage'
 import PortalTransition from './components/PortalTransition'
 import OctiDock from './components/OctiDock'
+import FriendRequestPopups from './components/FriendRequestPopups.jsx'
 import LandingPage from './components/LandingPage'
 import TimersPage from './components/TimersPage.jsx'
 // OctiDock already pulls OctiPage into the first download, so lazy() would
@@ -196,9 +198,21 @@ function AppShell() {
 
       {/* Octi sits outside <Routes> so he survives every navigation. */}
       <OctiDock />
+      <FriendRequestPopups />
+      <NoteFileSync />
       <MobileNav />
     </>
   )
+}
+
+/**
+ * Draws nothing. Note files this device holds but the account doesn't yet
+ * (added offline, or before files synced) go up, so every device can open them.
+ */
+function NoteFileSync() {
+  const { state } = useStore()
+  useEffect(() => { uploadPending(state.notes) }, [state.notes])
+  return null
 }
 
 /** Header, nav and sidebar — the frame every section but Home sits inside. */

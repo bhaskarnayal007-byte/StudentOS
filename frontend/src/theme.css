@@ -1321,12 +1321,15 @@ button.ghost.always:hover { color: var(--color-accent); }
 .home-orbit {
   display: grid;
   grid-template-columns: 1fr minmax(210px, 280px) 1fr;
-  align-items: center;
+  /* Top-aligned: centring the shorter right column left a gap above it. */
+  align-items: start;
   gap: var(--s4);
 }
 
 .orbit-col { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
-.orbit-centre { display: grid; place-items: center; }
+/* One wrapper per island (for its place in the saved layout); it adds no box. */
+.island { display: contents; }
+.orbit-centre { display: grid; place-items: center; position: sticky; top: var(--s5); }
 
 /* On a wide screen the 880px column left most of the window empty and made
    Home scroll. Widen it, and let each flank lay its widgets out two across. */
@@ -1338,7 +1341,8 @@ button.ghost.always:hover { color: var(--color-accent); }
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
-  .orbit-col > .home-buttons { grid-column: 1 / -1; }
+  .orbit-col .home-buttons,
+  .orbit-col .friends-island { grid-column: 1 / -1; }
 }
 
 .mascot-button {
@@ -1543,7 +1547,7 @@ button.ghost.always:hover { color: var(--color-accent); }
   }
   .home-top .friends-btn { display: none; }
   .home-top .home-top-stack { flex-direction: row; }
-  .home-top .home-chat-btn,
+  .home-top .friends-island-round,
   .home-top .settings-btn {
     display: grid;
     place-items: center;
@@ -1564,23 +1568,17 @@ button.ghost.always:hover { color: var(--color-accent); }
   .today-strip::-webkit-scrollbar { display: none; }
   .today-cell { flex: none; border-radius: var(--r-pill); white-space: nowrap; }
 
-  /* ── The widgets become one grid, ordered by how often they're opened.
-     Timer and Spending are small enough to share a row. ── */
-  .home-orbit { grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  /* ── The widgets become one grid, in the order set in Settings → Home
+     layout. Timer and Spending share a row when they sit next to each other. ── */
+  .home-orbit { grid-template-columns: 1fr 1fr; gap: var(--s3); align-items: center; }
+  .orbit-centre { position: static; }
   .orbit-col { display: contents; }
-  .home-orbit > .orbit-centre,
+  .home-orbit .orbit-centre,
   .home-orbit [data-widget] { grid-column: 1 / -1; }
-  [data-widget="tasks"] { order: 1; }
-  [data-widget="schedule"] { order: 2; }
-  [data-widget="calendar"] { order: 3; }
-  .home-orbit [data-widget="timer"],
-  .home-orbit [data-widget="finance"] { order: 4; grid-column: auto; }
-  [data-widget="notes"] { order: 5; }
-  [data-widget="courses"] { order: 6; }
+  .home-orbit .island.half > * { grid-column: auto; }
 
   /* ── Octi: small, beside the bar you type into ── */
   .orbit-centre {
-    order: 0;
     display: flex;
     align-items: center;
     gap: var(--s2);
@@ -1865,6 +1863,10 @@ button.ghost.always:hover { color: var(--color-accent); }
      with a stub of an Add button. */
   form.row > :not(.grow, .muted) { flex: 1 1 auto; }
   .day-add { flex-wrap: wrap; }
+  /* One field and Add: they fit one line in the Friends sheet. */
+  .friends-panel form.row { flex-wrap: nowrap; }
+  .friends-panel form.row > .grow { flex: 1 1 auto; }
+  .friends-panel form.row > button { flex: none; }
   .day-add input:first-child { flex-basis: 100%; }
   .day-add input[type="time"], .day-add button { flex: 1; width: auto; }
 
@@ -2038,8 +2040,6 @@ button.ghost.always:hover { color: var(--color-accent); }
     background: var(--color-sunken);
   }
   .sheet-tile.active .sheet-icon { border-color: var(--color-accent); }
-  .sheet-octi { width: 30px; height: 30px; }
-  .sheet .tabbar-dot { top: 6px; right: 6px; }
 }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 
@@ -2862,6 +2862,22 @@ button.ghost.always:hover { color: var(--color-accent); }
   stroke-width: 2;
 }
 .map-empty { position: absolute; left: 0; right: 0; top: 140px; }
+/* Wide screens: one soft card per top-level branch, holding its outline. */
+.map-branch {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--course, var(--color-accent));
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--color-surface) 55%, transparent);
+}
+/* Compact rows in the columns: one line each, the full name on hover. */
+.map-canvas.wide { overflow-x: hidden; } /* the columns always fit the width */
+.map-canvas.wide .map-node { padding-block: 4px; }
+.map-canvas.wide .map-text { -webkit-line-clamp: 1; }
+/* A branch's title row: two lines and a touch larger. */
+.map-canvas.wide .map-head-row { font-size: var(--t-md); }
+.map-canvas.wide .map-head-row .map-text { -webkit-line-clamp: 2; }
 
 .map-node {
   position: absolute;
@@ -2958,6 +2974,23 @@ button.ghost.always:hover { color: var(--color-accent); }
 .map-icon:hover { color: var(--color-accent); border-color: var(--color-accent); }
 @media (hover: none) { .map-actions { opacity: 1; } }
 .course-chip { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Settings → Home layout: one row per island, arrows to move it. */
+.layout-list { display: grid; gap: 6px; max-width: 520px; margin: 0 0 var(--s3); padding: 0; list-style: none; }
+.layout-row {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 48px;
+  padding: var(--s1) var(--s3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r);
+}
+.layout-row.octi { border-color: var(--color-accent); }
+.layout-row.off > .grow { opacity: 0.45; text-decoration: line-through; }
+.layout-show { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); cursor: pointer; }
+.layout-always { font-size: var(--t-sm); }
+.layout-row .map-icon { width: 32px; height: 32px; font-size: 15px; }
+.layout-row .map-icon:disabled { opacity: 0.3; cursor: default; }
 .course-note { display: block; margin-top: var(--s4); text-align: left; }
 
 /* ─── Today ─────────────────────────────────────────────────────────────────
@@ -3511,16 +3544,138 @@ a.theme-toggle { text-decoration: none; }
 .home-top-actions { display: flex; align-items: flex-start; gap: var(--s2); }
 /* Settings with the round Chats button directly beneath it. */
 .home-top-stack { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
-.home-chat-btn {
-  position: relative;
-  width: 52px; height: 52px;
-  padding: 0;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  text-decoration: none;
+/* Phones: Friends as a round button beside Settings (see FriendsIsland). */
+.friends-island-round { position: relative; text-decoration: none; }
+.friends-island-round .unread-badge { position: absolute; top: -4px; right: -4px; }
+/* ...opening a bottom sheet like More's, resting on the tab bar so the tab
+   bar stays put and the message box sits right above it. */
+.friends-island.compact.open { z-index: 90; }
+.friends-sheet-backdrop {
+  position: fixed;
+  left: 0; right: 0; top: 0;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  background: rgb(0 0 0 / 0.45);
+  animation: fade-in 200ms ease;
 }
-.home-chat-btn .unread-badge { position: absolute; top: -4px; right: -4px; }
+.friends-island.compact .friends-panel {
+  position: fixed;
+  left: 0; right: 0; top: auto;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  width: auto;
+  height: min(80dvh, calc(100dvh - var(--tabbar-h) - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 48px));
+  padding: var(--s2) var(--s4) var(--s3);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.3);
+  animation: sheet-up 280ms var(--ease);
+}
+.friends-panel > .sheet-grip { flex: none; margin: 0 auto; }
+/* The sheet already rests on the tab bar, so the message box sits flush on
+   it: none of the Chats page's lift (its sticky offset), edge to edge. */
+.friends-island.compact .friends-panel { padding-bottom: 0; }
+.friends-island.compact .messenger-compose {
+  position: static;
+  margin: 0 calc(var(--s4) * -1);
+  border-radius: 0;
+}
+.friends-panel-head { flex-wrap: nowrap; }
+.friends-panel-head h3 { margin-right: auto; }
+.friends-panel-close { min-width: 44px; min-height: 44px; }
 .friends-btn { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s3); text-decoration: none; }
+
+/* Home's Friends island: a glass bar that opens into a panel below it. */
+.friends-island { position: relative; z-index: 30; }
+.friends-island-bar {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%;
+  padding: var(--s3) var(--s4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  outline: 1px solid var(--edge);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.friends-island-bar b { font-size: var(--t-md, 1rem); }
+.friends-island-faces { display: flex; margin-left: auto; }
+.friends-island-faces > * { margin-left: -8px; box-shadow: 0 0 0 2px var(--color-surface); border-radius: 50%; }
+.friends-island-bar .unread-badge { margin-left: var(--s1); }
+.friends-island.open .friends-island-bar { border-color: var(--color-text-3); }
+
+.friends-panel {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  right: 0;
+  display: flex; flex-direction: column; gap: var(--s3);
+  width: max(100%, 360px);
+  height: min(540px, calc(100vh - 160px));
+  padding: var(--s4);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.35);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  animation: friends-panel-in 0.18s ease-out backwards;
+}
+@keyframes friends-panel-in { from { opacity: 0; transform: translateY(-6px); } }
+.friends-panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.friends-panel-head h3 { margin: 0; }
+.friends-panel-list { flex: 1; overflow-y: auto; margin: 0 calc(var(--s2) * -1); padding: 0 var(--s2); }
+.friends-panel-list h4 { margin: var(--s3) 0 var(--s1); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-3); }
+.friends-panel-list ul { list-style: none; margin: 0; padding: 0; }
+.friends-row {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%;
+  padding: var(--s2);
+  background: none; border: 0; border-radius: var(--r);
+  color: inherit; text-align: left;
+  cursor: pointer;
+}
+.friends-row:hover { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+.friends-row.pending { cursor: default; opacity: 0.7; }
+.friends-row.pending:hover,
+.friends-row.request:hover { background: none; }
+.friends-row.request { cursor: default; }
+.friends-row-text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; flex: 1; text-align: left; }
+.friends-row-text > * { max-width: 100%; align-self: flex-start; }
+.friends-row-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The shared chat view fills the panel. */
+.friends-panel .messenger-chat,
+.friends-panel .messenger-new { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: var(--s2); }
+.friends-panel .messenger-messages { flex: 1; overflow-y: auto; }
+/* The way back to the list; the Chats page only needs it on phones. */
+.friends-panel .notes-back { display: inline-flex; white-space: nowrap; }
+
+/* Friend requests slide in from the right edge. */
+.request-popups {
+  position: fixed;
+  /* Below the header, clear of Settings. */
+  top: 88px;
+  right: var(--s4);
+  z-index: 70;
+  display: flex; flex-direction: column; gap: var(--s2);
+  width: min(340px, calc(100vw - var(--s4) * 2));
+}
+.request-popup {
+  display: flex; align-items: flex-start; gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.35);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  animation: request-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+@keyframes request-in { from { opacity: 0; transform: translateX(110%); } }
+.request-popup-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.request-popup-text .row { margin-top: var(--s2); }
+.request-popup-close { padding: 2px 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .request-popup, .friends-panel { animation: none; }
+}
 
 .friends-me { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s4); }
 .friends-me .avatar-picker { margin: 0; }

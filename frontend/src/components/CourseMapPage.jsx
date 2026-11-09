@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store.jsx'
-import { INDENT, NODE_H, NODE_W, descendants, layout, outline, progress } from '../lib/topics.js'
+import { INDENT, NODE_H, NODE_W, columns, descendants, outline, progress } from '../lib/topics.js'
 import { PHONE, useMatchMedia } from '../lib/useMatchMedia.js'
 import ShareButton from './ShareButton.jsx'
 
@@ -21,8 +21,9 @@ export default function CourseMapPage() {
   const [editing, setEditing] = useState(null)
   const course = state.courses.find(c => c.id === id)
 
-  // Phones get an indented outline that reads top to bottom; the wide
-  // top-down tree only fits a bigger screen.
+  // Phones get one indented outline that reads top to bottom; wider screens
+  // get a card per branch, packed into as many columns as fit (lib/topics.js).
+  // Either way the map fits the width, so it never scrolls sideways.
   const phone = useMatchMedia(PHONE)
   const PAD = phone ? PAD_PHONE : PAD_WIDE
   const canvas = useRef(null)
@@ -35,19 +36,10 @@ export default function CourseMapPage() {
     return () => ro.disconnect()
   }, [Boolean(course)]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const tree = useMemo(
-    () => (phone ? outline(state.topics, id, Math.max(0, canvasW - PAD * 2)) : layout(state.topics, id)),
-    [state.topics, id, phone, canvasW, PAD],
-  )
-  const rootX = tree.nodes.find(n => !n.topic)?.x ?? 0
-
-  // A wide tree opens centred on the subject, not scrolled to its left edge.
-  useEffect(() => {
-    const el = canvas.current
-    if (el) el.scrollLeft = rootX + PAD + NODE_W / 2 - el.clientWidth / 2
-    // Once per subject (and once more when saved data arrives), not on every edit.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, Boolean(course)])
+  const tree = useMemo(() => {
+    const room = Math.max(0, canvasW - PAD * 2)
+    return phone ? outline(state.topics, id, room) : columns(state.topics, id, room)
+  }, [state.topics, id, phone, canvasW, PAD])
 
   if (!course) {
     return (
@@ -94,27 +86,26 @@ export default function CourseMapPage() {
         <button className="primary" onClick={() => add(null)}>+ Add topic</button>
       </header>
 
-      <div className="map-canvas" ref={canvas}>
+      <div className={phone ? 'map-canvas' : 'map-canvas wide'} ref={canvas}>
         <div className="map-stage" style={{ width: tree.width + PAD * 2, height: tree.height + PAD * 2 }}>
+          {/* Wide screens: a card behind each top-level branch. */}
+          {tree.cards?.map(c => (
+            <div key={c.id} className="map-branch" style={{ left: c.x + PAD, top: c.y + PAD, width: c.w, height: c.h }} />
+          ))}
+
           <svg className="map-lines" width={tree.width + PAD * 2} height={tree.height + PAD * 2} aria-hidden="true">
             {tree.edges.map(({ from, to }) => {
               const a = at.get(from)
               const b = at.get(to)
-              if (phone) {
-                // Elbow: down from just inside the parent's left edge, across to the child.
-                const x = a.x + PAD + INDENT / 2
-                return <path key={to} d={`M${x} ${a.y + PAD + NODE_H} V${b.y + PAD + NODE_H / 2} H${b.x + PAD}`} />
-              }
-              const x1 = a.x + PAD + NODE_W / 2
-              const y1 = a.y + PAD + NODE_H
-              const x2 = b.x + PAD + NODE_W / 2
-              const y2 = b.y + PAD
-              const mid = (y1 + y2) / 2
-              return <path key={to} d={`M${x1} ${y1} C${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`} />
+              // Elbow: down from just inside the parent's left edge, across to the child.
+              const x = a.x + PAD + INDENT / 2
+              const ah = a.h ?? NODE_H
+              const bh = b.h ?? NODE_H
+              return <path key={to} d={`M${x} ${a.y + PAD + ah} V${b.y + PAD + bh / 2} H${b.x + PAD}`} />
             })}
           </svg>
 
-          {tree.nodes.map(({ topic, x, y, w = NODE_W }) =>
+          {tree.nodes.map(({ topic, x, y, w = NODE_W, h = NODE_H, head }) =>
             topic ? (
               <TopicNode
                 key={topic.id}
@@ -123,6 +114,8 @@ export default function CourseMapPage() {
                 x={x + PAD}
                 y={y + PAD}
                 w={w}
+                h={h}
+                head={head}
                 editing={editing === topic.id}
                 onEdit={setEditing}
                 onAdd={add}
@@ -159,7 +152,7 @@ export default function CourseMapPage() {
   )
 }
 
-function TopicNode({ topic, topics, x, y, w, editing, onEdit, onAdd, onRemove, dispatch }) {
+function TopicNode({ topic, topics, x, y, w, h, head, editing, onEdit, onAdd, onRemove, dispatch }) {
   const card = useRef(null)
   const settled = useRef(false)
   const branch = progress(topics, topic.id)
@@ -199,8 +192,8 @@ function TopicNode({ topic, topics, x, y, w, editing, onEdit, onAdd, onRemove, d
   return (
     <div
       ref={card}
-      className={'map-node' + (topic.done ? ' done' : '')}
-      style={{ left: x, top: y, width: w, height: NODE_H }}
+      className={'map-node' + (topic.done ? ' done' : '') + (head ? ' map-head-row' : '')}
+      style={{ left: x, top: y, width: w, height: h }}
       tabIndex={0}
       onKeyDown={key}
       onDoubleClick={() => onEdit(topic.id)}

@@ -19,6 +19,8 @@ const env = {
 const counters = new Map(); // what bump_ai_counter keeps in Postgres
 let providerA = 200; // status provider "a" answers with
 const calls = [];
+let noteFiles = ["n1", "n2"]; // what's in the user's note-files folder
+const removed = [];
 
 globalThis.fetch = async (input, init = {}) => {
   const url = new URL(typeof input === "string" ? input : input.url);
@@ -27,7 +29,7 @@ globalThis.fetch = async (input, init = {}) => {
 
   if (url.pathname === "/auth/v1/user") {
     return auth === "Bearer good"
-      ? Response.json({ id: "u1", email: "me@test.dev", created_at: "2026-01-01" })
+      ? Response.json({ id: "11111111-1111-4111-8111-111111111111", email: "me@test.dev", created_at: "2026-01-01" })
       : Response.json({ msg: "bad jwt" }, { status: 401 });
   }
   if (url.pathname === "/rest/v1/rpc/bump_ai_counter") {
@@ -37,6 +39,20 @@ globalThis.fetch = async (input, init = {}) => {
     c.hits += p_amount;
     counters.set(p_key, c);
     return Response.json([{ hits: c.hits, reset_at: new Date(c.reset_at).toISOString() }]);
+  }
+  if (url.pathname === "/storage/v1/object/list/note-files") {
+    assert.equal(JSON.parse(init.body).prefix, "11111111-1111-4111-8111-111111111111", "lists only the caller's folder");
+    return Response.json(noteFiles.map((name) => ({ name })));
+  }
+  if (url.pathname === "/storage/v1/object/note-files" && init.method === "DELETE") {
+    const { prefixes } = JSON.parse(init.body);
+    removed.push(...prefixes);
+    noteFiles = noteFiles.filter((n) => !prefixes.includes(`11111111-1111-4111-8111-111111111111/${n}`));
+    return Response.json(prefixes.map((name) => ({ name })));
+  }
+  if (url.pathname === "/auth/v1/admin/users/11111111-1111-4111-8111-111111111111" && init.method === "DELETE") {
+    assert.equal(noteFiles.length, 0, "files go before the account");
+    return Response.json({});
   }
   if (url.pathname === "/rest/v1/user_state") {
     return new Response(null, { status: 200, headers: { "Content-Range": "*/2" } });
@@ -89,7 +105,12 @@ res = await call("GET", "/api/auth/me", { token: "bad" });
 assert.equal(res.status, 401, "bad token");
 res = await call("GET", "/api/auth/me", { token: "good" });
 assert.equal(res.status, 200);
-assert.equal((await res.json()).id, "u1");
+assert.equal((await res.json()).id, "11111111-1111-4111-8111-111111111111");
+
+// Deleting the account removes its note files first, then the user.
+res = await call("DELETE", "/api/auth/me", { token: "good" });
+assert.equal(res.status, 204);
+assert.deepEqual(removed.sort(), ["11111111-1111-4111-8111-111111111111/n1", "11111111-1111-4111-8111-111111111111/n2"]);
 
 res = await call("GET", "/nope");
 assert.equal(res.status, 404);
@@ -102,7 +123,7 @@ res = await call("POST", "/api/ai/generate", { token: "good", body: ask });
 assert.equal(res.status, 200);
 assert.equal((await res.json()).choices[0].message.content, "hi from a");
 assert.equal(res.headers.get("X-AI-Provider"), "a:model-a");
-assert.equal(counters.get("tok:u1").hits, 120, "spend recorded for the user");
+assert.equal(counters.get("tok:11111111-1111-4111-8111-111111111111").hits, 120, "spend recorded for the user");
 assert.equal(counters.get("tok:all").hits, 120, "and in total");
 
 providerA = 429;
@@ -118,12 +139,12 @@ assert.ok(!calls.includes("b.test/v1/chat/completions"), "and b is not tried");
 providerA = 200;
 
 // Daily budget: per user is max(500 floor, 1000 / 2 active) = 500.
-counters.set("tok:u1", { hits: 500, reset_at: Date.now() + 60_000 });
+counters.set("tok:11111111-1111-4111-8111-111111111111", { hits: 500, reset_at: Date.now() + 60_000 });
 res = await call("POST", "/api/ai/generate", { token: "good", body: ask });
 assert.equal(res.status, 429, "user's daily share used up");
 assert.ok(res.headers.get("Retry-After"));
 
-counters.set("tok:u1", { hits: 0, reset_at: Date.now() + 60_000 });
+counters.set("tok:11111111-1111-4111-8111-111111111111", { hits: 0, reset_at: Date.now() + 60_000 });
 counters.set("tok:all", { hits: 1000, reset_at: Date.now() + 60_000 });
 res = await call("POST", "/api/ai/generate", { token: "good", body: ask });
 assert.equal(res.status, 503, "shared pool empty");
@@ -131,7 +152,7 @@ assert.equal((await res.json()).code, "ai_capacity_exhausted");
 counters.set("tok:all", { hits: 0, reset_at: Date.now() + 60_000 });
 
 // Requests per minute: 20, counted including the ones above.
-counters.set("req:u1", { hits: 20, reset_at: Date.now() + 60_000 });
+counters.set("req:11111111-1111-4111-8111-111111111111", { hits: 20, reset_at: Date.now() + 60_000 });
 res = await call("POST", "/api/ai/generate", { token: "good", body: ask });
 assert.equal(res.status, 429, "21st request in a minute refused");
 

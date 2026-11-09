@@ -64,6 +64,9 @@ const emptyState = {
   topics: [],         // { id, courseId, parentId, text, done, collapsed } — a subject's mind map
   theme: 'system',    // 'system' | 'dark' | an aesthetic id from Settings — drives data-theme
   textSize: 1,        // multiplier for every font size — drives --fs on <html>
+  // Home's islands, per device kind: { wide?: { order, hidden }, phone?: … }.
+  // Missing means the default — see lib/homeLayout.js.
+  homeLayout: {},
   // Mirrored from the Supabase user's metadata on sign-in, so HomePage can
   // greet you without an async read. The account is the source of truth.
   profileName: '',
@@ -268,6 +271,9 @@ function reducer(state, action) {
 
     case 'set-text-size':
       return { ...state, textSize: action.value }
+
+    case 'set-home-layout':
+      return { ...state, homeLayout: { ...state.homeLayout, [action.device]: action.layout } }
 
     // Swap in a different account's data wholesale. The only action that
     // replaces state rather than editing it.

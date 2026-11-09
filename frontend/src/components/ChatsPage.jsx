@@ -104,14 +104,14 @@ export default function ChatsPage() {
   )
 }
 
-function ChatAvatar({ chat: c, myId }) {
+export function ChatAvatar({ chat: c, myId }) {
   const other = otherMember(c, myId)
   if (other) return <Avatar profile={other} size={36} />
   return <span className="messenger-group-icon" aria-hidden="true">{(c.title || 'G').charAt(0).toUpperCase()}</span>
 }
 
 // ── Starting a chat or a group ────────────────────────────────────────────────
-function NewChat({ group, onCancel, onDone }) {
+export function NewChat({ group, onCancel, onDone, back = 'Chats' }) {
   const [friends, setFriends] = useState(null)
   const [picked, setPicked] = useState([])
   const [title, setTitle] = useState('')
@@ -141,7 +141,7 @@ function NewChat({ group, onCancel, onDone }) {
   return (
     <div className="messenger-new">
       <div className="messenger-head">
-        <button className="ghost notes-back" onClick={onCancel}>← Chats</button>
+        <button className="ghost notes-back" onClick={onCancel}>← {back}</button>
         <h3>{group ? 'New group' : 'New chat'}</h3>
       </div>
 
@@ -207,7 +207,7 @@ function NewChat({ group, onCancel, onDone }) {
 }
 
 // ── One open chat ─────────────────────────────────────────────────────────────
-function Conversation({ chatInfo, myId, onBack, onLeft, onRead }) {
+export function Conversation({ chatInfo, myId, onBack, onLeft, onRead, back = 'Chats' }) {
   const [messages, setMessages] = useState([])
   const [more, setMore] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -290,7 +290,7 @@ function Conversation({ chatInfo, myId, onBack, onLeft, onRead }) {
   return (
     <div className="messenger-chat">
       <div className="messenger-head">
-        <button className="ghost notes-back" onClick={onBack}>← Chats</button>
+        <button className="ghost notes-back" onClick={onBack}>← {back}</button>
         <ChatAvatar chat={chatInfo} myId={myId} />
         <div className="messenger-head-text">
           <b>{chatTitle(chatInfo, myId)}</b>

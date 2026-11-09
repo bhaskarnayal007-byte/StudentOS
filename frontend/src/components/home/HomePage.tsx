@@ -10,7 +10,9 @@ import { SettingsButton } from "../../App.jsx";
 import { Link } from "react-router-dom";
 import Avatar from "../Avatar.jsx";
 import { useMyProfile } from "../../lib/social.js";
-import { useUnread } from "../../lib/chat.js";
+import { PHONE, useMatchMedia } from "../../lib/useMatchMedia.js";
+import FriendsIsland from "./FriendsIsland.jsx";
+import { halves, resolve } from "../../lib/homeLayout.js";
 import { useStore } from "../../store.jsx";
 import { useNow } from "../../lib/useNow.js";
 
@@ -48,16 +50,76 @@ type Props = {
  */
 export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props) {
   const { state } = useStore() as {
-    state: { profileName: string; shortcuts: Shortcut[]; timer: { endsAt: number } | null };
+    state: {
+      profileName: string;
+      shortcuts: Shortcut[];
+      timer: { endsAt: number } | null;
+      homeLayout?: Record<string, { order?: string[]; hidden?: string[] }>;
+    };
   };
 
   // Octi mirrors what you're doing: headphones on while a timer runs, asleep
   // late at night. Checked each minute so it wakes up on its own.
   const now = useNow(60_000);
   const profile = useMyProfile();
+  const phone = useMatchMedia(PHONE);
   const hour = new Date(now).getHours();
   const mood =
     state.timer && state.timer.endsAt > now ? "focus" : hour >= 23 || hour < 6 ? "sleeping" : "idle";
+
+  // Order and visibility come from Settings → Home layout (lib/homeLayout.js).
+  const layout = resolve(state.homeLayout?.[phone ? "phone" : "wide"], phone ? "phone" : "wide");
+  const shown = (id: string) => !layout.hidden.includes(id);
+  const octiAt = layout.order.indexOf("octi");
+  const left = layout.order.slice(0, octiAt).filter(shown);
+  const right = layout.order.slice(octiAt + 1).filter(shown);
+  const halfRow = halves(layout.order.filter(shown));
+
+  function island(id: string) {
+    switch (id) {
+      case "octi":
+        return (
+          <div className="orbit-centre">
+            {/* The stage keeps its size while the canvas loads, so nothing
+                below it jumps when Octi arrives. */}
+            <Suspense fallback={<div className="mascot-stage" />}>
+              <OctopusMascot mood={mood} onClick={() => onGoTo("Assistant")} />
+            </Suspense>
+            {/* Phones only (theme.css): Octi shrinks to the side of this bar,
+                which reads as the place to type, not a picture to admire. */}
+            <button type="button" className="ask-octi" onClick={() => onGoTo("Assistant")}>
+              Ask Octi anything…
+            </button>
+          </div>
+        );
+      case "tasks": return <TasksWidget onOpen={() => onGoTo("Tasks")} />;
+      case "calendar": return <CalendarWidget onOpen={() => onGoTo("Calendar")} />;
+      case "courses": return <CoursesWidget onOpen={() => onGoTo("Courses")} />;
+      case "finance": return <FinanceWidget open={financeOpen} onToggle={onToggleFinance} />;
+      case "friends": return <FriendsIsland />;
+      case "timer": return <TimerWidget onOpen={() => onGoTo("Timers")} />;
+      case "schedule": return <ScheduleWidget onOpen={() => onGoTo("Schedule")} />;
+      case "notes": return <NotesWidget />;
+      case "shortcuts":
+        return (
+          <div className="home-buttons">
+            {state.shortcuts.map((shortcut) => (
+              <button
+                key={shortcut.id}
+                className="home-btn"
+                onClick={() => openShortcut(shortcut.url)}
+                title={shortcut.url}
+              >
+                {shortcut.iconUrl && <img src={shortcut.iconUrl} alt="" className="home-btn-icon" />}
+                <span className="home-btn-name">{shortcut.name}</span>
+              </button>
+            ))}
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
 
   return (
     <div className="home">
@@ -78,22 +140,12 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
             </span>
           </span>
         </h2>
-        {/* Home has no header, so Friends and Settings need their own way in. */}
+        {/* Home has no header, so Settings needs its own way in. Phones get
+            Friends here as a round button; laptops get the island below. */}
         <div className="home-top-actions">
-          <Link to="/friends" className="theme-toggle friends-btn" aria-label="Friends" title="Friends">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <span>Friends</span>
-          </Link>
-          {/* Chats sits right under Settings: round and a size up, with the
-              unread count on it. On phones this replaces the dock tab. */}
           <div className="home-top-stack">
             <SettingsButton />
-            <ChatsButton />
+            {phone && <FriendsIsland compact />}
           </div>
         </div>
       </header>
@@ -103,66 +155,20 @@ export default function HomePage({ financeOpen, onToggleFinance, onGoTo }: Props
       <TodayStrip />
 
       <div className="home-orbit">
-        <div className="orbit-col">
-          <TasksWidget onOpen={() => onGoTo("Tasks")} />
-          <CalendarWidget onOpen={() => onGoTo("Calendar")} />
-          <CoursesWidget onOpen={() => onGoTo("Courses")} />
-          <FinanceWidget open={financeOpen} onToggle={onToggleFinance} />
-        </div>
-
-        <div className="orbit-centre">
-          {/* The stage keeps its size while the canvas loads, so nothing
-              below it jumps when Octi arrives. */}
-          <Suspense fallback={<div className="mascot-stage" />}>
-            <OctopusMascot mood={mood} onClick={() => onGoTo("Assistant")} />
-          </Suspense>
-          {/* Phones only (theme.css): Octi shrinks to the side of this bar,
-              which reads as the place to type, not a picture to admire. */}
-          <button type="button" className="ask-octi" onClick={() => onGoTo("Assistant")}>
-            Ask Octi anything…
-          </button>
-        </div>
-
-        <div className="orbit-col">
-          <TimerWidget onOpen={() => onGoTo("Timers")} />
-          <ScheduleWidget onOpen={() => onGoTo("Schedule")} />
-          <NotesWidget />
-
-          <div className="home-buttons">
-            {state.shortcuts.map((shortcut) => (
-              <button
-                key={shortcut.id}
-                className="home-btn"
-                onClick={() => openShortcut(shortcut.url)}
-                title={shortcut.url}
-              >
-                {shortcut.iconUrl && (
-                  <img src={shortcut.iconUrl} alt="" className="home-btn-icon" />
-                )}
-                <span className="home-btn-name">{shortcut.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {phone ? (
+          // Phones: one column in the saved order, Octi's bar wherever it was put.
+          layout.order.filter(shown).map((id) => (
+            <div key={id} className={halfRow.has(id) ? "island half" : "island"}>{island(id)}</div>
+          ))
+        ) : (
+          // Laptops: islands before Octi go left, after him right.
+          <>
+            <div className="orbit-col">{left.map((id) => <div key={id} className="island">{island(id)}</div>)}</div>
+            {island("octi")}
+            <div className="orbit-col">{right.map((id) => <div key={id} className="island">{island(id)}</div>)}</div>
+          </>
+        )}
       </div>
-
     </div>
-  );
-}
-
-function ChatsButton() {
-  const unread = useUnread();
-  return (
-    <Link
-      to="/chat"
-      className="theme-toggle home-chat-btn"
-      aria-label={unread ? `Chats, ${unread} unread` : "Chats"}
-      title="Chats"
-    >
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-      {unread > 0 && <span className="unread-badge">{unread > 99 ? "99+" : unread}</span>}
-    </Link>
   );
 }

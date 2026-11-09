@@ -1,12 +1,15 @@
 // Files attached to notes: PDFs, photos, slides, documents, spreadsheets.
 //
 // The note itself (title, subject, { pdf: { name, size } }) lives in the store
-// and syncs like any other note. The file does not: whole-state sync is one
-// JSON row and localStorage caps out around 5MB, so the bytes go in IndexedDB,
-// keyed by note id. The field is still called `pdf` because notes saved
-// before other file types existed already use it.
-// ponytail: files stay on the device they were dropped on; move them to a
-// Supabase Storage bucket if they need to follow the account.
+// and syncs like any other note. The file can't ride along: whole-state sync is
+// one JSON row and localStorage caps out around 5MB. So the bytes go to the
+// account's private `note-files` bucket (supabase/migrations/0008), at
+// <user id>/<note id>, and IndexedDB keeps a copy on each device that has
+// opened it. The field is still called `pdf` because notes saved before other
+// file types existed already use it.
+
+import { supabase } from './supabase.js'
+import { me } from './social.js'
 
 // Named before the rename to Stratus. Renaming it would strand every file
 // already stored, so it stays.
@@ -31,7 +34,72 @@ async function run(mode, fn) {
   })
 }
 
-export const deleteFile = id => run('readwrite', s => s.delete(id)).catch(() => {})
+const BUCKET = 'note-files'
+const cloudPath = async id => `${await me()}/${id}`
+
+// Ids this device has uploaded, so a file is sent once. Per account; the
+// `:<user id>` suffix is what account deletion clears (useSession.js).
+const UPLOADED = uid => `stratus-files-up:${uid}`
+function uploadedIds(uid) {
+  try { return new Set(JSON.parse(localStorage.getItem(UPLOADED(uid)) || '[]')) } catch { return new Set() }
+}
+function markUploaded(uid, id) {
+  const ids = uploadedIds(uid)
+  ids.add(id)
+  try { localStorage.setItem(UPLOADED(uid), JSON.stringify([...ids])) } catch { /* private mode */ }
+}
+
+const inFlight = new Set()
+
+/** Send one stored file to the account. Quietly does nothing offline; the
+ *  next uploadPending() tries again. */
+async function upload(id, blob) {
+  if (inFlight.has(id)) return
+  inFlight.add(id)
+  try {
+    const uid = await me()
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(`${uid}/${id}`, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' })
+    if (!error) markUploaded(uid, id)
+  } catch { /* offline or signed out */ } finally {
+    inFlight.delete(id)
+  }
+}
+
+/**
+ * Upload every file this device holds that the account doesn't have yet:
+ * ones added offline, and ones added before files synced at all.
+ */
+export async function uploadPending(notes) {
+  let uid
+  try { uid = await me() } catch { return }
+  const done = uploadedIds(uid)
+  for (const note of notes) {
+    if (!note.pdf || done.has(note.id)) continue
+    const blob = await run('readonly', s => s.get(note.id)).catch(() => undefined)
+    if (blob) await upload(note.id, blob)
+  }
+}
+
+/** The file's bytes: this device's copy, else the account's (kept here after). */
+async function fileBlob(id) {
+  const local = await run('readonly', s => s.get(id)).catch(() => undefined)
+  if (local) return local
+  const uid = await me()
+  const { data } = await supabase.storage.from(BUCKET).download(`${uid}/${id}`)
+  if (!data) return undefined
+  await run('readwrite', s => s.put(data, id)).catch(() => {})
+  markUploaded(uid, id) // it came from the account, so never send it back
+  return data
+}
+
+export async function deleteFile(id) {
+  await run('readwrite', s => s.delete(id)).catch(() => {})
+  try {
+    await supabase.storage.from(BUCKET).remove([await cloudPath(id)])
+  } catch { /* offline: the bucket keeps an orphan, which only its owner can see */ }
+}
 
 // Raster images and PDFs can't run script. An SVG or HTML file can, and a
 // blob: URL opened in a tab runs in this origin, next to the signed-in session.
@@ -45,7 +113,7 @@ const SAFE = /^(image\/(png|jpe?g|gif|webp|avif|bmp|heic|heif)|application\/pdf)
  * are only ever read through here, so nothing can link the raw bytes.
  */
 export async function fileUrl(id, name) {
-  const blob = await run('readonly', s => s.get(id))
+  const blob = await fileBlob(id)
   if (!blob) return
   // An SVG only draws with its own type, which is the type that runs its
   // script. As a data: URL it still draws in an <img>, but a tab won't open
@@ -88,6 +156,7 @@ export async function addFileNotes(files, dispatch, courseId) {
   for (const file of [...files].filter(f => kindOf(f.name, f.type))) {
     const id = crypto.randomUUID()
     await run('readwrite', s => s.put(file, id))
+    upload(id, file) // in the background; uploadPending() retries if it fails
     dispatch({
       type: 'add-note',
       note: {
