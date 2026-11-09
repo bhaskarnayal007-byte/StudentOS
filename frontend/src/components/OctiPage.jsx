@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { ask } from '../ai/agentLoop.js'
+import { canListen, listen } from '../lib/speech.js'
 
 const SUGGESTIONS = [
   'Add a task to buy milk tomorrow',
@@ -10,17 +11,12 @@ const SUGGESTIONS = [
   "What's on my schedule this week?",
 ]
 
-// The browser's own speech-to-text: free, no key, no backend. Chrome sends the
-// audio to Google to transcribe it; Firefox has none, so there the mic button
-// simply isn't shown.
-// ponytail: browser speech only; add server-side Whisper through the backend
-// when Firefox users or Hinglish accuracy start to matter.
-const Recognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)
+// Speech to text: the browser's on the website, Android's in the app (lib/speech.js).
 
 // What each failure means to the person holding the phone.
 const MIC_ERRORS = {
-  'not-allowed': 'The microphone is blocked. Allow it for this site to talk to Octi.',
-  'service-not-allowed': 'The microphone is blocked. Allow it for this site to talk to Octi.',
+  'not-allowed': 'The microphone is blocked. Allow it for Stratus to talk to Octi.',
+  'service-not-allowed': "Voice isn't available on this device. Type instead.",
   'audio-capture': 'No microphone found.',
   network: 'Voice needs an internet connection. Type instead for now.',
 }
@@ -58,23 +54,17 @@ export default function OctiPage() {
       recognition.current?.stop()
       return
     }
-    const rec = new Recognition()
-    // Indian English: the default en-US hears local names and accents worse.
-    rec.lang = 'en-IN'
-    rec.interimResults = true
     // Speaking adds to whatever was already typed.
     const typed = input.trim() ? `${input.trim()} ` : ''
-    rec.onresult = e => setInput(typed + [...e.results].map(r => r[0].transcript).join(''))
-    rec.onerror = e => {
-      // Silence and our own abort() aren't failures worth a message.
-      if (e.error === 'no-speech' || e.error === 'aborted') return
-      setError(MIC_ERRORS[e.error] ?? `Couldn't hear that (${e.error}). Try again or type it.`)
-    }
-    rec.onend = () => setListening(false)
-    recognition.current = rec
     setError('')
-    rec.start()
     setListening(true)
+    recognition.current = listen({
+      // Indian English: the default en-US hears local names and accents worse.
+      lang: 'en-IN',
+      onText: text => setInput(typed + text),
+      onError: code => setError(MIC_ERRORS[code] ?? `Couldn't hear that (${code}). Try again or type it.`),
+      onEnd: () => setListening(false),
+    })
   }
 
   async function send(text) {
@@ -148,7 +138,7 @@ export default function OctiPage() {
           onChange={e => setInput(e.target.value)}
           disabled={busy}
         />
-        {Recognition && (
+        {canListen && (
           <button
             type="button"
             className={listening ? 'mic listening' : 'mic'}

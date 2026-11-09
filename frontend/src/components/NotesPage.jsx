@@ -6,6 +6,7 @@ import { CoursePicker, CourseChip } from './CoursesPage.jsx'
 import ShareButton from './ShareButton.jsx'
 import { isNative } from '../lib/supabase.js'
 import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/fileStore.js'
+import { SHARE_EVENT, takeNativeShare } from '../lib/shareIn.js'
 
 /**
  * Notes, with their own sidebar: every saved note listed on the left, the one
@@ -58,12 +59,26 @@ export default function NotesPage() {
     if (id) setOpenId(id)
   }
 
-  // Files shared in from another app (see public/share-target-sw.js). Checked
-  // on every visit, not only on ?shared=1: someone signed out when they shared
-  // lands on sign-in first, and the files wait until Notes is next opened.
+  // Things shared in from another app: on the website through
+  // public/share-target-sw.js, in the Android app through lib/shareIn.js.
+  // Checked on every visit, not only on ?shared=1: someone signed out when they
+  // shared lands on sign-in first, and it waits until Notes is next opened.
   useEffect(() => {
-    takeSharedFiles().then(files => { if (files.length) attach(files) })
+    const take = () => {
+      takeSharedFiles().then(files => { if (files.length) attach(files) })
+      const { files, texts } = takeNativeShare()
+      if (files.length) attach(files)
+      // A shared message or link becomes a note of its own.
+      for (const text of texts) {
+        const id = crypto.randomUUID()
+        dispatch({ type: 'add-note', note: { id, text, courseId: filter || undefined } })
+        setOpenId(id)
+      }
+    }
+    take()
+    window.addEventListener(SHARE_EVENT, take)
     if (params.has('shared')) setParams({}, { replace: true })
+    return () => window.removeEventListener(SHARE_EVENT, take)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
