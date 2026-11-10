@@ -28,7 +28,7 @@ SUPABASE_URL = "https://millegxadswedtrebdlk.supabase.co"
 # https://localhost is always allowed). Update when the Pages name is known,
 # and again when the domain is bought.
 # The branch preview is listed so the move can be tested before it's merged.
-FRONTEND_URL = "https://stratus-ae5.pages.dev,https://phase-1-cloudflare-move.stratus-ae5.pages.dev,https://student-os.vercel.app"
+FRONTEND_URL = "https://stratus-ae5.pages.dev,https://phase-1-cloudflare-move.stratus-ae5.pages.dev"
 
 # The rotation: `name|baseUrl|model|KEY_VAR`, tried in order. Free tiers are
 # metered per model, so each entry is its own 200k-token/day pool.

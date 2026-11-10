@@ -1,5 +1,4 @@
-# Response headers on Cloudflare Pages. Same as vercel.json's "headers",
-# which this replaces, with the Worker (*.workers.dev) added to connect-src.
+# Response headers on Cloudflare Pages, with the Worker (*.workers.dev) in connect-src.
 # Pages serves index.html for unknown paths on its own (no 404.html here),
 # so the app's routes need no rewrite rule.
 
