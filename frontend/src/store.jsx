@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useReducer, useState } from 'react'
 import { readScoped, writeScoped } from './lib/scopedStorage.js'
 import { useSession } from './auth/useSession.js'
-import { pull, push, subscribe, reconcile, readRev, writeRev } from './lib/cloudSync.js'
+import { pull, push, subscribe, reconcile, readRev, writeRev, merge, lastAgreed, markAgreed, markOnServer } from './lib/cloudSync.js'
+import { isNative } from './lib/supabase.js'
 import { descendants } from './lib/topics.js'
 import { syncThemeColor } from './lib/themeColor.js'
 
@@ -392,11 +393,42 @@ function useCloudSync(state, dispatch, userId) {
       })
     }
 
+    // A newer copy from another device. Merged rather than swapped in, so an
+    // edit made here that hasn't gone up yet survives; if the merge kept
+    // anything of ours, the change it makes to state queues it to go up.
+    const receive = remote => {
+      const base = lastAgreed(userId)
+      writeRev(userId, remote.rev)
+      markOnServer(userId, remote.data)
+      markAgreed(userId, remote.data)
+      adopt(merge(base, latest.current, remote.data))
+    }
+
+    // Asks the server for anything missed: realtime only delivers changes
+    // while connected, and a phone in the background isn't.
+    const catchUp = async () => {
+      // Never reached the server (opened offline): sign-in hasn't happened yet.
+      if (!ready.current) return start()
+      const remote = await pull(userId)
+      if (cancelled || !remote) return
+      if (remote.rev > readRev(userId)) receive(remote)
+    }
+
     const flush = async () => {
       if (!ready.current || !pending.current) return
       pending.current = false
       setStatus('saving')
       const rev = await push(userId, latest.current)
+      // Another device wrote first. Take its copy in, ours merged on top, and
+      // the next tick sends the result.
+      if (rev === 'conflict') {
+        pending.current = true
+        const remote = await pull(userId)
+        if (cancelled) return
+        if (remote) receive(remote)
+        else if (remote === null) writeRev(userId, 0) // the row is gone: insert afresh
+        return
+      }
       // The write failed — keep it pending so the next tick or reconnect retries.
       if (rev === null) {
         pending.current = true
@@ -406,7 +438,8 @@ function useCloudSync(state, dispatch, userId) {
       setStatus('synced')
     }
 
-    ;(async () => {
+    // Sign-in: settle with the server before anything goes up.
+    const start = async () => {
       const remote = await pull(userId)
       if (cancelled) return
 
@@ -426,21 +459,33 @@ function useCloudSync(state, dispatch, userId) {
         // No echo push follows any more to record this revision, so record it
         // here — else the next load reads it as new and adopts over local edits.
         writeRev(userId, remote.rev)
+        markAgreed(userId, remote.data)
         adopt(remote.data)
       }
+      // Level with the server: what it holds is what we agree on.
+      if (action === 'push' && remote) markAgreed(userId, remote.data)
       ready.current = action !== 'wait'
       // Couldn't reach the server at all: everything still works, on this
       // device only, and the next successful flush clears this.
       if (action === 'wait') setStatus('local')
       if (action === 'push') pending.current = true
       await flush()
-    })()
+    }
+    start()
 
-    const stop = subscribe(userId, adopt)
+    const stop = subscribe(userId, receive)
     const timer = setInterval(flush, PUSH_DEBOUNCE_MS)
-    // Coming back from a tunnel or campus wifi: retry whatever is still queued.
-    const onOnline = () => { flush() }
+    // Coming back from a tunnel or campus wifi, or to the app: fetch what was
+    // missed, then retry whatever is still queued.
+    const onOnline = () => { catchUp().then(flush) }
+    const onVisible = () => { if (document.visibilityState === 'visible') onOnline() }
     window.addEventListener('online', onOnline)
+    document.addEventListener('visibilitychange', onVisible)
+    let resume
+    if (isNative) import('@capacitor/app').then(async ({ App }) => {
+      resume = await App.addListener('resume', onOnline)
+      if (cancelled) resume.remove()
+    })
     // A tab closing mid-debounce would otherwise drop the last edit.
     window.addEventListener('pagehide', flush)
 
@@ -449,6 +494,8 @@ function useCloudSync(state, dispatch, userId) {
       stop()
       clearInterval(timer)
       window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisible)
+      resume?.remove()
       window.removeEventListener('pagehide', flush)
       flush()
     }

@@ -51,18 +51,39 @@ function markUploaded(uid, id) {
 
 const inFlight = new Set()
 
-/** Send one stored file to the account. Quietly does nothing offline; the
- *  next uploadPending() tries again. */
+// How each upload is going this session, for the note showing the file:
+// 'uploading', or why it didn't land. Gone once it has.
+const status = new Map()
+/** Fired on window whenever uploadStatus() changes. */
+export const FILES_EVENT = 'stratus-files'
+export const uploadStatus = id => status.get(id)
+function setStatus(id, value) {
+  if (value) status.set(id, value)
+  else status.delete(id)
+  dispatchEvent(new Event(FILES_EVENT))
+}
+
+// The bucket's limit (supabase/migrations/0008), and the free plan's.
+const MAX_BYTES = 50 * 1024 * 1024
+
+/** Send one stored file to the account. Offline or failed, it stays queued
+ *  and the next uploadPending() tries again. */
 async function upload(id, blob) {
   if (inFlight.has(id)) return
+  if (blob.size > MAX_BYTES) return setStatus(id, "It's over 50 MB, so it stays on this device only.")
   inFlight.add(id)
+  setStatus(id, 'uploading')
   try {
     const uid = await me()
     const { error } = await supabase.storage
       .from(BUCKET)
       .upload(`${uid}/${id}`, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' })
-    if (!error) markUploaded(uid, id)
-  } catch { /* offline or signed out */ } finally {
+    if (error) throw error
+    markUploaded(uid, id)
+    setStatus(id)
+  } catch (err) {
+    setStatus(id, navigator.onLine ? `Upload failed (${err?.message || 'unknown error'}). It will try again.` : "Offline. It will upload when you're back online.")
+  } finally {
     inFlight.delete(id)
   }
 }

@@ -8,7 +8,7 @@
 // supabase/migrations/0001_user_state.sql for why, and what it costs.
 
 import { supabase } from './supabase.js'
-import { DEVICE_ONLY, isOnServer, markOnServer } from './reconcile.js'
+import { DEVICE_ONLY, isOnServer, markOnServer, markAgreed } from './reconcile.js'
 
 const TABLE = 'user_state'
 // The revision we last agreed on with the server, per account. Held next to
@@ -58,8 +58,9 @@ export async function pull(userId) {
 }
 
 /** Write the local state up as the newest revision. Resolves to the new rev
- *  (the current one if there was nothing new to send), or null if it didn't
- *  land — the caller keeps the local copy either way. */
+ *  (the current one if there was nothing new to send), 'conflict' if another
+ *  device wrote first — pull, merge and push again — or null if it didn't
+ *  land. The caller keeps the local copy either way. */
 export async function push(userId, state) {
   // Every write bumps the revision and makes every other device fetch the row,
   // so don't send what the server already has.
@@ -67,18 +68,24 @@ export async function push(userId, state) {
   // Date.now() rather than a counter: two devices that have both been offline
   // come back with revisions that still order sensibly against each other.
   const rev = Date.now()
-  const { error } = await supabase
-    .from(TABLE)
-    .upsert({ user_id: userId, data: forWire(state), rev, updated_at: new Date().toISOString() })
+  const known = readRev(userId)
+  const row = { data: forWire(state), rev, updated_at: new Date().toISOString() }
+  // Only over the revision this device last saw. Writing blind let a phone
+  // that had slept through an edit on the laptop wipe that edit out.
+  const { data, error } = known
+    ? await supabase.from(TABLE).update(row).eq('user_id', userId).eq('rev', known).select('rev')
+    : await supabase.from(TABLE).insert({ user_id: userId, ...row }).select('rev')
 
+  if (error?.code === '23505' || (!error && !data?.length)) return 'conflict'
   if (error) return null
   markOnServer(userId, state)
+  markAgreed(userId, state)
   writeRev(userId, rev)
   return rev
 }
 
 /**
- * Call `onRemote(state, rev)` when another device writes this account's row.
+ * Call `onRemote({ data, rev })` when another device writes this account's row.
  * Returns an unsubscribe function.
  */
 export function subscribe(userId, onRemote) {
@@ -93,10 +100,7 @@ export function subscribe(userId, onRemote) {
         const rev = Number(row.rev)
         // Our own write comes back through the same channel; ignore it.
         if (rev <= readRev(userId)) return
-        writeRev(userId, rev)
-        // Applying it changes local state; this keeps that from being echoed back.
-        markOnServer(userId, row.data)
-        onRemote(row.data, rev)
+        onRemote({ data: row.data, rev })
       },
     )
     .subscribe()
@@ -104,6 +108,6 @@ export function subscribe(userId, onRemote) {
   return () => { supabase.removeChannel(channel) }
 }
 
-export { reconcile } from './reconcile.js'
+export { reconcile, merge, lastAgreed, markAgreed } from './reconcile.js'
 
-export { DEVICE_ONLY, writeRev }
+export { DEVICE_ONLY, writeRev, markOnServer }

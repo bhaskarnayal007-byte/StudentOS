@@ -5,7 +5,7 @@ import { useStore } from '../store.jsx'
 import { CoursePicker, CourseChip } from './CoursesPage.jsx'
 import ShareButton from './ShareButton.jsx'
 import { isNative } from '../lib/supabase.js'
-import { ACCEPT, ICON, addFileNotes, deleteFile, fileUrl, kindOf } from '../lib/fileStore.js'
+import { ACCEPT, FILES_EVENT, ICON, addFileNotes, deleteFile, fileUrl, kindOf, uploadStatus } from '../lib/fileStore.js'
 import { SHARE_EVENT, takeNativeShare } from '../lib/shareIn.js'
 
 /**
@@ -247,27 +247,76 @@ async function takeSharedFiles() {
  * ponytail: no in-page Office preview; add mammoth/SheetJS if reading them
  * here matters more than the extra JavaScript.
  */
-function FileView({ id, name, size, tab = false }) {
+function FileView(props) {
+  // On the device the file was added on: whether the others can open it yet.
+  const [status, setStatus] = useState(() => uploadStatus(props.id))
+  useEffect(() => {
+    const update = () => setStatus(uploadStatus(props.id))
+    update()
+    window.addEventListener(FILES_EVENT, update)
+    return () => window.removeEventListener(FILES_EVENT, update)
+  }, [props.id])
+  return (
+    <>
+      <FileBody {...props} />
+      {status && (
+        <p className="muted notes-file-status">
+          {status === 'uploading' ? 'Uploading so your other devices can open it…' : `Not on your other devices yet. ${status}`}
+        </p>
+      )}
+    </>
+  )
+}
+
+// How often to look again for a file another device hasn't finished sending.
+const MISSING_RETRY_MS = 8000
+
+function FileBody({ id, name, size, tab = false }) {
   const [url, setUrl] = useState()
   const [missing, setMissing] = useState(false)
   const [broken, setBroken] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const kind = kindOf(name)
 
   useEffect(() => {
-    let objectUrl
-    setUrl(undefined)
     setMissing(false)
+    setAttempt(0)
+  }, [id])
+
+  useEffect(() => {
+    let objectUrl
+    let gone = false
+    setUrl(undefined)
     setBroken(false)
     fileUrl(id, name).then(u => {
+      if (gone) return u && URL.revokeObjectURL(u)
       if (!u) return setMissing(true)
       objectUrl = u
+      setMissing(false)
       setUrl(u)
-    }, () => setMissing(true))
-    return () => objectUrl && URL.revokeObjectURL(objectUrl)
-  }, [id, name])
+    }, () => !gone && setMissing(true))
+    return () => {
+      gone = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [id, name, attempt])
+
+  // Not here yet: keep looking, and look again on coming back to the app.
+  useEffect(() => {
+    if (!missing) return
+    const again = () => { if (document.visibilityState === 'visible') setAttempt(n => n + 1) }
+    const timer = setInterval(again, MISSING_RETRY_MS)
+    window.addEventListener('online', again)
+    document.addEventListener('visibilitychange', again)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('online', again)
+      document.removeEventListener('visibilitychange', again)
+    }
+  }, [missing])
 
   if (missing) {
-    return <p className="placeholder">Couldn't load “{name}”. If it was just added on another device, it may still be uploading — check your connection and open it again.</p>
+    return <p className="placeholder">Waiting for “{name}” to arrive from the device it was added on. That device needs to be online with Stratus open; this will show it as soon as it's uploaded.</p>
   }
   if (!url) return null
 

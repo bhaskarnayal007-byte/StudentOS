@@ -58,3 +58,58 @@ export function markOnServer(userId, state) {
 export function isOnServer(userId, state) {
   return onServer.get(userId) === wireKey(state)
 }
+
+// The account's state as it was the last time this device and the server
+// agreed (a push that landed, or a remote change applied). merge() needs it to
+// tell "I deleted this" from "the other device added this". In memory only: a
+// reload starts without one, and sign-in then adopts the server's copy.
+const agreed = new Map()
+
+export function markAgreed(userId, state) {
+  agreed.set(userId, state)
+}
+
+export function lastAgreed(userId) {
+  return agreed.get(userId)
+}
+
+const same = (a, b) => wireKey({ v: a }) === wireKey({ v: b })
+const byId = list => new Map((list ?? []).map(item => [item.id, item]))
+const isIdList = v => Array.isArray(v) && v.every(item => item && typeof item === 'object' && 'id' in item)
+
+/**
+ * Three-way merge of this device's `local` state with `remote`, a newer copy
+ * another device wrote, given `base`, what both last agreed on. Lists of
+ * things with ids (notes, tasks, topics…) merge item by item: adds and
+ * deletes from both sides survive, and an item both sides edited keeps this
+ * device's version. Any other field takes whichever side changed it.
+ * With no base every local item counts as new, so nothing is lost but a
+ * remote delete may come back.
+ */
+export function merge(base = {}, local, remote) {
+  const out = { ...remote }
+  for (const key of new Set([...Object.keys(local), ...Object.keys(remote)])) {
+    const b = base[key], l = local[key], r = remote[key]
+    if (!(key in local)) continue
+    if (!(isIdList(l) && isIdList(r ?? []))) {
+      if (!same(l, b)) out[key] = l
+      continue
+    }
+    const B = byId(isIdList(b) ? b : []), L = byId(l), R = byId(r)
+    const edited = item => !B.has(item.id) || !same(item, B.get(item.id))
+    const list = []
+    for (const item of r ?? []) {
+      const mine = L.get(item.id)
+      if (mine) list.push(edited(mine) ? mine : item)
+      else if (!B.has(item.id)) list.push(item) // added over there
+      // else: deleted here
+    }
+    for (const item of l) {
+      if (R.has(item.id)) continue
+      // New here, or deleted over there but edited here since: keep it.
+      if (edited(item)) list.push(item)
+    }
+    out[key] = list
+  }
+  return out
+}

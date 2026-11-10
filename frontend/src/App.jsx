@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useBackNavigation } from './lib/backButton.js'
 import { AlarmWatcher } from './components/TimersPage.jsx'
 import AppLauncherSidebar from './components/AppLauncherSidebar.jsx'
@@ -211,7 +211,19 @@ function AppShell() {
  */
 function NoteFileSync() {
   const { state } = useStore()
+  const notes = useRef(state.notes)
+  notes.current = state.notes
   useEffect(() => { uploadPending(state.notes) }, [state.notes])
+  // A failed or offline upload tries again on reconnecting or coming back to the app.
+  useEffect(() => {
+    const retry = () => { if (document.visibilityState === 'visible') uploadPending(notes.current) }
+    window.addEventListener('online', retry)
+    document.addEventListener('visibilitychange', retry)
+    return () => {
+      window.removeEventListener('online', retry)
+      document.removeEventListener('visibilitychange', retry)
+    }
+  }, [])
   return null
 }
 

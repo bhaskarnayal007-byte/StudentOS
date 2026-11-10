@@ -3298,6 +3298,7 @@ main:has(> .notes, > .course-map) { display: flex; min-height: 0; padding: 0; ov
 .notes-file-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .notes-file-name strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .notes-file-name .muted { font-size: var(--t-xs); }
+.notes-file-status { flex: none; margin: var(--s2) 0 0; font-size: var(--t-xs); }
 .notes-file .primary { text-decoration: none; }
 
 .widget-notes-list { display: grid; gap: 2px; margin: 0; }
