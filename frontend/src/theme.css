@@ -2987,9 +2987,19 @@ button.ghost.always:hover { color: var(--color-accent); }
 }
 .layout-row.octi { border-color: var(--color-accent); }
 .layout-row.off > .grow { opacity: 0.45; text-decoration: line-through; }
+/* Only the name gives way when the row is narrow; everything else keeps its size. */
+.layout-row { min-width: 0; }
+.layout-row > * { flex: none; }
+.layout-row > .grow { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .layout-show { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); cursor: pointer; }
-.layout-always { font-size: var(--t-sm); }
+.layout-always { font-size: var(--t-sm); white-space: nowrap; }
 .layout-row .map-icon { width: 32px; height: 32px; font-size: 15px; }
+@media (max-width: 620px) {
+  .layout-row { gap: 6px; padding: var(--s1) var(--s2) var(--s1) var(--s3); }
+  .layout-row .map-icon { width: 30px; height: 30px; }
+  .layout-show-text { display: none; }
+  .layout-row .chip { padding: 1px 6px; font-size: var(--t-xs); }
+}
 .layout-row .map-icon:disabled { opacity: 0.3; cursor: default; }
 .course-note { display: block; margin-top: var(--s4); text-align: left; }
 

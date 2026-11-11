@@ -182,8 +182,8 @@ function HomeLayoutSetting() {
       </div>
       <p className="muted">
         {wide
-          ? 'Islands above Octi sit on the left of Home, below him on the right.'
-          : 'Top to bottom, the way Home scrolls.'}
+          ? 'Islands above Octi sit on the left of Home, below him on the right. Untick one to hide it.'
+          : 'Top to bottom, the way Home scrolls. Untick one to hide it.'}
       </p>
 
       <ol className="layout-list">
@@ -195,15 +195,16 @@ function HomeLayoutSetting() {
               <span className="grow">{LABELS[id]}</span>
               {side && <span className="chip">{side}</span>}
               {id === 'octi' ? (
-                <span className="muted layout-always">{wide ? 'Middle' : 'Always shown'}</span>
+                <span className="muted layout-always">{wide ? 'Middle' : 'Always on'}</span>
               ) : (
                 <label className="layout-show">
                   <input
                     type="checkbox"
                     checked={!hidden}
+                    aria-label={`Show ${LABELS[id]}`}
                     onChange={() => save({ ...layout, hidden: hidden ? layout.hidden.filter(h => h !== id) : [...layout.hidden, id] })}
                   />
-                  Show
+                  <span className="layout-show-text">Show</span>
                 </label>
               )}
               <button className="map-icon" aria-label={`Move ${LABELS[id]} up`} disabled={i === 0} onClick={() => save({ ...layout, order: move(layout.order, id, -1) })}>↑</button>
