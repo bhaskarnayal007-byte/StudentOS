@@ -1043,6 +1043,22 @@ main > .chat .chat-empty { margin: auto 0; }
 
 .actions { display: flex; flex-wrap: wrap; gap: var(--s1); margin-top: var(--s2); }
 
+/* Flagging an AI reply (Play's generative-AI rule). Quiet so it doesn't
+   compete with the answer, but always there. */
+.bubble .report {
+  display: block;
+  margin-top: var(--s2);
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--color-text-3);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  text-decoration: underline;
+}
+.bubble .report:disabled { text-decoration: none; cursor: default; }
+.ai-note { font-size: var(--t-xs); color: var(--color-text-3); text-align: center; max-width: 36ch; margin: var(--s2) auto var(--s3); }
+
 .thinking { display: flex; gap: 5px; padding: var(--s4); align-items: center; }
 .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-text-3); animation: blink 1.3s var(--ease) infinite; }
 .thinking span:nth-child(2) { animation-delay: 0.18s; }

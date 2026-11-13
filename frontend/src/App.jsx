@@ -36,6 +36,7 @@ const FileTab = lazy(() => import('./components/NotesPage.jsx').then(m => ({ def
 const LoginPage = lazy(() => import('./components/auth/LoginPage'))
 const PrivacyPage = lazy(() => import('./components/legal/PrivacyPage'))
 const TermsPage = lazy(() => import('./components/legal/TermsPage'))
+const DeleteAccountPage = lazy(() => import('./components/legal/DeleteAccountPage'))
 const SettingsPage = lazy(() => import('./components/SettingsPage.jsx'))
 const FriendsPage = lazy(() => import('./components/FriendsPage.jsx'))
 const ChatsPage = lazy(() => import('./components/ChatsPage.jsx'))
@@ -101,6 +102,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/delete-account" element={<DeleteAccountPage />} />
           {/* A deep link into the app while signed out lands on the pitch,
               not a dead end. */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -158,6 +160,7 @@ function AppShell() {
         <Route path={FINANCE_PATH} element={<HomePage {...panelProps} />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/delete-account" element={<DeleteAccountPage signedIn />} />
         <Route path="/settings" element={<SettingsPage />} />
         {/* A note's file on its own, opened from Notes in a new tab. */}
         <Route path="/view/:id" element={<FileTab />} />

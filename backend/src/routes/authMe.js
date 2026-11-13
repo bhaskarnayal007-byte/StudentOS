@@ -15,24 +15,26 @@ export async function getMe(request, supabase) {
 /**
  * Deletes the caller's own account. Needs the service-role key, which is why
  * it lives here and not in the app. Their user_state row goes with it (`on
- * delete cascade`). Storage has no cascade, so their note files are removed
- * first. The id comes from the verified token, never the body.
+ * delete cascade`). Storage has no cascade, so their note files and profile
+ * picture (public, so it would stay reachable by URL) are removed first. The
+ * id comes from the verified token, never the body.
  */
 export async function deleteMe(request, supabase) {
   const user = await verifySupabaseToken(request, supabase);
-  await removeNoteFiles(supabase, user.id);
+  await removeFolder(supabase, "note-files", user.id);
+  await removeFolder(supabase, "avatars", user.id);
   const { error } = await supabase.auth.admin.deleteUser(user.id);
   if (error) throw error;
   return json(204, null);
 }
 
-/** Every file in the user's note-files folder (supabase/migrations/0008). */
-async function removeNoteFiles(supabase, userId) {
-  const bucket = supabase.storage.from("note-files");
+/** Every file in the user's folder of a bucket (supabase/migrations/0003, 0008). */
+async function removeFolder(supabase, bucketId, userId) {
+  const bucket = supabase.storage.from(bucketId);
   // A page at a time until the folder is empty; the cap stops a runaway loop.
   for (let page = 0; page < 100; page++) {
     const { data, error } = await bucket.list(userId, { limit: 1000 });
-    // No bucket yet (0008 not run): nothing to remove, so don't block the delete.
+    // No bucket yet (migration not run): nothing to remove, so don't block the delete.
     if (error && /not found/i.test(error.message)) return;
     if (error) throw error;
     if (!data?.length) return;

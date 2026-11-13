@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+// Release signing reads android/keystore.properties, which is never committed
+// (see android/.gitignore). It holds storeFile (relative to android/),
+// storePassword, keyAlias and keyPassword. Without it bundleRelease still
+// builds, but unsigned, and Play refuses the upload.
+def keystoreFile = rootProject.file('keystore.properties')
+def keystore = new Properties()
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystore.load(it) }
+
 android {
     namespace = "com.bhaskarnayal.stratus"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +24,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile rootProject.file(keystore['storeFile'])
+                storePassword keystore['storePassword']
+                keyAlias keystore['keyAlias']
+                keyPassword keystore['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystoreFile.exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

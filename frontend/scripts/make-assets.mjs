@@ -7,8 +7,11 @@
 //
 // Outputs (all in public/):
 //   pwa-192.png, pwa-512.png, pwa-maskable-512.png, mascot.png
+// Play Store listing (in play-store/, not shipped with the site):
+//   icon-512.png, feature-graphic-1024x500.png
 import sharp from "sharp";
 import { fileURLToPath } from "node:url";
+import { mkdir } from "node:fs/promises";
 
 // fileURLToPath, not .pathname — on Windows .pathname yields "/C:/..." and
 // leaves spaces percent-encoded, so the path never resolves.
@@ -16,6 +19,7 @@ const dir = (p) => fileURLToPath(new URL(p, import.meta.url));
 const LOGO = dir("../src/assets/logo.png");
 const MASCOT = dir("../src/assets/mascot-src.png");
 const OUT = dir("../public/");
+const PLAY = dir("../play-store/");
 
 // The badge's own background, used to letterbox rather than white bars.
 const BADGE_BG = "#090408";
@@ -155,8 +159,38 @@ async function mascot() {
   return (cleared / (width * height)) * 100;
 }
 
+// Play wants a 512×512 32-bit PNG (with alpha) and a 1024×500 feature
+// graphic. Same badge as the PWA icon; the alpha channel is just opaque.
+async function playStore() {
+  await mkdir(PLAY, { recursive: true });
+  await sharp(LOGO)
+    .flatten({ background: BADGE_BG })
+    .resize(512, 512, { fit: "contain", background: BADGE_BG })
+    .ensureAlpha()
+    .png()
+    .toFile(`${PLAY}icon-512.png`);
+
+  const logo = await sharp(LOGO).flatten({ background: BADGE_BG }).resize(260, 260).png().toBuffer();
+  const octi = await sharp(`${OUT}mascot.png`).resize(300, 300).png().toBuffer();
+  // Text is drawn by sharp's SVG renderer with the system's sans-serif.
+  const words = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500">
+    <text x="380" y="235" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="92" font-weight="700" fill="#ffffff">Stratus</text>
+    <text x="384" y="290" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#b9b2c4">Your semester, organised.</text>
+    <text x="384" y="328" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#b9b2c4">Octi does the busywork.</text>
+  </svg>`);
+  await sharp({ create: { width: 1024, height: 500, channels: 4, background: BADGE_BG } })
+    .composite([
+      { input: logo, left: 90, top: 120 },
+      { input: words, left: 0, top: 0 },
+      { input: octi, left: 704, top: 110 },
+    ])
+    .png()
+    .toFile(`${PLAY}feature-graphic-1024x500.png`);
+}
+
 const pct = await mascot().then((v) => v);
 await icons();
+await playStore();
 console.log(
-  `wrote pwa-192/512, pwa-maskable-512, mascot — mascot background cleared ${pct.toFixed(1)}%`,
+  `wrote pwa-192/512, pwa-maskable-512, mascot, play-store/ — mascot background cleared ${pct.toFixed(1)}%`,
 );

@@ -1,8 +1,10 @@
 // The /octi page: a chat with Octi, who changes the app through the same actions the buttons use. OctiDock shows it too.
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useStore } from '../store.jsx'
 import { ask } from '../ai/agentLoop.js'
 import { canListen, listen } from '../lib/speech.js'
+import { supabase } from '../lib/supabase.js'
 
 const SUGGESTIONS = [
   'Add a task to buy milk tomorrow',
@@ -96,12 +98,28 @@ export default function OctiPage() {
     }
   }
 
+  // Play requires a way to flag offensive AI output without leaving the app.
+  // The reply and the message before it go to content_reports (migration 0009).
+  async function report(i) {
+    const { error } = await supabase.from('content_reports').insert({
+      kind: 'octi',
+      content: chat[i].content.slice(0, 8000),
+      context: chat[i - 1]?.content.slice(0, 4000) ?? null,
+    })
+    if (error) return setError("Couldn't send the report. Check your connection and try again.")
+    setChat(c => c.map((m, j) => (j === i ? { ...m, reported: true } : m)))
+  }
+
   return (
     <div className="chat">
       {chat.length === 0 && (
         <div className="chat-empty">
           <img src="/mascot.png" alt="" className="mascot mascot-lg" />
           <p className="placeholder">Ask me to change anything in the app.</p>
+          <p className="ai-note">
+            Octi is an AI and can get things wrong. What you send, and the data needed to answer it,
+            goes to our AI provider. <Link to="/privacy">Privacy</Link>
+          </p>
           <div className="suggestions">
             {SUGGESTIONS.map(s => (
               <button key={s} className="suggestion" onClick={() => send(s)}>{s}</button>
@@ -120,6 +138,11 @@ export default function OctiPage() {
                     mysterious — you can see exactly what it touched. */}
                 {m.actions.map((a, j) => <span key={j} className="chip">{a}</span>)}
               </div>
+            )}
+            {m.role === 'assistant' && (
+              <button className="report" onClick={() => report(i)} disabled={m.reported}>
+                {m.reported ? 'Reported, thanks' : 'Report'}
+              </button>
             )}
           </div>
         ))}

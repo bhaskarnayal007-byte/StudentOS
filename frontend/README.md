@@ -28,11 +28,11 @@ src/
     ├── finance/        the spending overlay at /money
     ├── mascot/         the 3D Octi
     ├── auth/           sign-in and sign-up
-    ├── legal/          privacy and terms pages
+    ├── legal/          privacy, terms and delete-account pages
     └── ui/TopoField.tsx  the animated background
 scripts/
 ├── test-<moduleName>.mjs   plain node + assert tests, one per module
-└── make-assets.mjs         regenerates the PWA icons
+└── make-assets.mjs         regenerates the PWA icons and the Play Store icon and feature graphic (play-store/)
 ```
 
 A new feature is usually three edits: a field in `emptyState` in `store.jsx`, a
@@ -59,7 +59,7 @@ npm run dev       # dev server on :5173
 npm run build     # production build into dist/
 npm run preview   # serve dist/
 npm test          # every scripts/test-*.mjs
-node scripts/make-assets.mjs   # rebuild icons from src/assets/*.png into public/
+node scripts/make-assets.mjs   # rebuild icons from src/assets/*.png into public/ and play-store/
 ```
 
 ## Notes
