@@ -1283,6 +1283,8 @@ button.ghost.always:hover { color: var(--color-accent); }
 .login-card .field .grow { width: 100%; }
 .login-go { padding: 11px var(--s4); font-size: var(--t-md); }
 .login-note { margin: 0; font-size: var(--t-xs); color: var(--color-text-3); }
+.login-consent { display: flex; gap: var(--s2); align-items: flex-start; text-align: left; font-size: var(--t-sm); color: var(--color-text-2); cursor: pointer; }
+.login-consent input { margin-top: 3px; flex: none; accent-color: var(--color-accent); }
 
 /* Wrong password. Small horizontal nudge, not a violent shake — and the
    reduced-motion rule at the top of this file already flattens it to nothing

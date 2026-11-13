@@ -1,6 +1,6 @@
 // The terms and conditions, at /terms.
 import { Link } from "react-router-dom";
-import LegalPage, { CONTACT } from "./LegalPage";
+import LegalPage, { CONTACT, Grievance } from "./LegalPage";
 
 export default function TermsPage() {
   return (
@@ -46,8 +46,9 @@ export default function TermsPage() {
         When you message or share with a friend, they get it, and a shared note, event or mind map
         becomes their own copy. Be kind. Don't send anything that is unlawful, threatening,
         harassing, hateful, sexually explicit, or that shares someone's private information without
-        their consent. You can remove a friend at any time. To report a person or message, email{" "}
-        {CONTACT}; we review every report and may remove content or suspend accounts.
+        their consent, and don't impersonate anyone. You can remove a friend at any time. To report
+        a person or message, contact our grievance officer (below); we review every report and may
+        remove content or suspend accounts.
       </p>
 
       <h2>Octi, the AI assistant</h2>
@@ -88,9 +89,10 @@ export default function TermsPage() {
 
       <h2>Updates to the app</h2>
       <p>
-        To keep Stratus working and secure, the Android app may download updates to its content in
-        the background and apply them the next time it opens. Bigger updates come through Google
-        Play.
+        To keep Stratus working and secure, the Android app may download updates to its screens and
+        features (the web content it displays) in the background and apply them the next time it
+        opens. The app itself, and anything that changes how it runs on your phone, is updated only
+        through Google Play.
       </p>
 
       <h2>Keep your own copies</h2>
@@ -144,8 +146,7 @@ export default function TermsPage() {
         Chennai, Tamil Nadu.
       </p>
 
-      <h2>Contact</h2>
-      <p>Questions about these terms, or to report a problem: {CONTACT}.</p>
+      <Grievance />
     </LegalPage>
   );
 }

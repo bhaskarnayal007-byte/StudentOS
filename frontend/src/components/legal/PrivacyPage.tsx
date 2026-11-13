@@ -1,6 +1,6 @@
 // The privacy policy, at /privacy. Written to match what the code does; change it whenever data goes somewhere new.
 import { Link } from "react-router-dom";
-import LegalPage, { CONTACT } from "./LegalPage";
+import LegalPage, { CONTACT, Grievance } from "./LegalPage";
 
 export default function PrivacyPage() {
   return (
@@ -96,7 +96,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>App updates</strong>: the Android app checks our website for updates to its
-          content and downloads them. The check sends no personal data.
+          screens and features (the web content it displays) and downloads them. The check sends no
+          personal data. The app itself, and anything that changes how it runs on your phone, is
+          updated only through Google Play.
         </li>
       </ul>
 
@@ -104,9 +106,18 @@ export default function PrivacyPage() {
       <p>
         Octi's replies are written by an AI model run by our AI provider (currently Groq). When
         you send Octi a message, it goes through our server to the provider together with the
-        Stratus data needed to answer it. The provider uses it only to generate the reply, under
-        its terms with us. We don't keep a copy of your conversations with Octi, and the
-        conversation is gone from the app when you close it. Octi only changes your data in ways
+        Stratus data needed to answer it, and the provider uses it to generate the reply.
+      </p>
+      <p>
+        <strong>What we keep:</strong> we don't store your conversations with Octi on our servers,
+        and a conversation is gone from the app when you close it.
+      </p>
+      <p>
+        <strong>What Groq keeps:</strong> under Groq's data policy, it doesn't keep messages by
+        default. It may log a message and its reply for up to 30 days, and only while
+        troubleshooting errors or investigating abuse, unless the law requires longer.
+      </p>
+      <p> Octi only changes your data in ways
         you ask for, and shows you what it changed.
       </p>
 
@@ -152,16 +163,28 @@ export default function PrivacyPage() {
       <p>
         Everything travels encrypted (HTTPS). In our database, access rules mean each account can
         reach only its own data, and the keys that can read everything never leave our server.
-        Note files are stored privately. No system is perfectly secure, but if a breach affects
-        your data we will tell you and the Data Protection Board of India as the law requires.
+        Note files are stored privately. No system is perfectly secure.
+      </p>
+
+      <h2>If there is a data breach</h2>
+      <p>
+        If a breach affects your personal data, we will tell you without delay, by email and in the
+        app. We will explain what happened and when, what data it involved and what that could
+        mean for you, what we are doing about it, what you can do to protect yourself, and who to
+        contact ({CONTACT}). We will also report it to the Data Protection Board of India as the law
+        requires.
       </p>
 
       <h2>How long we keep it</h2>
       <p>
         As long as your account exists. When you delete something in the app, it's deleted from
         your synced data. When you delete your account, your account and everything stored with it
-        are deleted straight away, from our servers and from the device you deleted it on. Crash
-        reports are deleted by Sentry within 90 days. See{" "}
+        are deleted straight away, from our servers and from the device you deleted it on.
+      </p>
+      <p>
+        There are two exceptions. Records the law requires us to keep, such as logs of sign-ins and
+        account activity, may be kept for up to one year and are then erased; they are used for
+        nothing else. Crash reports are deleted by Sentry within 90 days. See{" "}
         <Link to="/delete-account">Delete your account</Link> for exactly what goes.
       </p>
 
@@ -176,7 +199,8 @@ export default function PrivacyPage() {
         <li>complain to us, and if you're not satisfied, to the Data Protection Board of India.</li>
       </ul>
       <p>
-        Email {CONTACT} for any of these. We reply within 7 days and complete requests within 30.
+        Email {CONTACT} for any of these. We acknowledge your request within 24 hours and complete
+        it within 15 days.
       </p>
 
       <h2>Age</h2>
@@ -191,11 +215,7 @@ export default function PrivacyPage() {
         data is used, we tell you in the app before it takes effect.
       </p>
 
-      <h2>Contact and grievances</h2>
-      <p>
-        Questions, requests or complaints about your data: Bhaskar Nayal, {CONTACT}. This is also
-        our grievance contact under Indian law.
-      </p>
+      <Grievance />
     </LegalPage>
   );
 }

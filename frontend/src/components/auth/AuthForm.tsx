@@ -5,6 +5,7 @@ import { supabase, isNative, NATIVE_AUTH_REDIRECT } from "../../lib/supabase.js"
 import { signInWithGoogle } from "../../auth/useSession.js";
 
 const MIN_LENGTH = 6;
+const NEEDS_CONSENT = "Tick the box to confirm you're 18 or older and agree to the Terms and Privacy policy.";
 
 type Props = {
   /** Called once a session exists. The seeds are measured from this card so
@@ -28,6 +29,9 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // A new account needs an explicit yes: 18 or older, and the Terms and
+  // Privacy policy. Asked again on every sign-up, never remembered.
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,6 +61,7 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
       return fail(`Password needs at least ${MIN_LENGTH} characters.`);
     }
     if (mode === "signup" && !name.trim()) return fail("Enter a name to continue.");
+    if (mode === "signup" && !agreed) return fail(NEEDS_CONSENT);
 
     // Measured while the card is still on screen — once it unmounts every rect
     // is zero and the particles have nothing to sample.
@@ -169,6 +174,20 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
         />
       </label>
 
+      {signup && (
+        <label className="login-consent">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => { setAgreed(e.target.checked); setError(""); }}
+          />
+          <span>
+            I'm 18 or older and agree to the <Link to="/terms">Terms</Link> and{" "}
+            <Link to="/privacy">Privacy policy</Link>.
+          </span>
+        </label>
+      )}
+
       {error && <p className="error">{error}</p>}
       {notice && <p className="login-note">{notice}</p>}
 
@@ -183,6 +202,8 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
         className="oauth-btn"
         disabled={busy}
         onClick={async () => {
+          // Google creates the account on first use, so sign-up's yes applies here too.
+          if (signup && !agreed) return fail(NEEDS_CONSENT);
           setBusy(true);
           setError("");
           const { error: err } = await signInWithGoogle();
@@ -208,10 +229,11 @@ export default function AuthForm({ onAuthed, initialMode = "signin" }: Props) {
         {signup ? "I already have an account" : "Create an account"}
       </button>
 
-      {signup && (
+      {/* Continue with Google from here can still create a new account. */}
+      {!signup && (
         <p className="login-note">
-          By creating an account you agree to the <Link to="/terms">Terms</Link> and{" "}
-          <Link to="/privacy">Privacy policy</Link>.
+          New to Stratus? Continuing with Google confirms you're 18 or older and agree to the{" "}
+          <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy policy</Link>.
         </p>
       )}
 

@@ -27,7 +27,8 @@ export default function DeleteAccountPage({ signedIn = false }: { signedIn?: boo
       <h2>By email</h2>
       <p>
         Can't sign in? Email {CONTACT} from the address you signed up with and ask for your account to
-        be deleted. We do it within 7 days and reply when it's done.
+        be deleted. We acknowledge your email within 24 hours, delete the account within 15 days, and
+        reply when it's done.
       </p>
 
       <h2>What is deleted</h2>
@@ -38,8 +39,9 @@ export default function DeleteAccountPage({ signedIn = false }: { signedIn?: boo
         you haven't opened yet.
       </p>
       <p>
-        Nothing is kept afterwards. Crash reports we received never contained your data, and are
-        removed by our crash-report provider within 90 days.
+        Records the law requires us to keep, such as logs of sign-ins and account activity, may be
+        kept for up to one year and are then erased. Crash reports never contained your data, and
+        are removed by our crash-report provider within 90 days.
       </p>
     </LegalPage>
   );
