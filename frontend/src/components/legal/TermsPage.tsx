@@ -75,6 +75,14 @@ export default function TermsPage() {
       <p>Don't use Stratus to:</p>
       <ul>
         <li>break the law or help someone else break it;</li>
+        <li>share anything that sexually exploits or otherwise harms children;</li>
+        <li>infringe anyone's copyright, trademark or other rights;</li>
+        <li>spread information you know is false or misleading;</li>
+        <li>promote gambling or betting, or launder money;</li>
+        <li>
+          threaten the unity, integrity, defence, security or sovereignty of India, its relations
+          with other countries, or public order, or incite any offence;
+        </li>
         <li>get into other people's accounts, or probe, scan or attack our systems;</li>
         <li>overload the service, including Octi, or get around its limits;</li>
         <li>copy, scrape or resell the service, or pretend to be someone else;</li>

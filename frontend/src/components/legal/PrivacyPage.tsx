@@ -86,8 +86,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Google Calendar</strong> (optional): read-only access to your primary calendar,
-          so its events show on the Calendar page. Your device fetches them directly from Google;
-          access lapses after an hour or when you disconnect. Our use of Google data follows the
+          so its events show on the Calendar page. Your device fetches them directly from Google and
+          keeps them only while the page is open; Octi can't see them, and they never reach our
+          servers or our AI provider. Access lapses after an hour or when you disconnect. Our use of Google data follows the
           Google API Services User Data Policy, including its Limited Use requirements.
         </li>
         <li>
@@ -113,7 +114,11 @@ export default function PrivacyPage() {
         and a conversation is gone from the app when you close it.
       </p>
       <p>
-        <strong>What Groq keeps:</strong> under Groq's data policy, it doesn't keep messages by
+        <strong>What Groq keeps:</strong> under{" "}
+        <a href="https://console.groq.com/docs/your-data" target="_blank" rel="noreferrer">
+          Groq's data policy
+        </a>
+        , it doesn't keep messages by
         default. It may log a message and its reply for up to 30 days, and only while
         troubleshooting errors or investigating abuse, unless the law requires longer.
       </p>
@@ -184,7 +189,8 @@ export default function PrivacyPage() {
       <p>
         There are two exceptions. Records the law requires us to keep, such as logs of sign-ins and
         account activity, may be kept for up to one year and are then erased; they are used for
-        nothing else. Crash reports are deleted by Sentry within 90 days. See{" "}
+        nothing else. Our database backups are kept for at most 7 days, so deleted data is gone
+        from them within 7 days. Crash reports are deleted by Sentry within 90 days. See{" "}
         <Link to="/delete-account">Delete your account</Link> for exactly what goes.
       </p>
 
@@ -200,7 +206,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         Email {CONTACT} for any of these. We acknowledge your request within 24 hours and complete
-        it within 15 days.
+        it within 30 days.
       </p>
 
       <h2>Age</h2>

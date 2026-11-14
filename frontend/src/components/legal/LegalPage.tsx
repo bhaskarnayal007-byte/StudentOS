@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 // Where the policies promise people can reach us. A link, so it opens their mail app.
 const EMAIL = "archive.solutions007@gmail.com";
 export const CONTACT = <a href={`mailto:${EMAIL}`}>{EMAIL}</a>;
-const UPDATED = "13 November 2026";
+const UPDATED = "14 November 2026";
 
 /** The copyright line shown at the foot of every screen. */
 export function Copyright() {
@@ -41,6 +41,11 @@ export function Grievance() {
           <strong>24 hours</strong> of a complaint from the person shown or anyone acting for them.
         </li>
       </ul>
+      <p>
+        If you're not satisfied with the grievance officer's decision, you can appeal to the{" "}
+        <a href="https://gac.gov.in" target="_blank" rel="noreferrer">Grievance Appellate Committee</a>{" "}
+        within 30 days.
+      </p>
     </>
   );
 }
